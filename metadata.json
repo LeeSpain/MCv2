@@ -1,0 +1,5 @@
+{
+  "name": "MobileCare Ops Platform",
+  "description": "Comprehensive operations platform for stock accountability, ordering workflows, and device lifecycle management. Features AI agent orchestration and strict chain-of-custody tracking.",
+  "requestFramePermissions": []
+}
