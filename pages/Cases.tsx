@@ -3,14 +3,16 @@ import React, { useState } from 'react';
 import { useStore, store } from '../services/store';
 import { Card, Badge, Button } from '../components/ui';
 import { CaseStatus, Role } from '../types';
+import { useNavigate } from 'react-router-dom';
 import { 
   ClipboardList, Search, Filter, CheckCircle, XCircle, 
-  Clock, ArrowRight, MoreHorizontal, Package, FileText,
-  AlertCircle, Plus, Building2
+  Clock, ArrowRight, Package, Box, AlertTriangle, Building2,
+  RefreshCw, Wrench
 } from 'lucide-react';
 
 export const Cases: React.FC = () => {
   const { cases, currentUser } = useStore();
+  const navigate = useNavigate();
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [search, setSearch] = useState('');
 
@@ -34,8 +36,27 @@ export const Cases: React.FC = () => {
     return true;
   });
 
-  const handleApprove = (id: string) => {
+  const handleApprove = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
     if (canApprove) store.approveCase(id);
+  };
+
+  const handleAllocate = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (canApprove) {
+        store.allocateCase(id);
+    }
+  };
+
+  const handleCreateJob = (id: string, e: React.MouseEvent) => {
+      e.stopPropagation();
+      if(canApprove) {
+          store.createInstallJobsFromAllocation(id);
+      }
+  };
+
+  const handleManage = (clientId: string) => {
+      navigate(`/clients/${clientId}`);
   };
 
   const getStatusColor = (status: CaseStatus) => {
@@ -50,6 +71,15 @@ export const Cases: React.FC = () => {
     }
   };
 
+  const getLineItemStatusColor = (status: string) => {
+      switch(status) {
+          case 'ALLOCATED': return 'green';
+          case 'PARTIAL': return 'yellow';
+          case 'OUT_OF_STOCK': return 'red';
+          default: return 'gray';
+      }
+  };
+
   return (
     <div className="h-[calc(100vh-8rem)] flex flex-col space-y-4">
       {/* Header */}
@@ -62,7 +92,7 @@ export const Cases: React.FC = () => {
            <p className="text-xs text-slate-500 mt-1">Process intake, approvals, and fulfillment.</p>
         </div>
         <div className="flex gap-2">
-           {canCreate && <Button size="sm"><Plus className="w-4 h-4 mr-2" /> New Case</Button>}
+           {canCreate && <Button size="sm">New Case</Button>}
         </div>
       </div>
 
@@ -80,7 +110,7 @@ export const Cases: React.FC = () => {
                <p className="text-[10px] font-bold text-blue-600 uppercase">New Requests</p>
                <p className="text-xl font-bold text-blue-700">{newCases}</p>
             </div>
-            <AlertCircle className="w-8 h-8 text-blue-200" />
+            <Box className="w-8 h-8 text-blue-200" />
          </Card>
          <Card className="p-3 flex items-center justify-between">
             <div>
@@ -139,14 +169,16 @@ export const Cases: React.FC = () => {
                <tr>
                  <th className="px-4 py-3 text-xs uppercase tracking-wide w-32">Case ID</th>
                  <th className="px-4 py-3 text-xs uppercase tracking-wide">Client Details</th>
-                 <th className="px-4 py-3 text-xs uppercase tracking-wide">Requested Items</th>
-                 <th className="px-4 py-3 text-xs uppercase tracking-wide">Status</th>
-                 <th className="px-4 py-3 text-xs uppercase tracking-wide text-right">Actions</th>
+                 <th className="px-4 py-3 text-xs uppercase tracking-wide">Line Items & Allocation</th>
+                 <th className="px-4 py-3 text-xs uppercase tracking-wide">Workflow Status</th>
+                 <th className="px-4 py-3 text-xs uppercase tracking-wide text-right">Ops Actions</th>
                </tr>
              </thead>
              <tbody className="divide-y divide-slate-100">
                {filteredCases.map(c => {
-                 const itemNames = store.getProductIdsToNames(c.product_ids);
+                 const isFullyAllocated = c.line_items.every(li => li.status === 'ALLOCATED');
+                 const hasAllocationIssues = c.line_items.some(li => li.status === 'OUT_OF_STOCK' || li.status === 'PARTIAL');
+
                  return (
                    <tr key={c.id} className="hover:bg-slate-50 transition-colors group">
                      <td className="px-4 py-3">
@@ -160,11 +192,19 @@ export const Cases: React.FC = () => {
                         </div>
                      </td>
                      <td className="px-4 py-3">
-                        <div className="flex flex-wrap gap-1">
-                          {itemNames.map((item, i) => (
-                             <span key={i} className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-[10px] border border-slate-200">
-                                <Package className="w-3 h-3" /> {item}
-                             </span>
+                        <div className="space-y-1.5">
+                          {c.line_items.map((li, i) => (
+                             <div key={i} className="flex items-center justify-between text-xs bg-slate-50 p-1.5 rounded border border-slate-100">
+                                <div className="flex items-center gap-2">
+                                   <Package className="w-3 h-3 text-slate-400" />
+                                   <span className="font-medium text-slate-700">{store.getProductName(li.product_id)}</span>
+                                   <span className="text-slate-400">x{li.requested_qty}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                   <span className="text-[10px] text-slate-500">Allocated: <strong>{li.allocated_device_ids.length}</strong></span>
+                                   <Badge color={getLineItemStatusColor(li.status) as any}>{li.status}</Badge>
+                                </div>
+                             </div>
                           ))}
                         </div>
                      </td>
@@ -173,17 +213,41 @@ export const Cases: React.FC = () => {
                      </td>
                      <td className="px-4 py-3 text-right">
                         <div className="flex justify-end gap-2">
-                          {c.status === CaseStatus.NEW && canApprove ? (
+                          
+                          {/* NEW CASE ACTIONS */}
+                          {c.status === CaseStatus.NEW && canApprove && (
                              <>
-                               <Button size="sm" className="h-7 text-xs bg-green-600 hover:bg-green-700" onClick={() => handleApprove(c.id)}>
-                                 <CheckCircle className="w-3 h-3 mr-1" /> Approve
-                               </Button>
-                               <Button size="sm" variant="outline" className="h-7 text-xs text-red-600 hover:bg-red-50 hover:border-red-200 hover:text-red-700">
+                               <Button size="sm" variant="outline" className="h-7 text-xs text-red-600 border-red-200 hover:bg-red-50">
                                  <XCircle className="w-3 h-3" />
                                </Button>
+                               <Button size="sm" className="h-7 text-xs bg-green-600 hover:bg-green-700" onClick={(e) => handleApprove(c.id, e)}>
+                                 <CheckCircle className="w-3 h-3 mr-1" /> Approve
+                               </Button>
                              </>
-                          ) : (
-                             <Button size="sm" variant="outline" className="h-7 text-xs">
+                          )}
+
+                          {/* POST-APPROVAL ACTIONS (Allocations) */}
+                          {(c.status === CaseStatus.APPROVED || c.status === CaseStatus.STOCK_ALLOCATED) && canApprove && (
+                              <>
+                                {/* Show Allocate if issues or not fully done yet (idempotent) */}
+                                {(!isFullyAllocated || hasAllocationIssues) && (
+                                    <Button size="sm" variant="outline" className="h-7 text-xs border-brand-200 text-brand-700 hover:bg-brand-50" onClick={(e) => handleAllocate(c.id, e)}>
+                                        <RefreshCw className="w-3 h-3 mr-1" /> Allocate
+                                    </Button>
+                                )}
+                                
+                                {/* Show Create Jobs if fully allocated but jobs not yet created/case advanced */}
+                                {isFullyAllocated && (
+                                    <Button size="sm" className="h-7 text-xs bg-purple-600 hover:bg-purple-700 text-white" onClick={(e) => handleCreateJob(c.id, e)}>
+                                        <Wrench className="w-3 h-3 mr-1" /> Create Jobs
+                                    </Button>
+                                )}
+                              </>
+                          )}
+
+                          {/* GENERIC MANAGE */}
+                          {c.status !== CaseStatus.NEW && c.status !== CaseStatus.APPROVED && c.status !== CaseStatus.STOCK_ALLOCATED && (
+                             <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => handleManage(c.client_id)}>
                                Manage <ArrowRight className="w-3 h-3 ml-1" />
                              </Button>
                           )}

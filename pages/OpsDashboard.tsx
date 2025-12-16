@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useStore, store } from '../services/store';
 import { Card, Badge, Button } from '../components/ui';
@@ -24,6 +23,23 @@ export const OpsDashboard: React.FC = () => {
   const handleQuickApprove = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     store.approveCase(id);
+  };
+
+  const handleLogisticsAction = (action: string, job: any) => {
+     if (action === 'contact') {
+        alert(`Opening comms channel for ${job.client_name}...`);
+        navigate('/messages');
+     } else if (action === 'reschedule') {
+        // In real app: open modal
+        const newDate = prompt("Enter new date (YYYY-MM-DD):", new Date().toISOString().split('T')[0]);
+        if (newDate) {
+           store.rescheduleJob(job.id, newDate); // Updated method call
+           alert(`Job rescheduled to ${newDate}`);
+        }
+     } else if (action === 'book_return') {
+        alert(`Return label generated for ${job.client_name}. Notification sent.`);
+        navigate('/jobs');
+     }
   };
 
   const StatCard = ({ label, value, color, icon: Icon, onClick }: any) => (
@@ -182,8 +198,8 @@ export const OpsDashboard: React.FC = () => {
                           <Clock className="w-3 h-3" /> Was: {j.scheduled_for}
                        </div>
                        <div className="mt-2 flex gap-2">
-                          <button className="flex-1 bg-white border border-slate-200 hover:bg-slate-50 text-[10px] py-1 rounded font-medium transition-colors">Contact</button>
-                          <button className="flex-1 bg-white border border-slate-200 hover:bg-slate-50 text-[10px] py-1 rounded font-medium transition-colors">Reschedule</button>
+                          <button onClick={() => handleLogisticsAction('contact', j)} className="flex-1 bg-white border border-slate-200 hover:bg-slate-50 text-[10px] py-1 rounded font-medium transition-colors">Contact</button>
+                          <button onClick={() => handleLogisticsAction('reschedule', j)} className="flex-1 bg-white border border-slate-200 hover:bg-slate-50 text-[10px] py-1 rounded font-medium transition-colors">Reschedule</button>
                        </div>
                     </div>
                  ))}
@@ -204,7 +220,7 @@ export const OpsDashboard: React.FC = () => {
                            <p className="text-xs font-bold text-slate-800">{j.client_name}</p>
                            <p className="text-[10px] text-slate-500">Return Request</p>
                         </div>
-                        <Button size="sm" variant="outline" className="h-6 text-[10px] px-2">Book</Button>
+                        <Button onClick={() => handleLogisticsAction('book_return', j)} size="sm" variant="outline" className="h-6 text-[10px] px-2">Book</Button>
                      </div>
                   ))}
                </div>

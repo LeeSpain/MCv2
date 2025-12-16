@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 
 export const Jobs: React.FC = () => {
-  const { jobs, cases } = useStore();
+  const { jobs, cases, devices } = useStore();
   const [filterType, setFilterType] = useState<string>('ALL');
   const [search, setSearch] = useState('');
 
@@ -37,6 +37,30 @@ export const Jobs: React.FC = () => {
     }
   };
 
+  const handleBookJob = () => {
+      const clientName = prompt("Enter Client Name:");
+      if (clientName) {
+          store.createJob({
+              id: `j-${Date.now()}`,
+              type: 'INSTALL',
+              status: JobStatus.NEEDS_SCHEDULING,
+              client_name: clientName,
+              scheduled_for: undefined
+          });
+      }
+  };
+
+  const handleManageJob = (jobId: string) => {
+      const action = prompt("Manage Job Action:\nType 'confirm' to confirm schedule.\nType 'complete' to force finish job.");
+      if (action === 'confirm') {
+          store.confirmJobSchedule(jobId);
+          alert('Job schedule confirmed.');
+      } else if (action === 'complete') {
+          store.completeJob(jobId);
+          alert('Job marked completed (assets updated).');
+      }
+  };
+
   return (
     <div className="h-[calc(100vh-8rem)] flex flex-col space-y-4">
       {/* Header */}
@@ -54,7 +78,7 @@ export const Jobs: React.FC = () => {
               <span className="text-xs font-bold text-slate-700 px-2">Today, {new Date().toLocaleDateString()}</span>
               <button className="p-1 hover:bg-slate-100 rounded"><ChevronRight className="w-4 h-4 text-slate-500" /></button>
            </div>
-           <Button size="sm"><Calendar className="w-4 h-4 mr-2" /> Book New Job</Button>
+           <Button size="sm" onClick={handleBookJob}><Calendar className="w-4 h-4 mr-2" /> Book New Job</Button>
         </div>
       </div>
 
@@ -127,7 +151,9 @@ export const Jobs: React.FC = () => {
                ))}
             </div>
          </div>
-         <Button variant="outline" size="sm" className="h-8"><Filter className="w-3 h-3 mr-2" /> View Map</Button>
+         <Button variant="outline" size="sm" className="h-8" onClick={() => window.open("https://maps.google.com/?q=Amsterdam", "_blank")}>
+            <Filter className="w-3 h-3 mr-2" /> View Map
+         </Button>
       </div>
 
       {/* Dense List View */}
@@ -139,7 +165,7 @@ export const Jobs: React.FC = () => {
                  <th className="px-4 py-3 text-xs uppercase tracking-wide w-32">Scheduled</th>
                  <th className="px-4 py-3 text-xs uppercase tracking-wide w-24">Type</th>
                  <th className="px-4 py-3 text-xs uppercase tracking-wide">Client</th>
-                 <th className="px-4 py-3 text-xs uppercase tracking-wide">Details</th>
+                 <th className="px-4 py-3 text-xs uppercase tracking-wide">Target Equipment</th>
                  <th className="px-4 py-3 text-xs uppercase tracking-wide">Installer</th>
                  <th className="px-4 py-3 text-xs uppercase tracking-wide">Status</th>
                  <th className="px-4 py-3 text-xs uppercase tracking-wide text-right">Actions</th>
@@ -147,9 +173,25 @@ export const Jobs: React.FC = () => {
              </thead>
              <tbody className="divide-y divide-slate-100">
                {filteredJobs.map(job => {
-                 const jobCase = cases.find(c => c.id === job.case_id);
-                 const products = jobCase ? store.getProductIdsToNames(jobCase.product_ids) : [];
+                 // Derive products from Case -> Line Items or Allocated Devices
+                 // If case_id exists, look up allocated devices
+                 let productNames: string[] = [];
+                 if (job.case_id) {
+                     const linkedDevices = devices.filter(d => d.assigned_case_id === job.case_id);
+                     if (linkedDevices.length > 0) {
+                         productNames = linkedDevices.map(d => store.getProductName(d.product_id));
+                     } else {
+                         // Fallback to case line items if no devices physically allocated yet (pre-allocation job?)
+                         const jobCase = cases.find(c => c.id === job.case_id);
+                         if (jobCase) {
+                             productNames = jobCase.line_items.map(li => store.getProductName(li.product_id));
+                         }
+                     }
+                 }
                  
+                 // Remove duplicates
+                 productNames = [...new Set(productNames)];
+
                  return (
                    <tr key={job.id} className="hover:bg-slate-50 transition-colors group">
                      <td className="px-4 py-3">
@@ -177,17 +219,17 @@ export const Jobs: React.FC = () => {
                         </div>
                      </td>
                      <td className="px-4 py-3">
-                        {products.length > 0 ? (
+                        {productNames.length > 0 ? (
                            <div className="flex flex-col gap-0.5">
-                              {products.slice(0, 2).map((p, i) => (
+                              {productNames.slice(0, 2).map((p, i) => (
                                  <span key={i} className="text-xs text-slate-600 flex items-center gap-1.5">
                                     <Package className="w-3 h-3 text-slate-300" /> {p}
                                  </span>
                               ))}
-                              {products.length > 2 && <span className="text-[10px] text-slate-400 pl-4">+{products.length - 2} more</span>}
+                              {productNames.length > 2 && <span className="text-[10px] text-slate-400 pl-4">+{productNames.length - 2} more</span>}
                            </div>
                         ) : (
-                           <span className="text-xs text-slate-400">-</span>
+                           <span className="text-xs text-slate-400 italic">No equipment link</span>
                         )}
                      </td>
                      <td className="px-4 py-3">
@@ -207,7 +249,7 @@ export const Jobs: React.FC = () => {
                         {job.confirmation_needed && <span className="ml-2 text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-bold border border-amber-200">CONFIRM NEEDED</span>}
                      </td>
                      <td className="px-4 py-3 text-right">
-                        <Button variant="outline" size="sm" className="h-7 text-xs">Manage</Button>
+                        <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => handleManageJob(job.id)}>Manage</Button>
                      </td>
                    </tr>
                  );

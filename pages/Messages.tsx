@@ -65,6 +65,7 @@ export const Messages: React.FC = () => {
 const MobileMessagesInterface: React.FC<{ messages: Message[], currentUser: any }> = ({ messages, currentUser }) => {
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
   const [activeTab, setActiveTab] = useState<'CHATS' | 'ALERTS'>('CHATS');
+  const [replyText, setReplyText] = useState('');
 
   // Filter for tabs
   const chats = messages.filter(m => m.category === 'DIRECT_MESSAGE');
@@ -75,6 +76,30 @@ const MobileMessagesInterface: React.FC<{ messages: Message[], currentUser: any 
   const handleSelect = (m: Message) => {
     setSelectedMessage(m);
     if (!m.is_read) store.markMessageRead(m.id);
+  };
+
+  const handleSendReply = () => {
+      if (replyText.trim()) {
+          store.sendMessage({
+              id: `m-${Date.now()}`,
+              category: 'DIRECT_MESSAGE',
+              sender_type: 'HUMAN',
+              sender_name: currentUser.name,
+              sender_role: currentUser.role,
+              recipient_group: 'OPERATIONS',
+              subject: `Re: ${selectedMessage?.subject}`,
+              preview: replyText,
+              body: replyText,
+              priority: 'NORMAL',
+              is_read: false,
+              timestamp: new Date().toLocaleTimeString(),
+              tags: ['Reply']
+          });
+          setReplyText('');
+          // In a real app, this would append to thread. For now, we clear selection or show toast.
+          alert('Reply sent!');
+          setSelectedMessage(null);
+      }
   };
 
   // --- MOBILE DETAIL VIEW ---
@@ -156,8 +181,14 @@ const MobileMessagesInterface: React.FC<{ messages: Message[], currentUser: any 
                  type="text" 
                  placeholder="Type a reply..." 
                  className="flex-1 bg-slate-100 border-0 rounded-full px-4 py-3 text-sm focus:ring-2 focus:ring-brand-500 outline-none"
+                 value={replyText}
+                 onChange={e => setReplyText(e.target.value)}
               />
-              <button className="bg-brand-600 text-white rounded-full w-12 h-12 flex items-center justify-center shadow active:scale-95 transition-transform">
+              <button 
+                onClick={handleSendReply}
+                disabled={!replyText.trim()}
+                className="bg-brand-600 text-white rounded-full w-12 h-12 flex items-center justify-center shadow active:scale-95 transition-transform disabled:opacity-50"
+              >
                  <Send className="w-5 h-5 ml-0.5" />
               </button>
            </div>

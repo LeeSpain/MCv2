@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { Today } from './pages/Today';
@@ -14,6 +14,7 @@ import { Settings } from './pages/Settings';
 import { DailyReport } from './pages/DailyReport';
 import { Exceptions } from './pages/Exceptions';
 import { Products } from './pages/Products';
+import { SettingsAgents } from './pages/SettingsAgents';
 
 // Care & CRM Pages
 import { CareDashboard } from './pages/CareDashboard';
@@ -26,7 +27,13 @@ import { NewAssessment } from './pages/NewAssessment';
 import { AssessmentReview } from './pages/AssessmentReview';
 import { CarePlanReview } from './pages/CarePlanReview';
 
+import { store } from './services/store';
+
 const App: React.FC = () => {
+  useEffect(() => {
+    store.startAgentLoop();
+  }, []);
+
   return (
     <Router>
       <Layout>
@@ -51,7 +58,10 @@ const App: React.FC = () => {
           <Route path="/cases" element={<Cases />} />
           <Route path="/jobs" element={<Jobs />} />
           <Route path="/messages" element={<Messages />} />
+          
+          {/* Settings Sub-routes */}
           <Route path="/settings" element={<Settings />} />
+          <Route path="/settings/agents" element={<SettingsAgents />} />
 
           {/* Care Company / CRM Routes */}
           <Route path="/care-dashboard" element={<CareDashboard />} />

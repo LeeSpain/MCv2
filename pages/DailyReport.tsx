@@ -1,3 +1,4 @@
+
 import React, { useMemo } from 'react';
 import { useStore, store } from '../services/store';
 import { Card, Badge, Button } from '../components/ui';
@@ -41,6 +42,10 @@ export const DailyReport: React.FC = () => {
 
   const isHealthy = unaccountedDevices === 0 && criticalExceptions.length === 0;
 
+  const handlePrint = () => {
+      window.print();
+  };
+
   // Render Helper
   const MetricCell = ({ label, value, sub, color = 'text-slate-900' }: any) => (
     <div className="flex-1 px-4 py-3 md:py-0">
@@ -51,7 +56,7 @@ export const DailyReport: React.FC = () => {
   );
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6 pb-12">
+    <div className="max-w-7xl mx-auto space-y-6 pb-12 print:pb-0">
       {/* HEADER */}
       <div className="flex justify-between items-end pb-4 border-b border-slate-200">
         <div>
@@ -67,8 +72,8 @@ export const DailyReport: React.FC = () => {
             <span className="font-mono text-xs bg-slate-100 px-1.5 py-0.5 rounded">RUN-ID #8921</span>
           </p>
         </div>
-        <div className="flex gap-2">
-           <Button variant="outline" size="sm"><Printer className="w-4 h-4 mr-2" /> Print</Button>
+        <div className="flex gap-2 print:hidden">
+           <Button variant="outline" size="sm" onClick={handlePrint}><Printer className="w-4 h-4 mr-2" /> Print</Button>
            <Button variant="outline" size="sm"><Share2 className="w-4 h-4 mr-2" /> Share</Button>
            <Button size="sm"><Download className="w-4 h-4 mr-2" /> Export CSV</Button>
         </div>

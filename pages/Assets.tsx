@@ -5,7 +5,7 @@ import { Card, Badge, Button } from '../components/ui';
 import { DeviceStatus } from '../types';
 import { 
   Search, Filter, MapPin, Box, RefreshCw, AlertTriangle, 
-  Download, Plus, MoreHorizontal, Activity 
+  Download, Plus, MoreHorizontal, Activity, FileText
 } from 'lucide-react';
 
 export const Assets: React.FC = () => {
@@ -37,6 +37,24 @@ export const Assets: React.FC = () => {
     }
   };
 
+  const handleRegisterAsset = () => {
+    const serial = prompt("Enter Serial Number (e.g. MC-2024-XXX):");
+    if (serial) {
+        store.createDevice({
+            id: `d-${Date.now()}`,
+            serial_number: serial,
+            product_id: 'prod-hub',
+            status: DeviceStatus.IN_STOCK,
+            current_custodian: 'Warehouse',
+            last_updated: new Date().toISOString().split('T')[0]
+        });
+    }
+  };
+
+  const handleViewHistory = (deviceId: string) => {
+      alert(`Simulating Chain of Custody retrieval for Device ${deviceId}...\n\n- Warehouse (Created)\n- Installer (Transfer)\n- Client (Active)`);
+  };
+
   return (
     <div className="h-[calc(100vh-8rem)] flex flex-col space-y-4">
       {/* Header */}
@@ -50,7 +68,7 @@ export const Assets: React.FC = () => {
         </div>
         <div className="flex gap-2">
            <Button variant="outline" size="sm"><Download className="w-4 h-4 mr-2" /> Export</Button>
-           <Button size="sm"><Plus className="w-4 h-4 mr-2" /> Register Asset</Button>
+           <Button size="sm" onClick={handleRegisterAsset}><Plus className="w-4 h-4 mr-2" /> Register Asset</Button>
         </div>
       </div>
 
@@ -157,8 +175,8 @@ export const Assets: React.FC = () => {
                   </td>
                   <td className="px-4 py-2 text-xs text-slate-500 font-mono">{device.last_updated}</td>
                   <td className="px-4 py-2 text-right">
-                    <button className="p-1 hover:bg-slate-200 rounded text-slate-400 hover:text-slate-600 transition-colors">
-                       <MoreHorizontal className="w-4 h-4" />
+                    <button onClick={() => handleViewHistory(device.id)} className="p-1 hover:bg-slate-200 rounded text-slate-400 hover:text-slate-600 transition-colors" title="View History">
+                       <FileText className="w-4 h-4" />
                     </button>
                   </td>
                 </tr>

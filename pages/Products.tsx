@@ -1,19 +1,41 @@
 
 import React from "react";
 import { store } from "../services/store";
-import { Badge } from "../components/ui";
+import { Badge, Button } from "../components/ui";
+import { Plus } from "lucide-react";
+import { ProductCategory } from "../types";
 
 export const Products: React.FC = () => {
   const products = store.products;
 
+  const handleAddProduct = () => {
+      const name = prompt("Enter Product Name:");
+      if (name) {
+          store.addProduct({
+              id: `prod-${Date.now()}`,
+              name,
+              category: ProductCategory.SAFETY,
+              is_device: true,
+              is_active: true,
+              requires_hub: false,
+              requires_subscription: false
+          });
+      }
+  };
+
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold text-slate-900">Product Catalog</h1>
-      <p className="text-slate-600 mt-1">
-        Central definitions used by stock, orders, care plans, and AI recommendations.
-      </p>
+      <div className="flex justify-between items-end mb-6">
+        <div>
+            <h1 className="text-2xl font-bold text-slate-900">Product Catalog</h1>
+            <p className="text-slate-600 mt-1">
+                Central definitions used by stock, orders, care plans, and AI recommendations.
+            </p>
+        </div>
+        <Button size="sm" onClick={handleAddProduct}><Plus className="w-4 h-4 mr-2" /> Add Product</Button>
+      </div>
 
-      <div className="mt-6 bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
         <table className="w-full text-left">
           <thead className="bg-slate-50 text-slate-500 font-bold text-xs uppercase tracking-wider border-b border-slate-200">
             <tr>

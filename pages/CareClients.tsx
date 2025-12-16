@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { useStore } from '../services/store';
+import { useStore, store } from '../services/store';
 import { Card, Button, Badge } from '../components/ui';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -18,6 +18,18 @@ export const CareClients: React.FC = () => {
   // Permissions
   const isInternalOps = [Role.MC_ADMIN, Role.MC_OPERATIONS, Role.CEO].includes(currentUser.role);
   const isLead = currentUser.role === Role.CARE_COMPANY_LEAD_NURSE;
+
+  const handleAddClient = () => {
+      const name = prompt("Enter Client Full Name:");
+      if (name) {
+          const newClient = store.createClient({
+              full_name: name,
+              care_company_id: currentUser.care_company_id || 'cc1',
+              care_company_name: currentUser.care_company_id === 'cc1' ? 'Thuiszorg West' : 'Zorg & Co'
+          });
+          navigate(`/clients/${newClient.id}`);
+      }
+  };
 
   // Filter Logic
   const filteredClients = clients.filter(c => {
@@ -63,7 +75,7 @@ export const CareClients: React.FC = () => {
         </div>
         <div className="flex gap-2">
            <Button variant="outline" size="sm"><Download className="w-4 h-4 mr-2" /> Export</Button>
-           {(isLead || isInternalOps) && <Button size="sm"><Plus className="w-4 h-4 mr-2" /> Add Client</Button>}
+           {(isLead || isInternalOps) && <Button size="sm" onClick={handleAddClient}><Plus className="w-4 h-4 mr-2" /> Add Client</Button>}
         </div>
       </div>
 

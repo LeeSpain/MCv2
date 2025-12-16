@@ -1,13 +1,14 @@
 
 import React from 'react';
 import { useStore, store } from '../services/store';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Card, Button, Badge } from '../components/ui';
-import { ArrowLeft, FileText, Package, Plus, AlertCircle, Edit } from 'lucide-react';
+import { ArrowLeft, FileText, Package, Plus, AlertCircle, Edit, MessageSquare } from 'lucide-react';
 import { Role } from '../types';
 
 export const CareClientDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { clients, carePlans, devices, currentUser } = useStore();
 
   const client = clients.find(c => c.id === id);
@@ -17,6 +18,35 @@ export const CareClientDetail: React.FC = () => {
   const isLead = currentUser.role === Role.CARE_COMPANY_LEAD_NURSE;
 
   if (!client) return <div>Client not found</div>;
+
+  const handleLogNote = () => {
+      const note = prompt("Enter clinical or operational note:");
+      if (note) {
+          store.addTimelineEvent(client.id, `Manual Note: ${note}`);
+      }
+  };
+
+  const handleReportIssue = () => {
+      const issue = prompt("Describe the issue (will create an exception):");
+      if (issue) {
+          store.createException({
+              severity: 'WARNING',
+              title: 'Client Issue Reported',
+              description: `${currentUser.name} reported: ${issue}`,
+              related_entity_type: 'DEVICE', // Simplification
+              related_entity_id: clientDevices[0]?.id || 'unknown',
+          });
+          alert("Issue reported to Operations.");
+      }
+  };
+
+  const handleEndService = () => {
+      if (confirm("Are you sure you want to END SERVICE for this client? This will trigger a return request for all devices.")) {
+          store.endClientService(client.id);
+          alert("Service ended. Returns Recovery process initiated.");
+          navigate('/clients');
+      }
+  };
 
   return (
     <div className="space-y-8 max-w-5xl mx-auto">
@@ -30,7 +60,7 @@ export const CareClientDetail: React.FC = () => {
               <h2 className="text-3xl font-bold text-slate-900">{client.full_name}</h2>
               <p className="text-slate-500">{client.address} • {client.status}</p>
            </div>
-           {isLead && (
+           {isLead && client.status === 'ACTIVE' && (
              <Link to={`/clients/${id}/new-order`}>
                <Button className="bg-brand-600 hover:bg-brand-700 text-white shadow-lg">
                  <Plus className="w-4 h-4 mr-2" /> Request Devices / Services
@@ -87,6 +117,8 @@ export const CareClientDetail: React.FC = () => {
                         <Badge color="green">Active</Badge>
                      ) : d.status === 'AWAITING_RETURN' ? (
                         <Badge color="yellow">Return Pending</Badge>
+                     ) : d.status === 'DORMANT' ? (
+                        <Badge color="red">Dormant</Badge>
                      ) : (
                         <Badge color="blue">In Progress</Badge>
                      )}
@@ -102,9 +134,17 @@ export const CareClientDetail: React.FC = () => {
          <div className="space-y-6">
             <Card title="Quick Actions">
                <div className="space-y-2">
-                  <Button variant="outline" className="w-full justify-start">Log Client Note</Button>
-                  <Button variant="outline" className="w-full justify-start">Report Issue</Button>
-                  {isLead && <Button variant="outline" className="w-full justify-start text-red-600 hover:bg-red-50 hover:border-red-200">End Service</Button>}
+                  <Button variant="outline" className="w-full justify-start" onClick={handleLogNote}>
+                     <MessageSquare className="w-4 h-4 mr-2" /> Log Client Note
+                  </Button>
+                  <Button variant="outline" className="w-full justify-start" onClick={handleReportIssue}>
+                     <AlertCircle className="w-4 h-4 mr-2" /> Report Issue
+                  </Button>
+                  {isLead && client.status === 'ACTIVE' && (
+                      <Button variant="outline" onClick={handleEndService} className="w-full justify-start text-red-600 hover:bg-red-50 hover:border-red-200">
+                          End Service
+                      </Button>
+                  )}
                </div>
             </Card>
 

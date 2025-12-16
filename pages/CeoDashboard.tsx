@@ -1,17 +1,19 @@
 
-import React, { useState, useEffect } from 'react';
-import { useStore } from '../services/store';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { useStore, store } from '../services/store';
 import { Card, Button, Badge } from '../components/ui';
 import { 
   TrendingUp, Users, Box, ShieldCheck, Activity, 
   ArrowUpRight, ArrowDownRight, Globe, AlertTriangle,
   Maximize2, X, Zap, Server, DollarSign, Clock, MapPin,
-  Cpu, HeartPulse, Shield, Truck
+  Cpu, HeartPulse, Shield, Truck, Terminal, Wifi, Layers,
+  Crosshair, Radio, Network, Database, Lock, Search, 
+  ChevronRight, ZoomIn, ZoomOut, Navigation
 } from 'lucide-react';
-import { DeviceStatus, AgentStatus } from '../types';
+import { DeviceStatus, AgentStatus, Agent } from '../types';
 
 export const CeoDashboard: React.FC = () => {
-  const { devices, cases, exceptions, clients, agents } = useStore();
+  const { devices, cases, exceptions, clients, agents, agentRunLogs, timeline } = useStore();
   const [showLiveView, setShowLiveView] = useState(false);
 
   // --- KPI CALCULATIONS ---
@@ -20,15 +22,12 @@ export const CeoDashboard: React.FC = () => {
   const utilizationRate = totalAssets > 0 ? (activeAssets / totalAssets) * 100 : 0;
   
   const totalClients = clients.length;
-  const activeClients = clients.filter(c => c.status === 'ACTIVE').length;
-  
   const criticalIssues = exceptions.filter(e => e.severity === 'BLOCKER' || e.severity === 'INCIDENT').length;
-  
-  const weeklyGrowth = 2.4; // Mock
-  const accountabilityScore = 99.8; // Mock
+  const weeklyGrowth = 2.4; 
+  const accountabilityScore = 99.8; 
 
   const KPICard = ({ label, value, sub, trend, positive }: any) => (
-    <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between h-32">
+    <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between h-32 hover:border-brand-300 transition-all">
        <div className="flex justify-between items-start">
           <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{label}</span>
           {trend && (
@@ -45,7 +44,329 @@ export const CeoDashboard: React.FC = () => {
     </div>
   );
 
-  // --- LIVE COMMAND VIEW MODAL ---
+  // --- LIVE COMMAND INTERNAL COMPONENTS ---
+
+  const TelemetryGraph = ({ color = '#10b981' }: { color?: string }) => {
+      // Simulates a scrolling line chart for system load
+      const canvasRef = useRef<HTMLCanvasElement>(null);
+      
+      useEffect(() => {
+          const ctx = canvasRef.current?.getContext('2d');
+          if (!ctx) return;
+          
+          let dataPoints = Array(40).fill(0).map(() => 20 + Math.random() * 10);
+          let animationFrameId: number;
+
+          const draw = () => {
+              // Shift data
+              const last = dataPoints[dataPoints.length - 1];
+              const next = last + (Math.random() - 0.5) * 15;
+              dataPoints.push(Math.max(5, Math.min(95, next)));
+              dataPoints.shift();
+
+              ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+              
+              // Draw Grid (Subtle)
+              ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+              ctx.lineWidth = 1;
+              ctx.beginPath();
+              for(let i=0; i<ctx.canvas.width; i+=15) { ctx.moveTo(i,0); ctx.lineTo(i, ctx.canvas.height); }
+              for(let j=0; j<ctx.canvas.height; j+=15) { ctx.moveTo(0,j); ctx.lineTo(ctx.canvas.width, j); }
+              ctx.stroke();
+
+              // Draw Line
+              ctx.strokeStyle = color;
+              ctx.lineWidth = 2;
+              ctx.lineJoin = 'round';
+              ctx.shadowColor = color;
+              ctx.shadowBlur = 10;
+              
+              ctx.beginPath();
+              dataPoints.forEach((val, i) => {
+                  const x = (i / (dataPoints.length - 1)) * ctx.canvas.width;
+                  const y = ctx.canvas.height - (val / 100) * ctx.canvas.height;
+                  if (i === 0) ctx.moveTo(x, y);
+                  else ctx.lineTo(x, y);
+              });
+              ctx.stroke();
+
+              // Draw Fill Gradient
+              const gradient = ctx.createLinearGradient(0, 0, 0, ctx.canvas.height);
+              gradient.addColorStop(0, `${color}40`); // 25% opacity
+              gradient.addColorStop(1, `${color}00`); // 0% opacity
+              
+              ctx.fillStyle = gradient;
+              ctx.lineTo(ctx.canvas.width, ctx.canvas.height);
+              ctx.lineTo(0, ctx.canvas.height);
+              ctx.fill();
+              ctx.shadowBlur = 0; // Reset shadow
+
+              setTimeout(() => {
+                  animationFrameId = requestAnimationFrame(draw);
+              }, 100); 
+          };
+          draw();
+          return () => cancelAnimationFrame(animationFrameId);
+      }, [color]);
+
+      return <canvas ref={canvasRef} width={280} height={50} className="w-full h-12" />;
+  };
+
+  const VectorMap = () => {
+     const [blips, setBlips] = useState<{id:number, x:number, y:number, status:string, label:string}[]>([]);
+     const [selectedBlip, setSelectedBlip] = useState<number | null>(null);
+     const [mapCenter, setMapCenter] = useState({ x: 50, y: 50 });
+     const [zoom, setZoom] = useState(1);
+
+     // Define static "Zones" simulating Dutch cities relative to a 100x100 grid
+     const zones = [
+         { name: 'AMSTERDAM', x: 45, y: 35 },
+         { name: 'ROTTERDAM', x: 30, y: 65 },
+         { name: 'UTRECHT', x: 60, y: 50 },
+     ];
+
+     useEffect(() => {
+        // Init assets clustered around zones
+        const generate = () => Array.from({length: 12}).map((_, i) => {
+           const zone = zones[i % zones.length];
+           return {
+               id: i,
+               // Randomize around city center
+               x: zone.x + (Math.random() - 0.5) * 15,
+               y: zone.y + (Math.random() - 0.5) * 15,
+               status: Math.random() > 0.8 ? 'moving' : 'idle',
+               label: `UNIT-${1000+i}`
+           };
+        });
+        setBlips(generate());
+
+        const interval = setInterval(() => {
+           setBlips(prev => prev.map(b => {
+              if (b.status === 'moving' || Math.random() > 0.95) {
+                  return {
+                      ...b,
+                      x: b.x + (Math.random() - 0.5) * 0.5,
+                      y: b.y + (Math.random() - 0.5) * 0.5,
+                      status: 'moving'
+                  };
+              }
+              return b;
+           }));
+        }, 1000);
+        return () => clearInterval(interval);
+     }, []);
+
+     // Target Lock Logic
+     useEffect(() => {
+         if (selectedBlip !== null) {
+             const target = blips.find(b => b.id === selectedBlip);
+             if (target) {
+                 setMapCenter({ x: target.x, y: target.y });
+                 setZoom(2.5); // Zoom in on lock
+             }
+         } else {
+             setZoom(1);
+             setMapCenter({ x: 50, y: 50 });
+         }
+     }, [selectedBlip, blips]);
+
+     return (
+        <div className="relative w-full h-full bg-[#0f172a] overflow-hidden rounded-xl border border-slate-800 shadow-[inset_0_0_50px_rgba(0,0,0,0.5)] group">
+           
+           {/* MAP LAYERS TRANSFORMER */}
+           <div 
+             className="absolute inset-0 transition-all duration-1000 ease-in-out"
+             style={{ 
+                 transform: `scale(${zoom}) translate(${(50 - mapCenter.x)/2}%, ${(50 - mapCenter.y)/2}%)`,
+                 transformOrigin: 'center center'
+             }}
+           >
+               {/* 1. Map Grid (Dark Mode Streets) */}
+               <div className="absolute inset-[-50%] w-[200%] h-[200%] opacity-20 pointer-events-none" style={{ 
+                  backgroundImage: `
+                      linear-gradient(#334155 1px, transparent 1px), 
+                      linear-gradient(90deg, #334155 1px, transparent 1px)
+                  `, 
+                  backgroundSize: '40px 40px' 
+               }}></div>
+
+               {/* 2. City Zones (Text Labels on Map) */}
+               {zones.map((z, i) => (
+                   <div key={i} className="absolute text-slate-600 font-bold text-[8px] tracking-[0.2em] pointer-events-none" style={{ left: `${z.x}%`, top: `${z.y}%` }}>
+                       {z.name}
+                   </div>
+               ))}
+
+               {/* 3. Assets (Blips) */}
+               {blips.map(b => (
+                   <div 
+                      key={b.id}
+                      onClick={(e) => { e.stopPropagation(); setSelectedBlip(b.id === selectedBlip ? null : b.id); }}
+                      className="absolute cursor-pointer transition-all duration-1000 ease-linear hover:z-50"
+                      style={{ left: `${b.x}%`, top: `${b.y}%` }}
+                   >
+                      {/* Pulse Ring */}
+                      {b.status === 'moving' && (
+                          <div className="absolute -inset-4 border border-brand-500/30 rounded-full animate-ping"></div>
+                      )}
+                      
+                      {/* Icon */}
+                      <div className={`relative w-3 h-3 -ml-1.5 -mt-1.5 transform transition-transform hover:scale-150 ${b.id === selectedBlip ? 'scale-150' : ''}`}>
+                          <div className={`w-full h-full rounded-full shadow-[0_0_10px] ${
+                              b.id === selectedBlip ? 'bg-red-500 shadow-red-500' : 'bg-emerald-400 shadow-emerald-400'
+                          }`}></div>
+                          
+                          {/* Label Tooltip */}
+                          <div className={`absolute top-4 left-1/2 -translate-x-1/2 bg-slate-900/90 border border-slate-700 text-white text-[6px] px-1.5 py-0.5 rounded whitespace-nowrap backdrop-blur-sm pointer-events-none ${b.id === selectedBlip ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                              {b.label}
+                          </div>
+                      </div>
+                   </div>
+               ))}
+           </div>
+
+           {/* 4. Target Lock Overlay (Fixed on Screen) */}
+           {selectedBlip !== null && (
+               <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+                   <div className="w-24 h-24 border-2 border-red-500/50 rounded-full animate-pulse relative">
+                       <div className="absolute top-0 left-1/2 -translate-x-1/2 -mt-1 w-2 h-2 bg-red-500"></div>
+                       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 -mb-1 w-2 h-2 bg-red-500"></div>
+                       <div className="absolute left-0 top-1/2 -translate-y-1/2 -ml-1 w-2 h-2 bg-red-500"></div>
+                       <div className="absolute right-0 top-1/2 -translate-y-1/2 -mr-1 w-2 h-2 bg-red-500"></div>
+                       <div className="absolute -bottom-8 w-full text-center text-red-500 font-mono text-xs font-bold tracking-widest bg-black/50 rounded">
+                           TARGET_LOCKED
+                       </div>
+                   </div>
+               </div>
+           )}
+
+           {/* 5. HUD Overlay (UI Controls) */}
+           <div className="absolute top-4 left-4 p-2 bg-slate-900/80 backdrop-blur border border-slate-700 rounded-lg">
+              <div className="flex items-center gap-2 text-emerald-400 text-xs font-mono font-bold tracking-widest mb-1">
+                 <Navigation className="w-3 h-3" /> LIVE_OPS
+              </div>
+              <div className="text-[9px] text-slate-400 font-mono leading-tight">
+                 LAT: 52.3676° N<br/>
+                 LON: 4.9041° E<br/>
+                 TRACKING: {blips.length} UNITS
+              </div>
+           </div>
+
+           <div className="absolute bottom-4 right-4 flex flex-col gap-2">
+               <button className="p-2 bg-slate-800 text-slate-300 rounded hover:bg-slate-700 border border-slate-700" onClick={() => setZoom(z => Math.min(z + 0.5, 4))}>
+                   <ZoomIn className="w-4 h-4" />
+               </button>
+               <button className="p-2 bg-slate-800 text-slate-300 rounded hover:bg-slate-700 border border-slate-700" onClick={() => { setZoom(1); setSelectedBlip(null); }}>
+                   <ZoomOut className="w-4 h-4" />
+               </button>
+           </div>
+        </div>
+     );
+  }
+
+  const AgentNeuralNet = () => {
+      const orchestrator = agents.find(a => a.code === 'ORCHESTRATOR');
+      const specialists = agents.filter(a => a.code !== 'ORCHESTRATOR');
+
+      return (
+          <div className="h-full bg-slate-900 border border-slate-800 rounded-xl p-4 relative overflow-hidden flex flex-col shadow-[inset_0_0_30px_rgba(0,0,0,0.5)]">
+              <div className="text-xs font-bold text-slate-400 mb-4 flex justify-between items-center z-10">
+                  <span className="flex items-center gap-2"><Network className="w-3 h-3 text-brand-400" /> CORTEX ACTIVITY</span>
+                  <span className="text-[9px] font-mono text-emerald-500 flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> ONLINE
+                  </span>
+              </div>
+
+              <div className="flex-1 relative z-10 flex flex-col justify-center items-center gap-6">
+                  {/* Central Node */}
+                  <div className="relative group cursor-pointer">
+                      <div className="absolute -inset-8 bg-brand-500/10 rounded-full animate-pulse blur-xl"></div>
+                      <div className={`w-16 h-16 rounded-full border-2 flex items-center justify-center bg-slate-950 shadow-[0_0_20px_rgba(14,165,233,0.4)] transition-all duration-500 ${orchestrator?.status === 'ENABLED' ? 'border-brand-500 text-brand-400' : 'border-slate-700 text-slate-600'}`}>
+                          <Activity className="w-8 h-8" />
+                      </div>
+                      <div className="absolute -right-20 top-4 text-left">
+                          <div className="text-[10px] font-bold text-white uppercase tracking-wider bg-slate-900/80 px-2 py-1 rounded border border-slate-800">Orchestrator</div>
+                      </div>
+                  </div>
+
+                  {/* Satellite Nodes (Grid) */}
+                  <div className="grid grid-cols-4 gap-4 w-full px-2">
+                      {specialists.map((agent, i) => (
+                          <div key={agent.id} className="flex flex-col items-center gap-2 group relative">
+                              {/* Connection Line (CSS generated) */}
+                              <div className={`absolute bottom-full left-1/2 w-px h-6 bg-gradient-to-t from-slate-700 to-transparent transition-all duration-500 ${agent.status === 'ENABLED' ? 'h-8 bg-brand-500/30' : ''}`}></div>
+                              
+                              <div className={`w-8 h-8 rounded-lg border flex items-center justify-center transition-all duration-500 z-10 ${
+                                  agent.status === 'ENABLED' 
+                                  ? 'bg-slate-900 border-emerald-500/50 text-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.2)]' 
+                                  : 'bg-slate-900 border-slate-800 text-slate-600 opacity-50'
+                              }`}>
+                                  {agent.code.includes('STOCK') ? <Box className="w-4 h-4" /> : 
+                                   agent.code.includes('INSTALL') ? <Truck className="w-4 h-4" /> :
+                                   agent.code.includes('COMMS') ? <Radio className="w-4 h-4" /> :
+                                   <Zap className="w-4 h-4" />}
+                              </div>
+                              <div className="text-[8px] text-slate-500 font-mono opacity-0 group-hover:opacity-100 transition-opacity absolute top-full mt-1 bg-black px-1 rounded">
+                                  {agent.code.split('_')[0]}
+                              </div>
+                          </div>
+                      ))}
+                  </div>
+              </div>
+          </div>
+      );
+  };
+
+  const UnifiedEventLog = () => {
+     const combinedLogs = useMemo(() => {
+         const logs = [
+             ...agentRunLogs.map(l => ({
+                 id: l.id,
+                 time: l.finished_at,
+                 source: agents.find(a => a.id === l.agent_id)?.name || 'Unknown Agent',
+                 message: l.applied_actions.length > 0 
+                    ? `Executed ${l.applied_actions.length} actions (${l.autonomy})`
+                    : `Scan complete. System nominal.`,
+                 type: 'AGENT',
+                 risk: l.plan.actions.some(a => a.risk === 'HIGH') ? 'HIGH' : 'LOW'
+             })),
+             ...timeline.map(t => ({
+                 id: t.id,
+                 time: t.timestamp,
+                 source: t.source === 'AI' ? 'System AI' : t.actor_name || 'User',
+                 message: t.summary,
+                 type: 'SYSTEM',
+                 risk: 'LOW'
+             }))
+         ].sort((a,b) => b.time.localeCompare(a.time)).slice(0, 50);
+         return logs;
+     }, [agentRunLogs, timeline, agents]);
+
+     return (
+        <div className="h-64 bg-[#0a0a0a] font-mono text-[10px] p-3 rounded-xl border border-slate-800 overflow-y-auto custom-scrollbar shadow-inner flex flex-col gap-1">
+           {combinedLogs.length === 0 && <div className="text-slate-600 italic text-center mt-10">Initializing data stream...</div>}
+           
+           {combinedLogs.map((l) => (
+              <div key={l.id} className="flex gap-3 hover:bg-slate-900/50 p-1 rounded transition-colors group">
+                 <div className="text-slate-500 w-12 flex-shrink-0 opacity-70 group-hover:opacity-100">
+                    {new Date(l.time).toLocaleTimeString([], {hour12: false, hour:'2-digit', minute:'2-digit', second:'2-digit'})}
+                 </div>
+                 <div className="flex-1 min-w-0">
+                    <span className={`font-bold mr-2 ${
+                        l.type === 'AGENT' ? 'text-brand-400' : 'text-amber-400'
+                    }`}>
+                        [{l.source.toUpperCase().replace(' ', '_')}]
+                    </span>
+                    <span className={`text-slate-300 ${l.risk === 'HIGH' ? 'text-red-400' : ''}`}>
+                        {l.message}
+                    </span>
+                 </div>
+              </div>
+           ))}
+        </div>
+     );
+  }
+
   const LiveCommandModal = () => {
     const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -54,191 +375,180 @@ export const CeoDashboard: React.FC = () => {
       return () => clearInterval(timer);
     }, []);
 
-    const activeAgents = agents.filter(a => a.status === AgentStatus.ENABLED).length;
     const sysHealth = criticalIssues === 0 ? 100 : Math.max(0, 100 - (criticalIssues * 15));
 
     return (
-      <div className="fixed inset-0 z-50 bg-slate-900/95 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-        <div className="bg-slate-50 w-full h-full max-w-[1600px] max-h-[90vh] rounded-2xl shadow-2xl overflow-hidden flex flex-col ring-1 ring-white/10">
-          
-          {/* COMMAND HEADER */}
-          <div className="bg-slate-900 text-white p-6 flex justify-between items-center border-b border-slate-800">
-             <div className="flex items-center gap-4">
-                <div className="p-3 bg-brand-600 rounded-lg shadow-lg shadow-brand-900/50">
-                   <Activity className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                   <h2 className="text-2xl font-bold tracking-tight">MobileCare Live Command</h2>
-                   <div className="flex items-center gap-3 text-sm text-slate-400">
-                      <span className="flex items-center gap-1.5"><Globe className="w-3 h-3" /> Amsterdam HQ</span>
-                      <span className="w-1 h-1 bg-slate-600 rounded-full" />
-                      <span className="font-mono text-brand-400 font-bold">{currentTime.toLocaleTimeString()}</span>
-                      <span className="w-1 h-1 bg-slate-600 rounded-full" />
-                      <span className="flex items-center gap-1.5 text-green-400 font-bold"><Zap className="w-3 h-3" /> SYSTEM LIVE</span>
-                   </div>
-                </div>
-             </div>
-             <button 
-                onClick={() => setShowLiveView(false)}
-                className="p-2 hover:bg-slate-800 rounded-full transition-colors text-slate-400 hover:text-white"
-             >
-                <X className="w-8 h-8" />
-             </button>
-          </div>
+      <div className="fixed inset-0 z-50 bg-slate-950 text-slate-200 font-sans flex flex-col animate-in fade-in zoom-in-95 duration-300">
+        
+        {/* 1. COMMAND HEADER */}
+        <header className="flex-none h-16 border-b border-slate-800 bg-slate-900/80 backdrop-blur-md flex justify-between items-center px-6 shadow-2xl z-50">
+           <div className="flex items-center gap-6">
+              <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-brand-600 rounded flex items-center justify-center shadow-[0_0_15px_rgba(2,132,199,0.5)] border border-brand-400/30">
+                     <Activity className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                     <h1 className="text-base font-bold text-white tracking-widest flex items-center gap-2">
+                        MOBILECARE <span className="text-slate-600">//</span> OPS_COMMAND
+                     </h1>
+                  </div>
+              </div>
+              
+              {/* Top Stats */}
+              <div className="hidden lg:flex items-center gap-6 border-l border-slate-700 pl-6 ml-2">
+                  <div className="flex flex-col">
+                      <span className="text-[9px] text-slate-500 uppercase font-bold">Latency</span>
+                      <span className="text-xs font-mono text-emerald-400">12ms</span>
+                  </div>
+                  <div className="flex flex-col">
+                      <span className="text-[9px] text-slate-500 uppercase font-bold">Uptime</span>
+                      <span className="text-xs font-mono text-white">99.99%</span>
+                  </div>
+                  <div className="flex flex-col">
+                      <span className="text-[9px] text-slate-500 uppercase font-bold">Active Agents</span>
+                      <span className="text-xs font-mono text-brand-400">{agents.filter(a => a.status === 'ENABLED').length} / {agents.length}</span>
+                  </div>
+              </div>
+           </div>
 
-          {/* COMMAND BODY */}
-          <div className="flex-1 bg-slate-100 p-6 overflow-y-auto">
-             <div className="grid grid-cols-12 gap-6 h-full">
-                
-                {/* COL 1: FINANCIALS & GROWTH (Span 3) */}
-                <div className="col-span-12 lg:col-span-3 space-y-6">
-                   <Card className="bg-white border-none shadow-sm h-1/3 flex flex-col justify-center relative overflow-hidden">
-                      <div className="absolute top-0 right-0 p-4 opacity-5"><DollarSign className="w-32 h-32" /></div>
-                      <div className="relative z-10">
-                         <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Est. MRR (Live)</span>
-                         <div className="text-4xl font-bold text-slate-900 mt-2">€48,250</div>
-                         <div className="flex items-center gap-1 text-xs font-bold text-green-600 mt-1">
-                            <ArrowUpRight className="w-3 h-3" /> +4.2% vs last month
-                         </div>
-                      </div>
-                   </Card>
-                   <Card className="bg-white border-none shadow-sm h-1/3 flex flex-col justify-center">
-                      <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Active Subscribers</span>
-                      <div className="text-4xl font-bold text-slate-900 mt-2">{activeClients}</div>
-                      <div className="flex items-center gap-1 text-xs font-bold text-blue-600 mt-1">
-                         <Users className="w-3 h-3" /> Across {clients.map(c => c.care_company_name).filter((v, i, a) => a.indexOf(v) === i).length} Partners
-                      </div>
-                   </Card>
-                   <Card className="bg-slate-900 text-white border-none shadow-sm h-1/3 flex flex-col justify-center">
-                      <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Global Risk Score</span>
-                      <div className="flex items-end gap-3 mt-2">
-                         <div className="text-4xl font-bold text-white">{sysHealth}%</div>
-                         <div className="text-sm text-slate-400 mb-1">Health Index</div>
-                      </div>
-                      <div className="w-full bg-slate-800 h-1.5 rounded-full mt-3 overflow-hidden">
-                         <div style={{ width: `${sysHealth}%` }} className={`h-full rounded-full ${sysHealth > 90 ? 'bg-green-500' : 'bg-red-500'}`} />
-                      </div>
-                   </Card>
-                </div>
+           <div className="flex items-center gap-6">
+              <div className="text-right hidden md:block">
+                 <div className="text-xl font-mono font-bold text-white leading-none tracking-tight">
+                    {currentTime.toLocaleTimeString([], {hour12: false})}
+                 </div>
+                 <div className="text-[9px] text-slate-500 uppercase tracking-[0.2em] text-right mt-1">
+                    {currentTime.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'short' }).toUpperCase()}
+                 </div>
+              </div>
+              <div className="h-8 w-px bg-slate-800 hidden md:block"></div>
+              <button 
+                 onClick={() => setShowLiveView(false)}
+                 className="p-2 hover:bg-red-500/20 text-slate-400 hover:text-red-400 rounded-full transition-colors"
+              >
+                 <X className="w-6 h-6" />
+              </button>
+           </div>
+        </header>
 
-                {/* COL 2: MAP & OPS (Span 6) */}
-                <div className="col-span-12 lg:col-span-6 flex flex-col gap-6">
-                   {/* Map Placeholder */}
-                   <div className="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 p-6 relative overflow-hidden flex flex-col">
-                      <div className="flex justify-between items-start mb-4 relative z-10">
-                         <h3 className="font-bold text-slate-900 flex items-center gap-2">
-                            <MapPin className="w-5 h-5 text-brand-600" /> Active Operations Map
-                         </h3>
-                         <div className="flex gap-2">
-                            <Badge color="green">Amsterdam</Badge>
-                            <Badge color="blue">Rotterdam</Badge>
-                            <Badge color="gray">Utrecht</Badge>
+        {/* 2. MAIN GRID LAYOUT */}
+        <div className="flex-1 p-4 lg:p-6 overflow-hidden grid grid-cols-12 gap-4 lg:gap-6 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-100">
+           
+           {/* LEFT COLUMN: TELEMETRY (Span 3) */}
+           <div className="col-span-12 lg:col-span-3 flex flex-col gap-4 lg:gap-6 min-h-0">
+              
+              {/* Vitals Card */}
+              <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-5 backdrop-blur-sm shadow-lg">
+                 <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                        <HeartPulse className="w-3 h-3 text-emerald-500" /> Platform Vitals
+                    </h3>
+                    <div className="text-xs font-bold text-white bg-slate-800 px-2 py-0.5 rounded border border-slate-700">LIVE</div>
+                 </div>
+                 
+                 <div className="space-y-6">
+                     <div>
+                         <div className="flex justify-between text-[10px] text-slate-400 mb-1 uppercase tracking-wider font-bold">
+                             <span>Processing Load</span>
+                             <span className="text-emerald-400 font-mono">12%</span>
                          </div>
-                      </div>
-                      
-                      {/* Stylized Map Background */}
-                      <div className="absolute inset-0 top-16 opacity-10 flex items-center justify-center pointer-events-none">
-                         <Globe className="w-96 h-96 text-slate-900" />
-                      </div>
+                         <TelemetryGraph color="#10b981" />
+                     </div>
+                     <div>
+                         <div className="flex justify-between text-[10px] text-slate-400 mb-1 uppercase tracking-wider font-bold">
+                             <span>Network Traffic</span>
+                             <span className="text-blue-400 font-mono">4.2 GB/s</span>
+                         </div>
+                         <TelemetryGraph color="#3b82f6" />
+                     </div>
+                 </div>
+              </div>
 
-                      {/* Region Stats Overlay */}
-                      <div className="grid grid-cols-3 gap-4 mt-auto relative z-10">
-                         <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 text-center">
-                            <div className="text-xs text-slate-500 font-bold uppercase">Amsterdam</div>
-                            <div className="text-xl font-bold text-slate-800 mt-1">420</div>
-                            <div className="text-[10px] text-green-600">Active Units</div>
-                         </div>
-                         <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 text-center">
-                            <div className="text-xs text-slate-500 font-bold uppercase">Rotterdam</div>
-                            <div className="text-xl font-bold text-slate-800 mt-1">215</div>
-                            <div className="text-[10px] text-green-600">Active Units</div>
-                         </div>
-                         <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 text-center">
-                            <div className="text-xs text-slate-500 font-bold uppercase">Utrecht</div>
-                            <div className="text-xl font-bold text-slate-800 mt-1">85</div>
-                            <div className="text-[10px] text-green-600">Active Units</div>
-                         </div>
-                      </div>
-                   </div>
+              {/* Event Stream */}
+              <div className="flex-1 flex flex-col min-h-0 bg-slate-900/80 border border-slate-800 rounded-xl overflow-hidden backdrop-blur-sm shadow-lg">
+                 <div className="p-3 border-b border-slate-800 bg-slate-900/50 flex justify-between items-center">
+                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                        <Terminal className="w-3 h-3 text-brand-500" /> Operations Log
+                    </h3>
+                    <div className="flex gap-1">
+                        <div className="w-1.5 h-1.5 rounded-full bg-slate-600"></div>
+                        <div className="w-1.5 h-1.5 rounded-full bg-slate-600"></div>
+                    </div>
+                 </div>
+                 <div className="flex-1 overflow-hidden relative">
+                    <div className="absolute inset-0 p-2">
+                        <UnifiedEventLog />
+                    </div>
+                 </div>
+              </div>
+           </div>
 
-                   {/* Logistics Strip */}
-                   <div className="h-32 bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                         <div className="p-3 bg-blue-50 text-blue-600 rounded-lg">
-                            <Truck className="w-6 h-6" />
-                         </div>
-                         <div>
-                            <div className="text-2xl font-bold text-slate-900">{utilizationRate.toFixed(1)}%</div>
-                            <div className="text-xs font-bold text-slate-500 uppercase">Fleet Utilization</div>
-                         </div>
-                      </div>
-                      <div className="h-10 w-px bg-slate-100" />
-                      <div className="flex items-center gap-4">
-                         <div className="p-3 bg-amber-50 text-amber-600 rounded-lg">
-                            <Clock className="w-6 h-6" />
-                         </div>
-                         <div>
-                            <div className="text-2xl font-bold text-slate-900">{exceptions.length}</div>
-                            <div className="text-xs font-bold text-slate-500 uppercase">Pending Exceptions</div>
-                         </div>
-                      </div>
-                      <div className="h-10 w-px bg-slate-100" />
-                      <div className="flex items-center gap-4">
-                         <div className="p-3 bg-purple-50 text-purple-600 rounded-lg">
-                            <Box className="w-6 h-6" />
-                         </div>
-                         <div>
-                            <div className="text-2xl font-bold text-slate-900">{devices.filter(d => d.status === 'IN_STOCK').length}</div>
-                            <div className="text-xs font-bold text-slate-500 uppercase">Warehouse Stock</div>
-                         </div>
-                      </div>
-                   </div>
-                </div>
+           {/* CENTER COLUMN: MAP (Span 6) */}
+           <div className="col-span-12 lg:col-span-6 flex flex-col gap-4 lg:gap-6 min-h-0">
+              {/* Map Container */}
+              <div className="flex-1 relative rounded-xl overflow-hidden border border-slate-800 bg-slate-950 shadow-2xl">
+                 <VectorMap />
+              </div>
 
-                {/* COL 3: SYSTEMS & AI (Span 3) */}
-                <div className="col-span-12 lg:col-span-3 space-y-6">
-                   <div className="bg-slate-900 rounded-xl shadow-lg p-6 text-white h-full flex flex-col">
-                      <div className="flex items-center justify-between mb-6">
-                         <h3 className="font-bold flex items-center gap-2">
-                            <Cpu className="w-5 h-5 text-brand-400" /> AI Neural Status
-                         </h3>
-                         <span className="text-xs font-mono text-green-400 bg-green-400/10 px-2 py-0.5 rounded border border-green-400/20">ONLINE</span>
-                      </div>
-                      
-                      <div className="space-y-4 flex-1">
-                         {agents.slice(0, 5).map(agent => (
-                            <div key={agent.id} className="flex items-center justify-between group">
-                               <div className="flex items-center gap-3">
-                                  <div className={`w-2 h-2 rounded-full ${agent.status === 'ENABLED' ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-slate-600'}`} />
-                                  <span className="text-sm text-slate-300 group-hover:text-white transition-colors">{agent.name}</span>
-                               </div>
-                               <span className="text-[10px] font-mono text-slate-500">{agent.last_run.replace(' ago', '')}</span>
-                            </div>
-                         ))}
-                      </div>
+              {/* Ticker Stats */}
+              <div className="h-20 bg-slate-900/90 border border-slate-800 rounded-xl flex divide-x divide-slate-800 backdrop-blur-md shadow-lg">
+                 <div className="flex-1 flex flex-col justify-center items-center p-2">
+                    <span className="text-[9px] text-slate-500 uppercase tracking-wider font-bold mb-1">Active Assets</span>
+                    <span className="text-2xl font-mono font-bold text-white">{activeAssets}</span>
+                 </div>
+                 <div className="flex-1 flex flex-col justify-center items-center p-2">
+                    <span className="text-[9px] text-slate-500 uppercase tracking-wider font-bold mb-1">Blockers</span>
+                    <span className={`text-2xl font-mono font-bold ${criticalIssues > 0 ? 'text-red-500 animate-pulse' : 'text-slate-600'}`}>{criticalIssues}</span>
+                 </div>
+                 <div className="flex-1 flex flex-col justify-center items-center p-2">
+                    <span className="text-[9px] text-slate-500 uppercase tracking-wider font-bold mb-1">Utilization</span>
+                    <span className="text-2xl font-mono font-bold text-blue-400">{utilizationRate.toFixed(0)}%</span>
+                 </div>
+                 <div className="flex-1 flex flex-col justify-center items-center p-2">
+                    <span className="text-[9px] text-slate-500 uppercase tracking-wider font-bold mb-1">Net Growth</span>
+                    <span className="text-2xl font-mono font-bold text-emerald-400">+{weeklyGrowth}%</span>
+                 </div>
+              </div>
+           </div>
 
-                      <div className="mt-6 pt-6 border-t border-slate-800">
-                         <h4 className="text-xs font-bold text-slate-500 uppercase mb-3">Infrastructure Health</h4>
-                         <div className="space-y-3">
-                            <div className="flex justify-between text-xs">
-                               <span className="text-slate-400 flex items-center gap-2"><Server className="w-3 h-3" /> API Latency</span>
-                               <span className="text-green-400 font-mono">24ms</span>
-                            </div>
-                            <div className="flex justify-between text-xs">
-                               <span className="text-slate-400 flex items-center gap-2"><Shield className="w-3 h-3" /> Security</span>
-                               <span className="text-green-400 font-mono">SECURE</span>
-                            </div>
-                            <div className="flex justify-between text-xs">
-                               <span className="text-slate-400 flex items-center gap-2"><HeartPulse className="w-3 h-3" /> Uptime (30d)</span>
-                               <span className="text-green-400 font-mono">99.99%</span>
-                            </div>
-                         </div>
-                      </div>
-                   </div>
-                </div>
+           {/* RIGHT COLUMN: AI & STATUS (Span 3) */}
+           <div className="col-span-12 lg:col-span-3 flex flex-col gap-4 lg:gap-6 min-h-0">
+              
+              {/* Agent Neural Net */}
+              <div className="flex-1 min-h-[250px]">
+                  <AgentNeuralNet />
+              </div>
 
-             </div>
-          </div>
+              {/* Status Blocks */}
+              <div className="space-y-3">
+                  <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-4 flex items-center justify-between shadow-lg backdrop-blur-sm">
+                     <div className="flex items-center gap-3">
+                        <div className="p-2 bg-emerald-500/10 rounded-lg border border-emerald-500/20 text-emerald-500">
+                           <ShieldCheck className="w-5 h-5" />
+                        </div>
+                        <div>
+                           <div className="text-xs font-bold text-white uppercase tracking-wider">Security</div>
+                           <div className="text-[10px] text-emerald-500 font-mono">ENCRYPTION: ACTIVE</div>
+                        </div>
+                     </div>
+                     <Lock className="w-4 h-4 text-slate-700" />
+                  </div>
+
+                  <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-4 flex items-center justify-between shadow-lg backdrop-blur-sm">
+                     <div className="flex items-center gap-3">
+                        <div className="p-2 bg-blue-500/10 rounded-lg border border-blue-500/20 text-blue-500">
+                           <Database className="w-5 h-5" />
+                        </div>
+                        <div>
+                           <div className="text-xs font-bold text-white uppercase tracking-wider">Database</div>
+                           <div className="text-[10px] text-blue-500 font-mono">REPLICATION: 0ms</div>
+                        </div>
+                     </div>
+                     <Server className="w-4 h-4 text-slate-700" />
+                  </div>
+              </div>
+
+           </div>
+
         </div>
       </div>
     );
@@ -253,8 +563,8 @@ export const CeoDashboard: React.FC = () => {
            <p className="text-slate-500 mt-2">MobileCare Performance & Health Monitor</p>
         </div>
         <div className="flex gap-3">
-           <Button variant="secondary" onClick={() => setShowLiveView(true)} className="bg-slate-900 text-white hover:bg-slate-800 shadow-lg border-slate-900">
-              <Maximize2 className="w-4 h-4 mr-2" /> Live Command View
+           <Button variant="secondary" onClick={() => setShowLiveView(true)} className="bg-slate-900 text-white hover:bg-slate-800 shadow-lg border-slate-900 ring-2 ring-offset-2 ring-transparent hover:ring-brand-500 transition-all">
+              <Maximize2 className="w-4 h-4 mr-2" /> Launch Command
            </Button>
            <div className="h-8 w-px bg-slate-300 mx-1"></div>
            <Button variant="outline">Download Board Report</Button>

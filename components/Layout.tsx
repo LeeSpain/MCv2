@@ -7,7 +7,7 @@ import { Role } from '../types';
 import { 
   LayoutDashboard, Box, ClipboardList, Wrench, MessageSquare, Settings, 
   AlertOctagon, FileText, AlertCircle, Users, CheckCircle, TrendingUp, MapPin, UserCircle,
-  Tag
+  Tag, Home
 } from 'lucide-react';
 
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -46,6 +46,14 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
   // Navigation items definition with allowed roles
   const allNavItems = [
+    // PRIMARY DASHBOARD (TODAY VIEW)
+    {
+      path: '/',
+      label: 'Dashboard',
+      icon: Home,
+      allowed: [Role.MC_ADMIN, Role.MC_OPERATIONS, Role.CEO]
+    },
+
     // EXECUTIVE
     {
       path: '/ceo-dashboard',
@@ -216,7 +224,11 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
         <nav className="flex-1 px-4 py-6 space-y-1">
           {navItems.map((item) => {
-            const isActive = location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path));
+            // Updated logic to handle root path correctly
+            const isActive = item.path === '/' 
+              ? location.pathname === '/' 
+              : location.pathname.startsWith(item.path);
+              
             const Icon = item.icon;
             return (
               <Link

@@ -65,6 +65,20 @@ export enum ProductCategory {
   SERVICE = "SERVICE",
 }
 
+// Legacy types kept for compatibility during migration
+export interface ProposedAction {
+  type: string;
+  payload: any;
+  reason: string;
+  risk: 'LOW' | 'MEDIUM' | 'HIGH';
+}
+
+export interface ActionPlan {
+  agent_id: string;
+  actions: ProposedAction[];
+  summary: string;
+}
+
 export interface User {
   id: string;
   name: string;
@@ -88,8 +102,8 @@ export interface Client {
 
 export interface AiAnalysisSnapshot {
   suggested_product_ids: string[];
-  suggested_devices?: string[]; // Deprecated, kept for backward compat if needed during migration
-  suggested_services?: string[]; // Deprecated
+  suggested_devices?: string[]; 
+  suggested_services?: string[]; 
   risk_flags: string[];
   reasoning: string[];
   confidence: number;
@@ -103,7 +117,7 @@ export interface Assessment {
   type: 'INITIAL' | 'REVIEW' | 'CHANGE_OF_CONDITION';
   risk_level: 'LOW' | 'MEDIUM' | 'HIGH';
   needs_summary: string;
-  recommended_product_ids: string[]; // Consolidated devices & services
+  recommended_product_ids: string[]; 
   notes: string;
   status: 'DRAFT' | 'APPROVED';
   created_at: string;
@@ -116,7 +130,7 @@ export interface CarePlan {
   assessment_id?: string;
   goals: string;
   requirements: string;
-  agreed_product_ids: string[]; // Consolidated devices & services
+  agreed_product_ids: string[]; 
   review_date: string;
   review_interval_days: number;
   notes: string;
@@ -146,6 +160,15 @@ export interface Device {
   sla_breach?: boolean;
   confirmation_needed?: boolean;
   assigned_client_id?: string;
+  assigned_case_id?: string;
+}
+
+export interface CaseLineItem {
+  id: string;
+  product_id: string;
+  requested_qty: number;
+  allocated_device_ids: string[];
+  status: "REQUESTED" | "ALLOCATED" | "PARTIAL" | "OUT_OF_STOCK";
 }
 
 export interface Case {
@@ -154,7 +177,8 @@ export interface Case {
   client_name: string;
   status: CaseStatus;
   created_at: string;
-  product_ids: string[]; 
+  line_items: CaseLineItem[];
+  product_ids?: string[]; 
   care_company_id?: string;
   care_plan_id?: string;
 }
@@ -165,33 +189,10 @@ export interface Job {
   status: JobStatus;
   client_name: string;
   client_id?: string;
-  case_id?: string; // Links back to the order containing products
+  case_id?: string; 
   scheduled_for?: string;
   installer_name?: string;
   confirmation_needed?: boolean;
-}
-
-export interface Agent {
-  id: string;
-  name: string;
-  code: string;
-  description: string;
-  owner_team: string;
-  status: AgentStatus;
-  autonomy: AutonomyLevel;
-  risk_level: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
-  schedule_type: 'INTERVAL' | 'CRON' | 'MANUAL';
-  schedule_value: string;
-  data_scope: string;
-  system_instructions: string;
-  behavior_rules: string;
-  allowed_actions: Record<string, string[]>;
-  restricted_actions: Record<string, string[]>;
-  escalation_policy: string;
-  examples: string[]; 
-  languages: string[];
-  last_run: string;
-  logs: string[];
 }
 
 export interface Exception {
@@ -231,18 +232,81 @@ export interface Message {
 }
 
 export interface Product {
-  id: string; // e.g. "prod-sos"
-  name: string; // e.g. "SOS Pendant"
+  id: string; 
+  name: string; 
   category: ProductCategory;
-
-  // optional metadata
-  supplier?: string; // "Dosell", "Vivago", etc.
+  supplier?: string; 
   sku?: string;
-
-  // behavior flags
-  is_device: boolean; // physical device vs service
+  is_device: boolean; 
   is_active: boolean;
+  requires_hub?: boolean; 
+  requires_subscription?: boolean; 
+}
 
-  requires_hub?: boolean; // some devices need a hub installed
-  requires_subscription?: boolean; // some require monthly service to function/support
+// --- NEW AI AGENT PLAN TYPES ---
+
+export type AgentAutonomy = "OBSERVE" | "DRAFT" | "AUTO";
+
+export type AgentActionKind =
+  | "CREATE_EXCEPTION"
+  | "ACK_EXCEPTION"
+  | "RESOLVE_EXCEPTION"
+  | "ALLOCATE_CASE"
+  | "CREATE_INSTALL_JOBS"
+  | "CREATE_RETURN_JOB"
+  | "FLAG_DEVICE_CONFIRMATION"
+  | "SEND_REMINDER"
+  | "ADD_TIMELINE_EVENT";
+
+export type AgentRisk = "LOW" | "MEDIUM" | "HIGH";
+
+export interface AgentAction {
+  id: string;
+  kind: AgentActionKind;
+  risk: AgentRisk;
+  summary: string;
+  payload: Record<string, any>;
+}
+
+export interface AgentPlan {
+  agent_id: string;
+  run_id: string;
+  created_at: string; // ISO
+  notes?: string[];
+  actions: AgentAction[];
+}
+
+export interface AgentRunLog {
+  id: string;
+  agent_id: string;
+  started_at: string;
+  finished_at: string;
+  autonomy: AgentAutonomy;
+  kill_switch: boolean;
+  plan: AgentPlan;
+  applied_actions: { action_id: string; status: "APPLIED" | "SKIPPED" | "FAILED"; message?: string }[];
+}
+
+export interface Agent {
+  id: string;
+  name: string;
+  code: string;
+  description: string;
+  owner_team: string;
+  status: AgentStatus;
+  autonomy: AutonomyLevel;
+  risk_level: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  schedule_type: 'INTERVAL' | 'CRON' | 'MANUAL';
+  schedule_value: string;
+  data_scope: string;
+  system_instructions: string;
+  behavior_rules: string;
+  allowed_actions: Record<string, string[]>;
+  restricted_actions: Record<string, string[]>;
+  escalation_policy: string;
+  examples: string[]; 
+  languages: string[];
+  last_run: string;
+  logs: string[];
+  run_history?: AgentRunLog[];
 }

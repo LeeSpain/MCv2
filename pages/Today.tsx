@@ -1,9 +1,10 @@
+
 import React from 'react';
 import { useStore, store } from '../services/store';
 import { Card, Badge, Button, Stat } from '../components/ui';
 import { 
   AlertCircle, CheckCircle, Clock, Zap, Wrench, ShieldAlert, PlayCircle, Send, 
-  ArrowRight, Activity, Calendar, MoreHorizontal, User, Box, AlertTriangle 
+  ArrowRight, Activity, Box, AlertTriangle, User 
 } from 'lucide-react';
 import { Role, AgentStatus } from '../types';
 import { useNavigate } from 'react-router-dom';
@@ -23,6 +24,9 @@ export const Today: React.FC = () => {
     e.status !== 'RESOLVED' && 
     (e.severity === 'BLOCKER' || e.severity === 'INCIDENT')
   );
+
+  // Stock Shortages
+  const stockShortages = exceptions.filter(e => e.status !== 'RESOLVED' && e.title.includes('Stock shortage'));
 
   // Overdue
   const overdueDevices = devices.filter(d => d.sla_breach);
@@ -45,7 +49,7 @@ export const Today: React.FC = () => {
   };
 
   // --- EMPTY STATE ---
-  const isAllClear = openPriorities.length === 0 && overdueDevices.length === 0 && missedJobs.length === 0 && jobsToday.length === 0;
+  const isAllClear = openPriorities.length === 0 && overdueDevices.length === 0 && missedJobs.length === 0 && jobsToday.length === 0 && stockShortages.length === 0;
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-12">
@@ -190,6 +194,34 @@ export const Today: React.FC = () => {
           {/* 3. RIGHT COLUMN: SCHEDULE & TOOLS (1/3 Width) */}
           <div className="space-y-6">
             
+            {/* STOCK SHORTAGE WIDGET */}
+            {stockShortages.length > 0 && (
+                <div className="bg-red-50 border border-red-200 rounded-xl overflow-hidden shadow-sm">
+                    <div className="p-4 border-b border-red-100 flex justify-between items-center bg-red-100/50">
+                        <h4 className="font-bold text-red-900 flex items-center gap-2">
+                            <AlertTriangle className="w-4 h-4" /> Stock Shortages
+                        </h4>
+                        <Badge color="red">{stockShortages.length}</Badge>
+                    </div>
+                    <div className="divide-y divide-red-100">
+                        {stockShortages.slice(0, 5).map(s => (
+                            <div key={s.id} className="p-3 text-sm hover:bg-red-100/30 transition-colors">
+                                <div className="font-medium text-red-800">{s.title.replace('Stock shortage: ', '')}</div>
+                                <div className="text-xs text-red-600 mt-1 flex justify-between">
+                                    <span>Case #{s.related_entity_id}</span>
+                                    <span>{s.created_at}</span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    <div className="p-2 bg-red-50 text-center border-t border-red-100">
+                        <button onClick={() => navigate('/exceptions')} className="text-xs font-bold text-red-700 hover:text-red-900">
+                            Manage All Shortages
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {/* Today's Schedule */}
             <Card title="Today's Schedule" noPadding>
                <div className="divide-y divide-slate-50">

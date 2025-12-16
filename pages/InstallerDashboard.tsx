@@ -34,9 +34,9 @@ export const InstallerDashboard: React.FC = () => {
 
   const submitCompletion = () => {
     if (activeJobId) {
-        store.confirmJob(activeJobId);
+        store.completeJob(activeJobId); // Use proper completion logic
         setActiveJobId(null);
-        alert("Job synced successfully!");
+        alert("Job synced successfully! Assets updated.");
     }
   };
 

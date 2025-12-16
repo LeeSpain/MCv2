@@ -192,18 +192,73 @@ export const MOCK_TIMELINE: ClientTimelineEvent[] = [
 ];
 
 export const MOCK_DEVICES: Device[] = [
-  { id: 'd1', serial_number: 'MC-2024-001', product_id: 'prod-hub', status: DeviceStatus.INSTALLED_ACTIVE, current_custodian: 'Client: Jan Jansen', assigned_client_id: 'cl1', last_updated: fmtDate(yesterday), confirmation_needed: true },
+  // C1: Assigned to Jan
+  { id: 'd1', serial_number: 'MC-2024-001', product_id: 'prod-hub', status: DeviceStatus.INSTALLED_ACTIVE, current_custodian: 'Client: Jan Jansen', assigned_client_id: 'cl1', assigned_case_id: 'c1', last_updated: fmtDate(yesterday), confirmation_needed: true },
+  
+  // Free Stock
   { id: 'd2', serial_number: 'MC-2024-002', product_id: 'prod-hub', status: DeviceStatus.IN_STOCK, current_custodian: 'Warehouse', last_updated: fmtDate(today) },
+  
+  // Return Flow
   { id: 'd3', serial_number: 'MC-2024-003', product_id: 'prod-fall-sensor', status: DeviceStatus.AWAITING_RETURN, current_custodian: 'Client: Piet Puk', last_updated: '2023-10-01', sla_breach: true },
-  { id: 'd4', serial_number: 'MC-2024-004', product_id: 'prod-hub', status: DeviceStatus.WITH_INSTALLER, current_custodian: 'Installer: Bob', last_updated: fmtDate(today) },
+  
+  // C3: Allocated to Maria (With Installer)
+  { id: 'd4', serial_number: 'MC-2024-004', product_id: 'prod-hub', status: DeviceStatus.WITH_INSTALLER, current_custodian: 'Installer: Bob', assigned_client_id: 'cl3', assigned_case_id: 'c3', last_updated: fmtDate(today) },
+  
+  // Dormant/Lost
   { id: 'd5', serial_number: 'MC-2024-005', product_id: 'prod-dosell', status: DeviceStatus.DORMANT, current_custodian: 'Client: Sara Lee', last_updated: '2023-09-15', sla_breach: true },
+  
+  // Assigned to Gerrit (Installed)
   { id: 'd6', serial_number: 'MC-2024-006', product_id: 'prod-dosell', status: DeviceStatus.INSTALLED_ACTIVE, current_custodian: 'Client: Gerrit Groot', assigned_client_id: 'cl2', last_updated: fmtDate(yesterday) },
+
+  // Free Stock (For partial allocation testing)
+  { id: 'd7', serial_number: 'MC-2024-007', product_id: 'prod-fall-sensor', status: DeviceStatus.IN_STOCK, current_custodian: 'Warehouse', last_updated: fmtDate(today) },
 ];
 
 export const MOCK_CASES: Case[] = [
-  { id: 'c1', client_id: 'cl1', client_name: 'Jan Jansen', care_company_id: 'cc1', status: CaseStatus.ACTIVE_SERVICE, created_at: '2023-10-01', product_ids: ['prod-hub'] },
-  { id: 'c2', client_id: 'cl2', client_name: 'Gerrit Groot', care_company_id: 'cc2', status: CaseStatus.NEW, created_at: fmtDate(today), product_ids: ['prod-dosell', 'prod-fall-sensor'] },
-  { id: 'c3', client_id: 'cl3', client_name: 'Maria Klein', care_company_id: 'cc1', status: CaseStatus.INSTALLATION_PENDING, created_at: fmtDate(yesterday), product_ids: ['prod-hub'] },
+  // Case 1: Fully Active (Historic)
+  { 
+    id: 'c1', 
+    client_id: 'cl1', 
+    client_name: 'Jan Jansen', 
+    care_company_id: 'cc1', 
+    status: CaseStatus.ACTIVE_SERVICE, 
+    created_at: '2023-10-01', 
+    product_ids: ['prod-hub'], // Deprecated but kept
+    line_items: [
+      { id: 'li1', product_id: 'prod-hub', requested_qty: 1, allocated_device_ids: ['d1'], status: 'ALLOCATED' }
+    ]
+  },
+  
+  // Case 2: New Request (Requires Dosell + Fall Sensor).
+  // Note: We have 1 Fall Sensor IN_STOCK (d7), but 0 Dosell IN_STOCK.
+  // This allows demonstrating "Partial Allocation" or "Out of Stock" exception.
+  { 
+    id: 'c2', 
+    client_id: 'cl2', 
+    client_name: 'Gerrit Groot', 
+    care_company_id: 'cc2', 
+    status: CaseStatus.NEW, 
+    created_at: fmtDate(today), 
+    product_ids: ['prod-dosell', 'prod-fall-sensor'], 
+    line_items: [
+      { id: 'li2', product_id: 'prod-dosell', requested_qty: 1, allocated_device_ids: [], status: 'REQUESTED' },
+      { id: 'li3', product_id: 'prod-fall-sensor', requested_qty: 1, allocated_device_ids: [], status: 'REQUESTED' }
+    ]
+  },
+  
+  // Case 3: Installation Pending (Allocated)
+  { 
+    id: 'c3', 
+    client_id: 'cl3', 
+    client_name: 'Maria Klein', 
+    care_company_id: 'cc1', 
+    status: CaseStatus.INSTALLATION_PENDING, 
+    created_at: fmtDate(yesterday), 
+    product_ids: ['prod-hub'],
+    line_items: [
+      { id: 'li4', product_id: 'prod-hub', requested_qty: 1, allocated_device_ids: ['d4'], status: 'ALLOCATED' }
+    ]
+  },
 ];
 
 export const MOCK_JOBS: Job[] = [
@@ -213,6 +268,72 @@ export const MOCK_JOBS: Job[] = [
 ];
 
 export const MOCK_AGENTS: Agent[] = [
+  {
+    id: "agent-auto-allocation",
+    name: "Auto Allocation & Job Creation",
+    code: "AUTO_ALLOCATION",
+    description: "Allocates devices to approved cases and creates install jobs when fully allocated.",
+    autonomy: AutonomyLevel.AUTO_EXECUTE,
+    status: AgentStatus.ENABLED,
+    last_run: 'Never',
+    owner_team: 'Operations',
+    risk_level: 'LOW',
+    schedule_type: 'INTERVAL',
+    schedule_value: '5m',
+    data_scope: 'CASES',
+    system_instructions: 'Allocate stock. Create jobs.',
+    behavior_rules: 'Allocation -> Job Creation',
+    allowed_actions: { auto_execute: ['ALLOCATE_CASE', 'CREATE_INSTALL_JOBS'] },
+    restricted_actions: {},
+    escalation_policy: 'None',
+    examples: [],
+    languages: ['EN'],
+    logs: []
+  },
+  {
+    id: "agent-stock-shortage-watch",
+    name: "Stock Shortage Watch",
+    code: "STOCK_SHORTAGE_WATCH",
+    description: "Monitors IN_STOCK thresholds per product and raises low-stock warnings.",
+    autonomy: AutonomyLevel.AUTO_EXECUTE,
+    status: AgentStatus.ENABLED,
+    last_run: 'Never',
+    owner_team: 'Warehouse',
+    risk_level: 'LOW',
+    schedule_type: 'INTERVAL',
+    schedule_value: '1h',
+    data_scope: 'DEVICES',
+    system_instructions: 'Monitor stock levels.',
+    behavior_rules: 'Stock < 2 -> Warning',
+    allowed_actions: { auto_execute: ['CREATE_EXCEPTION'] },
+    restricted_actions: {},
+    escalation_policy: 'None',
+    examples: [],
+    languages: ['EN'],
+    logs: []
+  },
+  {
+    id: "agent-confirmation-reminders",
+    name: "Confirmation Reminders",
+    code: "CONFIRMATION_REMINDERS",
+    description: "Sends reminders (logged to timeline in v1) for pending confirmations.",
+    autonomy: AutonomyLevel.AUTO_EXECUTE,
+    status: AgentStatus.ENABLED,
+    last_run: 'Never',
+    owner_team: 'Support',
+    risk_level: 'LOW',
+    schedule_type: 'CRON',
+    schedule_value: '0 9 * * *',
+    data_scope: 'MESSAGES',
+    system_instructions: 'Send reminders for pending tasks.',
+    behavior_rules: 'Pending > 2 days -> Remind',
+    allowed_actions: { auto_execute: ['SEND_REMINDER'] },
+    restricted_actions: {},
+    escalation_policy: 'None',
+    examples: [],
+    languages: ['EN'],
+    logs: []
+  },
   { 
     id: 'a0', 
     name: 'Orchestrator Brain', 
@@ -220,7 +341,7 @@ export const MOCK_AGENTS: Agent[] = [
     description: 'Coordinates specialist agents. Monitors system events and prioritizes next actions.',
     owner_team: 'Operations',
     status: AgentStatus.ENABLED, 
-    autonomy: AutonomyLevel.OBSERVE_ONLY, 
+    autonomy: AutonomyLevel.AUTO_EXECUTE, // CHANGED: To allow proactive triggering
     risk_level: 'HIGH',
     schedule_type: 'INTERVAL',
     schedule_value: '10m',
@@ -272,7 +393,7 @@ export const MOCK_AGENTS: Agent[] = [
     description: 'Manages installation scheduling, installer assignments, and job confirmations.',
     owner_team: 'Operations',
     status: AgentStatus.ENABLED,
-    autonomy: AutonomyLevel.DRAFT_ONLY,
+    autonomy: AutonomyLevel.AUTO_EXECUTE, // CHANGED: To allow auto-scheduling/assigning for demo
     risk_level: 'MEDIUM',
     schedule_type: 'INTERVAL',
     schedule_value: '15m',
@@ -282,7 +403,7 @@ export const MOCK_AGENTS: Agent[] = [
     allowed_actions: {
       observe: ["scan_unassigned_jobs", "check_overdue_installs"],
       draft_only: ["propose_schedule", "send_confirmation_request"],
-      auto_execute: []
+      auto_execute: ["assign_installer", "set_scheduled_status"] // ADDED capability
     },
     restricted_actions: { never: ["cancel_job_without_reason"] },
     escalation_policy: 'INCIDENT: Job missed or installer no-show.',
@@ -297,8 +418,8 @@ export const MOCK_AGENTS: Agent[] = [
     code: 'RETURNS_RECOVERY',
     description: 'Handles the end-of-service flow, return requests, and chasing overdue returns.',
     owner_team: 'Operations',
-    status: AgentStatus.PAUSED,
-    autonomy: AutonomyLevel.OBSERVE_ONLY,
+    status: AgentStatus.ENABLED, // CHANGED: From PAUSED to ENABLED
+    autonomy: AutonomyLevel.AUTO_EXECUTE, // CHANGED: From OBSERVE_ONLY to AUTO_EXECUTE
     risk_level: 'LOW',
     schedule_type: 'CRON',
     schedule_value: '0 9 * * *',
@@ -307,8 +428,8 @@ export const MOCK_AGENTS: Agent[] = [
     behavior_rules: '1) If Case Closed -> Create Return Request. 2) If Return Overdue -> Send Reminder.',
     allowed_actions: {
       observe: ["scan_closed_cases", "check_return_sla"],
-      draft_only: ["create_return_request", "draft_chase_email"],
-      auto_execute: []
+      draft_only: ["draft_chase_email"],
+      auto_execute: ["create_return_request"] // Moved to auto
     },
     restricted_actions: { never: ["mark_lost_without_approval"] },
     escalation_policy: 'WARNING: Return overdue > 7 days.',

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useStore, store } from '../services/store';
 import { Badge, Button } from '../components/ui';
@@ -7,9 +8,11 @@ import {
   Filter, User, Clock, ArrowRight, MessageSquare, ClipboardCheck,
   ShieldAlert, Activity, Search
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export const Exceptions: React.FC = () => {
-  const { exceptions, currentUser } = useStore();
+  const { exceptions, currentUser, cases } = useStore();
+  const navigate = useNavigate();
   const [selectedException, setSelectedException] = useState<Exception | null>(null);
   const [resolutionNote, setResolutionNote] = useState('');
   const [filterSeverity, setFilterSeverity] = useState<string>('ALL');
@@ -51,6 +54,27 @@ export const Exceptions: React.FC = () => {
       store.resolveException(selectedException.id, resolutionNote);
       setResolutionNote('');
       setSelectedException(null);
+    }
+  };
+
+  const handleNavigateToEntity = () => {
+    if (!selectedException) return;
+    
+    const { related_entity_type, related_entity_id } = selectedException;
+
+    if (related_entity_type === 'DEVICE') {
+        navigate('/assets');
+    } else if (related_entity_type === 'CASE') {
+        const relatedCase = cases.find(c => c.id === related_entity_id);
+        if (relatedCase) {
+            navigate(`/clients/${relatedCase.client_id}`);
+        } else {
+            navigate('/cases');
+        }
+    } else if (related_entity_type === 'JOB' || related_entity_type === 'RETURN') {
+        navigate('/jobs');
+    } else {
+        alert(`Navigation for ${related_entity_type} not yet implemented.`);
     }
   };
 
@@ -229,14 +253,11 @@ export const Exceptions: React.FC = () => {
                   <div>
                      <h4 className="text-xs font-bold text-slate-400 uppercase mb-3">Investigation Tools</h4>
                      <div className="grid grid-cols-2 gap-3">
-                        <Button variant="outline" size="sm" className="justify-between">
+                        <Button variant="outline" size="sm" className="justify-between" onClick={handleNavigateToEntity}>
                            Open {selectedException.related_entity_type} <ArrowRight className="w-3 h-3" />
                         </Button>
                         <Button variant="outline" size="sm" className="justify-between">
                            View Audit Trail <ArrowRight className="w-3 h-3" />
-                        </Button>
-                        <Button variant="outline" size="sm" className="justify-between">
-                           Contact Custodian <ArrowRight className="w-3 h-3" />
                         </Button>
                      </div>
                   </div>

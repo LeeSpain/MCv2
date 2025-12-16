@@ -1,16 +1,17 @@
+
 import React, { useState } from 'react';
 import { useStore, store } from '../services/store';
-import { Card, Badge, Button } from '../components/ui';
+import { Button } from '../components/ui';
 import { 
-  Play, Activity, Terminal, ShieldAlert, AlertTriangle, 
-  Eye, Edit3, Zap, BookOpen, CheckCircle, XCircle, Lock, 
-  Search, Power, Server, ChevronRight 
+  Play, Activity, Terminal, ShieldAlert, 
+  Eye, Edit3, Zap, BookOpen, Lock, 
+  Search, Power, Server, ChevronRight, FileText, CloudLightning
 } from 'lucide-react';
 import { Agent, AgentStatus, AutonomyLevel, Role } from '../types';
 
 export const SettingsAgents: React.FC = () => {
-  const { agents, killSwitch, currentUser } = useStore();
-  const [selectedAgent, setSelectedAgent] = useState<Agent | null>(agents[0] || null); // Default to first for better initial state
+  const { agents, killSwitch, currentUser, agentRunLogs } = useStore();
+  const [selectedAgent, setSelectedAgent] = useState<Agent | null>(agents[0] || null); 
   const [searchTerm, setSearchTerm] = useState('');
 
   // PERMISSION CHECK
@@ -34,6 +35,9 @@ export const SettingsAgents: React.FC = () => {
     a.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
     a.code.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Filter logs for selected agent
+  const currentLogs = selectedAgent ? agentRunLogs.filter(l => l.agent_id === selectedAgent.id).slice(0, 10) : [];
 
   return (
     <div className="h-[calc(100vh-8rem)] flex flex-col bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
@@ -150,18 +154,41 @@ export const SettingsAgents: React.FC = () => {
                      <h3 className="text-xl font-bold text-slate-900">{selectedAgent.name}</h3>
                      <p className="text-xs text-slate-500">{selectedAgent.description}</p>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
                      {!canEdit && (
-                       <span className="text-xs text-amber-600 font-medium bg-amber-50 px-2 py-1 rounded border border-amber-100">Read Only</span>
+                       <span className="text-xs text-amber-600 font-medium bg-amber-50 px-2 py-1 rounded border border-amber-100 mr-2">Read Only</span>
                      )}
+                     
                      <Button 
                        size="sm"
-                       onClick={() => store.runAgent(selectedAgent.id)} 
-                       disabled={!canEdit || killSwitch || selectedAgent.status === AgentStatus.DISABLED}
-                       className={selectedAgent.status === AgentStatus.ENABLED ? 'bg-green-600 hover:bg-green-700' : ''}
+                       variant="outline"
+                       onClick={() => store.runOpsAgent(selectedAgent.id, 'DRAFT')} 
+                       disabled={killSwitch || selectedAgent.status === AgentStatus.DISABLED}
+                       className="text-amber-700 border-amber-200 hover:bg-amber-50"
+                     >
+                       <FileText className="w-3 h-3 mr-2" /> 
+                       Run Plan (Draft)
+                     </Button>
+
+                     <Button 
+                       size="sm"
+                       variant="outline"
+                       onClick={() => store.runOpsAgent(selectedAgent.id)} 
+                       disabled={killSwitch || selectedAgent.status === AgentStatus.DISABLED}
+                       className="text-blue-700 border-blue-200 hover:bg-blue-50"
                      >
                        <Play className="w-3 h-3 mr-2" /> 
-                       Run Cycle
+                       Run Now
+                     </Button>
+
+                     <Button 
+                       size="sm"
+                       onClick={() => store.runOpsAgent(selectedAgent.id, 'AUTO')} 
+                       disabled={killSwitch || selectedAgent.status === AgentStatus.DISABLED}
+                       className="bg-red-600 hover:bg-red-700 text-white"
+                     >
+                       <CloudLightning className="w-3 h-3 mr-2" /> 
+                       Run Auto
                      </Button>
                   </div>
                </div>
@@ -237,19 +264,6 @@ export const SettingsAgents: React.FC = () => {
                      </div>
                   </div>
 
-                  {/* Warning Banner */}
-                  {selectedAgent.autonomy === AutonomyLevel.AUTO_EXECUTE && (
-                    <div className="mx-6 mt-6 p-3 bg-red-50 border border-red-200 rounded-md flex items-start gap-3">
-                       <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-                       <div>
-                          <h4 className="text-sm font-bold text-red-800">High Risk Configuration</h4>
-                          <p className="text-xs text-red-700 mt-1">
-                             This agent is authorized to execute write operations autonomously. Ensure the "Allowed Actions" list below is strictly scoped.
-                          </p>
-                       </div>
-                    </div>
-                  )}
-
                   <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
                      
                      {/* LEFT COL: Instructions */}
@@ -323,46 +337,67 @@ export const SettingsAgents: React.FC = () => {
                                  )}
                               </div>
                            </div>
-
-                           {/* Forbidden */}
-                           <div className="border border-red-100 rounded-md overflow-hidden opacity-80">
-                              <div className="bg-red-50 px-3 py-2 border-b border-red-100 flex justify-between items-center">
-                                 <span className="text-[10px] font-bold text-red-800 uppercase flex items-center gap-1.5">
-                                    <XCircle className="w-3 h-3" /> Strictly Forbidden
-                                 </span>
-                              </div>
-                              <div className="p-2 bg-white flex flex-wrap gap-1.5">
-                                 {selectedAgent.restricted_actions.never?.map(a => (
-                                    <code key={a} className="px-1.5 py-0.5 bg-red-50 text-red-700 border border-red-100 rounded text-[10px] line-through decoration-red-300">{a}</code>
-                                 ))}
-                              </div>
-                           </div>
                         </div>
                      </div>
                   </div>
                </div>
 
-               {/* Console Footer */}
-               <div className="flex-none bg-slate-900 border-t border-slate-700 text-slate-300 h-48 flex flex-col">
+               {/* Run History Logs */}
+               <div className="flex-none bg-slate-900 border-t border-slate-700 text-slate-300 h-56 flex flex-col">
                   <div className="flex items-center justify-between px-4 py-2 border-b border-slate-700 bg-slate-800/50">
                      <span className="text-[10px] font-mono font-bold text-green-400 flex items-center gap-2">
-                        <Terminal className="w-3 h-3" /> AGENT_OUTPUT_STREAM
+                        <Terminal className="w-3 h-3" /> EXECUTION_LOGS [{selectedAgent.code}]
                      </span>
-                     <span className="text-[10px] text-slate-500">Live Connection • Latency 12ms</span>
+                     <span className="text-[10px] text-slate-500">Live Stream</span>
                   </div>
-                  <div className="flex-1 overflow-y-auto p-4 font-mono text-xs space-y-1 custom-scrollbar">
-                     {selectedAgent.logs.length > 0 ? (
-                        selectedAgent.logs.map((log, i) => (
-                           <div key={i} className="flex gap-2 hover:bg-white/5 py-0.5 -mx-2 px-2 rounded">
-                              <span className="text-slate-500 flex-shrink-0 w-20">[{new Date().toLocaleTimeString()}]</span>
-                              <span className={log.includes('[AUTO]') ? 'text-red-400' : log.includes('[DRAFT]') ? 'text-amber-400' : 'text-blue-300'}>
-                                 {log}
-                              </span>
-                           </div>
-                        ))
-                     ) : (
-                        <div className="text-slate-600 italic opacity-50">System ready. Waiting for execution trigger...</div>
-                     )}
+                  <div className="flex-1 overflow-y-auto font-mono text-xs custom-scrollbar">
+                     <table className="w-full text-left">
+                        <thead className="bg-slate-800/50 text-slate-500 font-bold">
+                           <tr>
+                              <th className="px-4 py-2 w-32">Time</th>
+                              <th className="px-4 py-2 w-24">Mode</th>
+                              <th className="px-4 py-2">Actions Applied</th>
+                              <th className="px-4 py-2 text-right">Run ID</th>
+                           </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-800">
+                           {currentLogs.length > 0 ? (
+                              currentLogs.map(log => {
+                                 const appliedCount = log.applied_actions.filter(a => a.status === 'APPLIED').length;
+                                 const skippedCount = log.applied_actions.filter(a => a.status === 'SKIPPED').length;
+                                 const failedCount = log.applied_actions.filter(a => a.status === 'FAILED').length;
+                                 
+                                 return (
+                                    <tr key={log.id} className="hover:bg-white/5 transition-colors">
+                                       <td className="px-4 py-2 text-slate-400">{new Date(log.started_at).toLocaleTimeString()}</td>
+                                       <td className="px-4 py-2">
+                                          <span className={`px-1.5 py-0.5 rounded text-[10px] ${
+                                             log.autonomy === 'AUTO' ? 'bg-red-900/50 text-red-300 border border-red-900' :
+                                             log.autonomy === 'DRAFT' ? 'bg-amber-900/50 text-amber-300 border border-amber-900' :
+                                             'bg-blue-900/50 text-blue-300 border border-blue-900'
+                                          }`}>
+                                             {log.autonomy}
+                                          </span>
+                                       </td>
+                                       <td className="px-4 py-2">
+                                          <div className="flex gap-2">
+                                             {appliedCount > 0 && <span className="text-green-400">{appliedCount} applied</span>}
+                                             {skippedCount > 0 && <span className="text-slate-500">{skippedCount} skipped</span>}
+                                             {failedCount > 0 && <span className="text-red-400">{failedCount} failed</span>}
+                                             {log.kill_switch && <span className="text-red-500 font-bold uppercase ml-2">KILL SWITCH</span>}
+                                          </div>
+                                       </td>
+                                       <td className="px-4 py-2 text-right text-slate-600 font-mono text-[10px]">{log.id.slice(-6)}</td>
+                                    </tr>
+                                 );
+                              })
+                           ) : (
+                              <tr>
+                                 <td colSpan={4} className="px-4 py-8 text-center text-slate-600 italic">No recent execution logs.</td>
+                              </tr>
+                           )}
+                        </tbody>
+                     </table>
                   </div>
                </div>
              </>

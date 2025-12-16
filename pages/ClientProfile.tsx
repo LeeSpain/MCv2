@@ -45,7 +45,14 @@ export const ClientProfile: React.FC = () => {
         care_company_id: client.care_company_id,
         status: CaseStatus.NEW,
         created_at: new Date().toLocaleDateString(),
-        product_ids: plan.agreed_product_ids
+        product_ids: plan.agreed_product_ids,
+        line_items: plan.agreed_product_ids.map((pid, idx) => ({
+          id: `li-${Date.now()}-${idx}`,
+          product_id: pid,
+          requested_qty: 1,
+          allocated_device_ids: [],
+          status: 'REQUESTED'
+        }))
       });
       navigate('/cases'); // Redirect to generic order list for Ops, or specific for Care
     }
@@ -53,6 +60,13 @@ export const ClientProfile: React.FC = () => {
 
   const startNewAssessment = () => {
     navigate(`/clients/${client.id}/assessment/new`);
+  };
+
+  const handleEditProfile = () => {
+      const newAddress = prompt("Update Address:", client.address);
+      if (newAddress !== null) {
+          store.updateClient(client.id, { address: newAddress });
+      }
   };
 
   // Determine back link based on role
@@ -86,7 +100,7 @@ export const ClientProfile: React.FC = () => {
            </div>
         </div>
         <div className="flex gap-3">
-           {canEditProfile && <Button variant="outline"><Edit className="w-4 h-4 mr-2" /> Edit Profile</Button>}
+           {canEditProfile && <Button variant="outline" onClick={handleEditProfile}><Edit className="w-4 h-4 mr-2" /> Edit Profile</Button>}
            {canPerformAssessment && (
               <Button onClick={startNewAssessment} className="bg-brand-600 hover:bg-brand-700 text-white">
                 <Activity className="w-4 h-4 mr-2" /> New Assessment

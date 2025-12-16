@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useStore } from '../services/store';
 import { Card, Button, Badge } from '../components/ui';
@@ -27,6 +28,14 @@ export const CareDashboard: React.FC = () => {
 
   // Assessments Pending Review (Lead Only)
   const pendingAssessments = assessments.filter(a => a.status === 'DRAFT' && myClients.map(c => c.id).includes(a.client_id));
+
+  const handleReviewAssessment = () => {
+      // Find the first draft assessment and navigate to it
+      if (pendingAssessments.length > 0) {
+          const first = pendingAssessments[0];
+          navigate(`/clients/${first.client_id}/assessment/${first.id}/review`);
+      }
+  };
 
   return (
     <div className="space-y-8 max-w-6xl mx-auto">
@@ -77,7 +86,7 @@ export const CareDashboard: React.FC = () => {
                         <p className="text-sm text-blue-800">{pendingAssessments.length} draft assessments awaiting approval.</p>
                      </div>
                   </div>
-                  <Button size="sm" className="bg-blue-600 hover:bg-blue-700 border-transparent text-white">Review</Button>
+                  <Button size="sm" className="bg-blue-600 hover:bg-blue-700 border-transparent text-white" onClick={handleReviewAssessment}>Review</Button>
                </div>
             )}
          </div>

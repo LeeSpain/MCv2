@@ -19,7 +19,8 @@ export const CareConfirmations: React.FC = () => {
   };
 
   const handleJobConfirm = (id: string) => {
-    store.confirmJob(id);
+    // Care company only confirms availability/schedule, they do not COMPLETE the job.
+    store.confirmJobSchedule(id); 
   };
 
   return (

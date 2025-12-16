@@ -34,7 +34,14 @@ export const CareNewOrder: React.FC = () => {
       care_company_id: currentUser.care_company_id,
       status: CaseStatus.NEW,
       created_at: new Date().toLocaleDateString(),
-      product_ids: selectedProductIds
+      product_ids: selectedProductIds,
+      line_items: selectedProductIds.map((pid, idx) => ({
+        id: `li-${Date.now()}-${idx}`,
+        product_id: pid,
+        requested_qty: 1,
+        allocated_device_ids: [],
+        status: 'REQUESTED'
+      }))
     });
     setSubmitted(true);
   };
