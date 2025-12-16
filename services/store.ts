@@ -1,11 +1,13 @@
+
 import { useState, useEffect } from 'react';
 import { 
   MOCK_DEVICES, MOCK_CASES, MOCK_JOBS, MOCK_AGENTS, MOCK_EXCEPTIONS, 
-  MOCK_USERS, MOCK_CLIENTS, MOCK_CARE_PLANS, MOCK_ASSESSMENTS, MOCK_TIMELINE 
+  MOCK_USERS, MOCK_CLIENTS, MOCK_CARE_PLANS, MOCK_ASSESSMENTS, MOCK_TIMELINE, MOCK_MESSAGES,
+  MOCK_PRODUCTS 
 } from './mockData';
 import { 
   User, Role, Agent, AgentStatus, AutonomyLevel, 
-  CaseStatus, Client, CarePlan, Assessment, ClientTimelineEvent, Case, AiAnalysisSnapshot 
+  CaseStatus, Client, CarePlan, Assessment, ClientTimelineEvent, Case, AiAnalysisSnapshot, Message 
 } from '../types';
 
 class Store {
@@ -18,6 +20,8 @@ class Store {
   carePlans = [...MOCK_CARE_PLANS];
   assessments = [...MOCK_ASSESSMENTS];
   timeline = [...MOCK_TIMELINE];
+  messages = [...MOCK_MESSAGES];
+  products = [...MOCK_PRODUCTS];
   currentUser: User = MOCK_USERS[0];
   killSwitch = false;
 
@@ -48,52 +52,82 @@ class Store {
     this.notify();
   }
 
+  // --- PRODUCT HELPERS ---
+
+  getProduct(productId: string) {
+    return this.products.find((p) => p.id === productId);
+  }
+
+  getProductName(productId: string) {
+    return this.getProduct(productId)?.name ?? productId;
+  }
+
+  getProductIdsToNames(productIds: string[]) {
+    return productIds.map((id) => this.getProductName(id));
+  }
+
   // --- AI INTAKE SIMULATION ---
 
-  analyzeAssessment(input: Partial<Assessment>): AiAnalysisSnapshot {
-    const text = (input.needs_summary || '') + ' ' + (input.notes || '');
-    const lowerText = text.toLowerCase();
-    
-    const suggestedDevices: string[] = ['Smart Hub']; // Base station always included
-    const suggestedServices: string[] = ['24/7 Monitoring'];
-    const riskFlags: string[] = [];
-    let confidence = 0.9;
-    let reasoning = 'Based on client profile analysis: ';
+  analyzeAssessment(text: string): AiAnalysisSnapshot {
+    const t = (text || "").toLowerCase();
 
-    if (lowerText.includes('fall') || lowerText.includes('dizzy') || lowerText.includes('balance')) {
-      suggestedDevices.push('Fall Sensor');
-      riskFlags.push('High Fall Risk');
-      reasoning += 'History of falls/dizziness detected. ';
+    // Always recommend monitoring service as baseline (you can change this later)
+    const suggested_product_ids: string[] = ["svc-monitoring"];
+    const risk_flags: string[] = [];
+    let confidence = 0.72;
+
+    // Helper: add unique IDs
+    const add = (id: string) => {
+      if (!suggested_product_ids.includes(id)) suggested_product_ids.push(id);
+    };
+
+    // Basic rules (v1)
+    if (t.includes("fall") || t.includes("fallen") || t.includes("dizzy") || t.includes("fainted")) {
+      add("prod-sos");
+      add("prod-fall-sensor");
+      risk_flags.push("Fall risk");
+      confidence += 0.06;
     }
 
-    if (lowerText.includes('medication') || lowerText.includes('pills') || lowerText.includes('forget')) {
-      suggestedDevices.push('Med Dispenser');
-      riskFlags.push('Medication Adherence Risk');
-      reasoning += 'Medication management concerns identified. ';
+    if (t.includes("medication") || t.includes("pills") || t.includes("forget") || t.includes("missed doses")) {
+      add("prod-dosell");
+      risk_flags.push("Medication adherence risk");
+      confidence += 0.06;
     }
 
-    if (lowerText.includes('wander') || lowerText.includes('lost') || lowerText.includes('dementia')) {
-      suggestedDevices.push('GPS Tracker');
-      riskFlags.push('Wandering Risk');
-      reasoning += 'Cognitive decline/wandering risk flagged. ';
+    if (t.includes("diabetes") || t.includes("glucose") || t.includes("sugar")) {
+      add("prod-glucose");
+      risk_flags.push("Diabetes monitoring");
+      confidence += 0.06;
     }
 
-    if (lowerText.includes('alone') || lowerText.includes('lonely')) {
-      suggestedServices.push('Wellness Check Calls');
-      reasoning += 'Social isolation detected. ';
+    if (t.includes("alone") || t.includes("lonely") || t.includes("isolated")) {
+      add("svc-wellness-calls");
+      risk_flags.push("Social isolation risk");
+      confidence += 0.04;
     }
 
-    if (suggestedDevices.length === 1) {
-      reasoning += 'Standard safety package recommended.';
-      confidence = 0.85;
+    // Hub logic: if SOS recommended, ensure hub
+    if (suggested_product_ids.includes("prod-sos") || suggested_product_ids.includes("prod-fall-sensor")) {
+      add("prod-hub");
     }
+
+    // Clamp confidence 0..0.95
+    confidence = Math.min(0.95, Math.max(0.55, confidence));
+
+    const reasoning: string[] = [];
+    if (risk_flags.length === 0) reasoning.push("No strong risk keywords detected; baseline monitoring recommended.");
+    if (risk_flags.includes("Fall risk")) reasoning.push("Detected fall/dizziness indicators; SOS & Fall Sensor support recommended.");
+    if (risk_flags.includes("Medication adherence risk")) reasoning.push("Detected medication adherence concerns; dispenser recommended.");
+    if (risk_flags.includes("Diabetes monitoring")) reasoning.push("Detected diabetes/glucose monitoring needs; glucose device recommended.");
+    if (risk_flags.includes("Social isolation risk")) reasoning.push("Detected isolation indicators; wellness calls recommended.");
+    if (suggested_product_ids.includes("prod-hub")) reasoning.push("Smart Hub included to support connected devices.");
 
     return {
-      suggested_devices: Array.from(new Set(suggestedDevices)),
-      suggested_services: Array.from(new Set(suggestedServices)),
-      risk_flags: riskFlags,
-      reasoning: reasoning.trim(),
-      confidence_score: confidence
+      suggested_product_ids,
+      risk_flags,
+      confidence,
+      reasoning,
     };
   }
 
@@ -121,13 +155,12 @@ class Store {
     this.notify();
   }
 
-  approveAssessment(id: string, finalDevices: string[], finalServices: string[]) {
+  approveAssessment(id: string, productIds: string[]) {
     this.assessments = this.assessments.map(a => 
       a.id === id ? { 
         ...a, 
         status: 'APPROVED', 
-        recommended_devices: finalDevices,
-        recommended_services: finalServices
+        recommended_product_ids: productIds
       } : a
     );
     this.notify();
@@ -143,8 +176,7 @@ class Store {
       assessment_id: assessment.id,
       goals: `Based on assessment: ${assessment.needs_summary.substring(0, 50)}...`,
       requirements: assessment.notes,
-      agreed_devices: assessment.recommended_devices,
-      agreed_services: assessment.recommended_services,
+      agreed_product_ids: assessment.recommended_product_ids,
       review_date: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       review_interval_days: 90,
       notes: 'Auto-generated from Approved Assessment',
@@ -181,12 +213,13 @@ class Store {
 
   createCase(newCase: Case) {
     this.cases = [newCase, ...this.cases];
+    const itemNames = this.getProductIdsToNames(newCase.product_ids).join(', ');
     this.logTimelineEvent({
       id: `tle-${Date.now()}`,
       client_id: newCase.client_id,
       event_type: 'ORDER',
       source: 'HUMAN',
-      summary: `Order #${newCase.id} submitted for ${newCase.items.join(', ')}`,
+      summary: `Order #${newCase.id} submitted for ${itemNames}`,
       timestamp: new Date().toISOString(),
       actor_name: this.currentUser.name
     });
@@ -303,6 +336,24 @@ class Store {
 
   sendReminders() {
     console.log("Sending reminders for scheduled jobs...");
+  }
+
+  // --- MESSAGING ---
+
+  markMessageRead(id: string) {
+    this.messages = this.messages.map(m => m.id === id ? { ...m, is_read: true } : m);
+    this.notify();
+  }
+
+  sendMessage(msg: Message) {
+    this.messages = [msg, ...this.messages];
+    this.notify();
+  }
+
+  approveMessageAction(id: string) {
+    this.messages = this.messages.map(m => m.id === id ? { ...m, action_required: false, tags: [...m.tags, 'Approved'] } : m);
+    // Logic to actually trigger the approved action would go here (e.g., executing the agent draft)
+    this.notify();
   }
 }
 

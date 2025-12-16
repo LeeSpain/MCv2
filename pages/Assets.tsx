@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import { useStore } from '../services/store';
+import { useStore, store } from '../services/store';
 import { Card, Badge, Button } from '../components/ui';
 import { DeviceStatus } from '../types';
 import { 
@@ -143,7 +144,7 @@ export const Assets: React.FC = () => {
               {filteredDevices.map(device => (
                 <tr key={device.id} className="hover:bg-slate-50 transition-colors group">
                   <td className="px-4 py-2 font-mono text-xs font-medium text-brand-700">{device.serial_number}</td>
-                  <td className="px-4 py-2 text-slate-700 font-medium">{device.product_name}</td>
+                  <td className="px-4 py-2 text-slate-700 font-medium">{store.getProductName(device.product_id)}</td>
                   <td className="px-4 py-2">
                     <Badge color={getStatusColor(device.status)}>{device.status}</Badge>
                     {device.sla_breach && <span className="ml-2 text-[10px] text-white bg-red-600 px-1 rounded font-bold">OVERDUE</span>}

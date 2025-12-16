@@ -1,4 +1,5 @@
-import { Role, DeviceStatus, CaseStatus, JobStatus, AgentStatus, AutonomyLevel, Device, Case, Job, Agent, Exception, Client, CarePlan, Assessment, ClientTimelineEvent } from '../types';
+
+import { Role, DeviceStatus, CaseStatus, JobStatus, AgentStatus, AutonomyLevel, Device, Case, Job, Agent, Exception, Client, CarePlan, Assessment, ClientTimelineEvent, Message, Product, ProductCategory } from '../types';
 
 // Helper for dynamic dates
 const today = new Date();
@@ -18,6 +19,81 @@ export const MOCK_USERS = [
   { id: 'u4', name: 'Nurse Joy (Lead)', role: Role.CARE_COMPANY_LEAD_NURSE, care_company_id: 'cc1' },
   { id: 'u5', name: 'Nurse Ann (Care)', role: Role.CARE_COMPANY_NURSE, care_company_id: 'cc1' },
   { id: 'u6', name: 'Bob Builder (Installer)', role: Role.INSTALLER },
+];
+
+export const MOCK_PRODUCTS: Product[] = [
+  // Core “platform” items
+  {
+    id: "prod-hub",
+    name: "Smart Hub",
+    category: ProductCategory.HOME_MONITORING,
+    supplier: "MobileCare",
+    is_device: true,
+    is_active: true,
+    requires_subscription: true,
+  },
+
+  // Safety
+  {
+    id: "prod-sos",
+    name: "SOS Pendant",
+    category: ProductCategory.SAFETY,
+    supplier: "MobileCare",
+    is_device: true,
+    is_active: true,
+    requires_hub: true,
+  },
+  
+  // Extra safety
+  {
+    id: "prod-fall-sensor",
+    name: "Fall Sensor",
+    category: ProductCategory.SAFETY,
+    supplier: "Vivago",
+    is_device: true,
+    is_active: true,
+    requires_hub: true
+  },
+
+  // Medication
+  {
+    id: "prod-dosell",
+    name: "Dosell Medication Dispenser",
+    category: ProductCategory.MEDICATION,
+    supplier: "Dosell",
+    is_device: true,
+    is_active: true,
+    requires_subscription: true,
+  },
+
+  // Vitals
+  {
+    id: "prod-glucose",
+    name: "Glucose Monitor",
+    category: ProductCategory.VITALS,
+    supplier: "MobileCare",
+    is_device: true,
+    is_active: true,
+    requires_subscription: true,
+  },
+
+  // Services (non-device)
+  {
+    id: "svc-monitoring",
+    name: "24/7 Monitoring",
+    category: ProductCategory.SERVICE,
+    supplier: "MobileCare",
+    is_device: false,
+    is_active: true,
+  },
+  {
+    id: "svc-wellness-calls",
+    name: "Wellness Check Calls",
+    category: ProductCategory.SERVICE,
+    supplier: "MobileCare",
+    is_device: false,
+    is_active: true,
+  },
 ];
 
 export const MOCK_CLIENTS: Client[] = [
@@ -70,8 +146,7 @@ export const MOCK_ASSESSMENTS: Assessment[] = [
     type: 'INITIAL',
     risk_level: 'MEDIUM',
     needs_summary: 'Client lives alone, experiencing mild balance issues. Has history of falls. Cognitive function is good.',
-    recommended_services: ['24/7 Monitoring'],
-    recommended_devices: ['Smart Hub', 'Fall Sensor'],
+    recommended_product_ids: ['svc-monitoring', 'prod-hub', 'prod-fall-sensor'],
     notes: 'Prioritize fall detection installation.',
     status: 'APPROVED',
     created_at: '2023-01-09'
@@ -85,8 +160,7 @@ export const MOCK_CARE_PLANS: CarePlan[] = [
     assessment_id: 'as1',
     goals: 'Maintain independence at home safely. Reduce anxiety for family.', 
     requirements: 'Fall detection, Daily activity monitoring',
-    agreed_services: ['24/7 Monitoring'],
-    agreed_devices: ['Smart Hub', 'Fall Sensor'],
+    agreed_product_ids: ['svc-monitoring', 'prod-hub', 'prod-fall-sensor'],
     review_date: fmtDate(tomorrow), 
     review_interval_days: 90,
     notes: 'Client is hard of hearing. Installer to use visual aids during demo.', 
@@ -99,8 +173,7 @@ export const MOCK_CARE_PLANS: CarePlan[] = [
     client_id: 'cl3', 
     goals: 'Medication adherence support.', 
     requirements: 'Smart pill dispenser', 
-    agreed_services: ['Medication Support'],
-    agreed_devices: ['Med Dispenser'],
+    agreed_product_ids: ['svc-monitoring', 'prod-dosell'],
     review_date: '2024-02-01', 
     review_interval_days: 180,
     notes: 'Family visits weekly.', 
@@ -119,24 +192,24 @@ export const MOCK_TIMELINE: ClientTimelineEvent[] = [
 ];
 
 export const MOCK_DEVICES: Device[] = [
-  { id: 'd1', serial_number: 'MC-2024-001', product_name: 'Smart Hub', status: DeviceStatus.INSTALLED_ACTIVE, current_custodian: 'Client: Jan Jansen', assigned_client_id: 'cl1', last_updated: fmtDate(yesterday), confirmation_needed: true },
-  { id: 'd2', serial_number: 'MC-2024-002', product_name: 'Smart Hub', status: DeviceStatus.IN_STOCK, current_custodian: 'Warehouse', last_updated: fmtDate(today) },
-  { id: 'd3', serial_number: 'MC-2024-003', product_name: 'Fall Sensor', status: DeviceStatus.AWAITING_RETURN, current_custodian: 'Client: Piet Puk', last_updated: '2023-10-01', sla_breach: true },
-  { id: 'd4', serial_number: 'MC-2024-004', product_name: 'Smart Hub', status: DeviceStatus.WITH_INSTALLER, current_custodian: 'Installer: Bob', last_updated: fmtDate(today) },
-  { id: 'd5', serial_number: 'MC-2024-005', product_name: 'Med Dispenser', status: DeviceStatus.DORMANT, current_custodian: 'Client: Sara Lee', last_updated: '2023-09-15', sla_breach: true },
-  { id: 'd6', serial_number: 'MC-2024-006', product_name: 'Med Dispenser', status: DeviceStatus.INSTALLED_ACTIVE, current_custodian: 'Client: Gerrit Groot', assigned_client_id: 'cl2', last_updated: fmtDate(yesterday) },
+  { id: 'd1', serial_number: 'MC-2024-001', product_id: 'prod-hub', status: DeviceStatus.INSTALLED_ACTIVE, current_custodian: 'Client: Jan Jansen', assigned_client_id: 'cl1', last_updated: fmtDate(yesterday), confirmation_needed: true },
+  { id: 'd2', serial_number: 'MC-2024-002', product_id: 'prod-hub', status: DeviceStatus.IN_STOCK, current_custodian: 'Warehouse', last_updated: fmtDate(today) },
+  { id: 'd3', serial_number: 'MC-2024-003', product_id: 'prod-fall-sensor', status: DeviceStatus.AWAITING_RETURN, current_custodian: 'Client: Piet Puk', last_updated: '2023-10-01', sla_breach: true },
+  { id: 'd4', serial_number: 'MC-2024-004', product_id: 'prod-hub', status: DeviceStatus.WITH_INSTALLER, current_custodian: 'Installer: Bob', last_updated: fmtDate(today) },
+  { id: 'd5', serial_number: 'MC-2024-005', product_id: 'prod-dosell', status: DeviceStatus.DORMANT, current_custodian: 'Client: Sara Lee', last_updated: '2023-09-15', sla_breach: true },
+  { id: 'd6', serial_number: 'MC-2024-006', product_id: 'prod-dosell', status: DeviceStatus.INSTALLED_ACTIVE, current_custodian: 'Client: Gerrit Groot', assigned_client_id: 'cl2', last_updated: fmtDate(yesterday) },
 ];
 
 export const MOCK_CASES: Case[] = [
-  { id: 'c1', client_id: 'cl1', client_name: 'Jan Jansen', care_company_id: 'cc1', status: CaseStatus.ACTIVE_SERVICE, created_at: '2023-10-01', items: ['Smart Hub'] },
-  { id: 'c2', client_id: 'cl2', client_name: 'Gerrit Groot', care_company_id: 'cc2', status: CaseStatus.NEW, created_at: fmtDate(today), items: ['Med Dispenser', 'Fall Sensor'] },
-  { id: 'c3', client_id: 'cl3', client_name: 'Maria Klein', care_company_id: 'cc1', status: CaseStatus.INSTALLATION_PENDING, created_at: fmtDate(yesterday), items: ['Smart Hub'] },
+  { id: 'c1', client_id: 'cl1', client_name: 'Jan Jansen', care_company_id: 'cc1', status: CaseStatus.ACTIVE_SERVICE, created_at: '2023-10-01', product_ids: ['prod-hub'] },
+  { id: 'c2', client_id: 'cl2', client_name: 'Gerrit Groot', care_company_id: 'cc2', status: CaseStatus.NEW, created_at: fmtDate(today), product_ids: ['prod-dosell', 'prod-fall-sensor'] },
+  { id: 'c3', client_id: 'cl3', client_name: 'Maria Klein', care_company_id: 'cc1', status: CaseStatus.INSTALLATION_PENDING, created_at: fmtDate(yesterday), product_ids: ['prod-hub'] },
 ];
 
 export const MOCK_JOBS: Job[] = [
-  { id: 'j1', type: 'INSTALL', status: JobStatus.SCHEDULED, client_name: 'Maria Klein', client_id: 'cl3', scheduled_for: fmtDate(today, '14:00'), installer_name: 'Bob Builder', confirmation_needed: true },
+  { id: 'j1', type: 'INSTALL', status: JobStatus.SCHEDULED, client_name: 'Maria Klein', client_id: 'cl3', case_id: 'c3', scheduled_for: fmtDate(today, '14:00'), installer_name: 'Bob Builder', confirmation_needed: true },
   { id: 'j2', type: 'RETURN', status: JobStatus.NEEDS_SCHEDULING, client_name: 'Piet Puk', scheduled_for: undefined },
-  { id: 'j3', type: 'INSTALL', status: JobStatus.MISSED, client_name: 'Gerrit Groot', client_id: 'cl2', scheduled_for: fmtDate(yesterday, '10:00'), installer_name: 'Bob Builder' },
+  { id: 'j3', type: 'INSTALL', status: JobStatus.MISSED, client_name: 'Gerrit Groot', client_id: 'cl2', case_id: 'c2', scheduled_for: fmtDate(yesterday, '10:00'), installer_name: 'Bob Builder' },
 ];
 
 export const MOCK_AGENTS: Agent[] = [
@@ -166,7 +239,188 @@ export const MOCK_AGENTS: Agent[] = [
     last_run: '10 mins ago', 
     logs: [] 
   },
-  // ... other agents
+  {
+    id: 'a1',
+    name: 'Stock Controller',
+    code: 'STOCK_CONTROLLER',
+    description: 'Manages inventory levels, reserves stock for new orders, and tracks warehouse movements.',
+    owner_team: 'Warehouse',
+    status: AgentStatus.ENABLED,
+    autonomy: AutonomyLevel.AUTO_EXECUTE,
+    risk_level: 'MEDIUM',
+    schedule_type: 'INTERVAL',
+    schedule_value: '5m',
+    data_scope: 'DEVICES',
+    system_instructions: 'Ensure stock accountability. Reserve devices for approved cases immediately. Flag missing inventory.',
+    behavior_rules: '1) If Case APPROVED -> Reserve Stock. 2) If Stock < Threshold -> Alert Admin.',
+    allowed_actions: {
+      observe: ["check_stock_levels", "scan_new_cases"],
+      draft_only: ["order_restock"],
+      auto_execute: ["reserve_device", "update_device_status"]
+    },
+    restricted_actions: { never: ["delete_stock", "modify_serial_numbers"] },
+    escalation_policy: 'WARNING: If stock low. BLOCKER: If stock empty for approved case.',
+    examples: ['Case #123 Approved -> Device #555 Reserved'],
+    languages: ["EN"],
+    last_run: '2 mins ago',
+    logs: []
+  },
+  {
+    id: 'a2',
+    name: 'Install Logistics',
+    code: 'INSTALL_LOGISTICS',
+    description: 'Manages installation scheduling, installer assignments, and job confirmations.',
+    owner_team: 'Operations',
+    status: AgentStatus.ENABLED,
+    autonomy: AutonomyLevel.DRAFT_ONLY,
+    risk_level: 'MEDIUM',
+    schedule_type: 'INTERVAL',
+    schedule_value: '15m',
+    data_scope: 'JOBS',
+    system_instructions: 'Coordinate installation logistics. Ensure all "Ready" devices get an appointment scheduled.',
+    behavior_rules: '1) If Stock Allocated -> Create Job (Needs Scheduling). 2) If Job Scheduled -> Request Confirmation.',
+    allowed_actions: {
+      observe: ["scan_unassigned_jobs", "check_overdue_installs"],
+      draft_only: ["propose_schedule", "send_confirmation_request"],
+      auto_execute: []
+    },
+    restricted_actions: { never: ["cancel_job_without_reason"] },
+    escalation_policy: 'INCIDENT: Job missed or installer no-show.',
+    examples: ['Job #999 needs scheduling -> Draft message to Client'],
+    languages: ["NL", "EN"],
+    last_run: '15 mins ago',
+    logs: []
+  },
+  {
+    id: 'a3',
+    name: 'Returns Recovery',
+    code: 'RETURNS_RECOVERY',
+    description: 'Handles the end-of-service flow, return requests, and chasing overdue returns.',
+    owner_team: 'Operations',
+    status: AgentStatus.PAUSED,
+    autonomy: AutonomyLevel.OBSERVE_ONLY,
+    risk_level: 'LOW',
+    schedule_type: 'CRON',
+    schedule_value: '0 9 * * *',
+    data_scope: 'RETURNS',
+    system_instructions: 'Recover assets efficiently. Chase clients/partners for returns if service ended.',
+    behavior_rules: '1) If Case Closed -> Create Return Request. 2) If Return Overdue -> Send Reminder.',
+    allowed_actions: {
+      observe: ["scan_closed_cases", "check_return_sla"],
+      draft_only: ["create_return_request", "draft_chase_email"],
+      auto_execute: []
+    },
+    restricted_actions: { never: ["mark_lost_without_approval"] },
+    escalation_policy: 'WARNING: Return overdue > 7 days.',
+    examples: ['Client deceased -> Schedule pickup immediately'],
+    languages: ["NL", "EN"],
+    last_run: 'Yesterday',
+    logs: []
+  },
+  {
+    id: 'a4',
+    name: 'Status Confirmation',
+    code: 'STATUS_CONFIRMATION',
+    description: 'Periodically verifies that "Active" devices are actually in use to prevent dormancy.',
+    owner_team: 'Compliance',
+    status: AgentStatus.ENABLED,
+    autonomy: AutonomyLevel.AUTO_EXECUTE,
+    risk_level: 'LOW',
+    schedule_type: 'CRON',
+    schedule_value: '0 9 * * 1',
+    data_scope: 'DEVICES',
+    system_instructions: 'Prevent ghost devices. Ask care companies to confirm active status periodically.',
+    behavior_rules: '1) If Device Active > 90 days -> Send Verification Request.',
+    allowed_actions: {
+      observe: ["scan_device_age"],
+      draft_only: [],
+      auto_execute: ["flag_confirmation_needed"]
+    },
+    restricted_actions: { never: ["deactivate_service"] },
+    escalation_policy: 'None.',
+    examples: ['Device active 6 months -> Flag for check'],
+    languages: ["NL"],
+    last_run: '3 days ago',
+    logs: []
+  },
+  {
+    id: 'a5',
+    name: 'Comms Agent',
+    code: 'COMMS_AGENT',
+    description: 'Centralized messaging bot. Handles reminders, notifications, and translations.',
+    owner_team: 'Support',
+    status: AgentStatus.ENABLED,
+    autonomy: AutonomyLevel.AUTO_EXECUTE,
+    risk_level: 'LOW',
+    schedule_type: 'MANUAL',
+    schedule_value: 'Event Trigger',
+    data_scope: 'MESSAGES',
+    system_instructions: 'Deliver clear, polite, multilingual communications. Use templates.',
+    behavior_rules: '1) If Triggered -> Select Template -> Translate -> Send.',
+    allowed_actions: {
+      observe: [],
+      draft_only: ["draft_broadcast"],
+      auto_execute: ["send_email", "send_sms", "send_push"]
+    },
+    restricted_actions: { never: ["send_unapproved_broadcast"] },
+    escalation_policy: 'WARNING: Bounce rate high.',
+    examples: ['Send appointment reminder (NL)'],
+    languages: ["NL", "EN", "DE", "FR"],
+    last_run: '1 min ago',
+    logs: []
+  },
+  {
+    id: 'a6',
+    name: 'Compliance Audit',
+    code: 'COMPLIANCE_AUDIT',
+    description: 'Ensures chain of custody is complete. Flags missing data or broken processes.',
+    owner_team: 'Legal',
+    status: AgentStatus.ENABLED,
+    autonomy: AutonomyLevel.OBSERVE_ONLY,
+    risk_level: 'HIGH',
+    schedule_type: 'CRON',
+    schedule_value: '0 2 * * *',
+    data_scope: 'ALL',
+    system_instructions: 'Audit every transaction. Ensure every device move has a source and destination.',
+    behavior_rules: '1) Scan Chain of Custody. 2) If gap found -> Create Blocker Exception.',
+    allowed_actions: {
+      observe: ["audit_ledger", "verify_users"],
+      draft_only: ["create_compliance_report"],
+      auto_execute: ["create_exception"]
+    },
+    restricted_actions: { never: ["modify_ledger"] },
+    escalation_policy: 'BLOCKER: Custody gap found.',
+    examples: ['Device moved Stock->Client without Installer record -> Flag'],
+    languages: ["EN"],
+    last_run: 'Last night',
+    logs: []
+  },
+  {
+    id: 'a7',
+    name: 'Reporting Agent',
+    code: 'REPORTING_AGENT',
+    description: 'Generates daily executive summaries and operational reports.',
+    owner_team: 'Data',
+    status: AgentStatus.ENABLED,
+    autonomy: AutonomyLevel.AUTO_EXECUTE,
+    risk_level: 'LOW',
+    schedule_type: 'CRON',
+    schedule_value: '0 7 * * *',
+    data_scope: 'ANALYTICS',
+    system_instructions: 'Synthesize daily data into readable reports for CEO/Admin.',
+    behavior_rules: '1) Aggregate stats. 2) Generate PDF/JSON. 3) Email to stakeholders.',
+    allowed_actions: {
+      observe: ["query_all_stats"],
+      draft_only: [],
+      auto_execute: ["publish_report"]
+    },
+    restricted_actions: { never: [] },
+    escalation_policy: 'None.',
+    examples: ['Generate Daily CEO Report'],
+    languages: ["EN"],
+    last_run: 'Today 07:00',
+    logs: []
+  }
 ];
 
 export const MOCK_EXCEPTIONS: Exception[] = [
@@ -183,4 +437,154 @@ export const MOCK_EXCEPTIONS: Exception[] = [
     recommended_action: 'Contact Care Company Lead immediately to verify location.',
     created_at: '2 hours ago'
   },
+];
+
+export const MOCK_MESSAGES: Message[] = [
+  {
+    id: 'm1',
+    category: 'SYSTEM_NOTIFICATION',
+    sender_type: 'AI',
+    sender_name: 'Stock Controller',
+    sender_role: 'AGENT',
+    recipient_group: 'OPERATIONS',
+    subject: 'Inventory Allocation Confirmed',
+    preview: 'Stock reserved for Case #C2 (Gerrit Groot).',
+    body: 'I have successfully reserved 2 items (Med Dispenser, Fall Sensor) for Case #C2. Warehouse pick-list updated. Installation scheduling is now unblocked.',
+    priority: 'NORMAL',
+    is_read: false,
+    timestamp: '10 mins ago',
+    tags: ['Stock', 'Auto-Action'],
+    action_required: false,
+    related_entity_type: 'CASE',
+    related_entity_id: 'c2'
+  },
+  {
+    id: 'm2',
+    category: 'DIRECT_MESSAGE',
+    sender_type: 'HUMAN',
+    sender_name: 'Nurse Joy',
+    sender_role: 'Lead Nurse',
+    recipient_group: 'OPERATIONS',
+    subject: 'Urgent: Replacement needed for Client #CL1',
+    preview: 'Smart Hub power adapter seems faulty.',
+    body: 'Hi Ops team, regarding Jan Jansen (CL1). The Smart Hub power adapter is flickering. Can we schedule a replacement? The client relies on this for fall detection.',
+    priority: 'HIGH',
+    is_read: true,
+    timestamp: '2 hours ago',
+    tags: ['Maintenance', 'Urgent'],
+    action_required: true
+  },
+  {
+    id: 'm3',
+    category: 'DIRECT_MESSAGE',
+    sender_type: 'AI',
+    sender_name: 'Comms Agent',
+    sender_role: 'AGENT',
+    recipient_group: 'OPERATIONS',
+    subject: 'Approval Needed: Broadcast Message',
+    preview: 'Draft created for "Holiday Service Schedule".',
+    body: 'I have drafted a broadcast message regarding the upcoming holiday service schedule changes. Translation to NL/EN completed. Please review and approve for distribution to all Care Partners.',
+    priority: 'NORMAL',
+    is_read: false,
+    timestamp: '3 hours ago',
+    tags: ['Approval', 'Draft'],
+    action_required: true
+  },
+  {
+    id: 'm4',
+    category: 'SYSTEM_NOTIFICATION',
+    sender_type: 'SYSTEM',
+    sender_name: 'System Monitor',
+    sender_role: 'SYSTEM',
+    recipient_group: 'OPERATIONS',
+    subject: 'Workflow State Change: Case #C3',
+    preview: 'Case moved to INSTALLATION_PENDING.',
+    body: 'Case #C3 for Maria Klein has advanced from STOCK_ALLOCATED to INSTALLATION_PENDING. Install Logistics Agent has been triggered to schedule an appointment.',
+    priority: 'LOW',
+    is_read: true,
+    timestamp: 'Yesterday',
+    tags: ['Workflow', 'Auto'],
+    related_entity_type: 'CASE',
+    related_entity_id: 'c3'
+  },
+  {
+    id: 'm5',
+    category: 'DIRECT_MESSAGE',
+    sender_type: 'HUMAN',
+    sender_name: 'Bob Builder',
+    sender_role: 'Installer',
+    recipient_group: 'OPERATIONS',
+    subject: 'Install Complete: #J1',
+    preview: 'Successfully installed at Maria Klein.',
+    body: 'Job #J1 is done. Photo proof uploaded. Client was happy with the demo. Returning to HQ.',
+    priority: 'LOW',
+    is_read: true,
+    timestamp: 'Yesterday',
+    tags: ['Job', 'Success'],
+    related_entity_type: 'JOB',
+    related_entity_id: 'j1'
+  },
+  {
+    id: 'm6',
+    category: 'SYSTEM_NOTIFICATION',
+    sender_type: 'AI',
+    sender_name: 'Reporting Agent',
+    sender_role: 'AGENT',
+    recipient_group: 'OPERATIONS',
+    subject: 'Daily Report Generated',
+    preview: 'Report #8921 available for review.',
+    body: 'The daily accountability report for 24-Oct has been generated and archived. Accountability Score: 99.8%.',
+    priority: 'LOW',
+    is_read: true,
+    timestamp: 'Yesterday',
+    tags: ['Report', 'Auto'],
+  },
+  {
+    id: 'm7',
+    category: 'SYSTEM_NOTIFICATION',
+    sender_type: 'SYSTEM',
+    sender_name: 'Security Guard',
+    sender_role: 'SYSTEM',
+    recipient_group: 'MC_ADMIN',
+    subject: 'Login from New Device',
+    preview: 'User u3 (Sarah) logged in from unknown IP.',
+    body: 'Security Alert: A login detected for Sarah from IP 192.168.1.55. Device fingerprint match: 40%.',
+    priority: 'HIGH',
+    is_read: true,
+    timestamp: '2 days ago',
+    tags: ['Security'],
+  },
+  // --- NEW MESSAGES FOR INSTALLER VIEW CHECK ---
+  {
+    id: 'm8',
+    category: 'DIRECT_MESSAGE',
+    sender_type: 'HUMAN',
+    sender_name: 'Sarah (Operations)',
+    sender_role: 'Ops Manager',
+    recipient_group: 'INSTALLER',
+    subject: 'Route Update: Amsterdam Area',
+    preview: 'Please prioritize job #J1 today.',
+    body: 'Hey Bob, client for #J1 requested an earlier slot. If you can make it before 2pm, that would be great. Thanks!',
+    priority: 'NORMAL',
+    is_read: false,
+    timestamp: '1 hour ago',
+    tags: ['Route', 'Update'],
+  },
+  {
+    id: 'm9',
+    category: 'SYSTEM_NOTIFICATION',
+    sender_type: 'AI',
+    sender_name: 'Install Logistics',
+    sender_role: 'AGENT',
+    recipient_group: 'INSTALLER',
+    subject: 'New Job Assigned: #J3',
+    preview: 'Added to your queue.',
+    body: 'You have been assigned a new installation job for client Gerrit Groot. Scheduled for tomorrow at 10:00.',
+    priority: 'LOW',
+    is_read: false,
+    timestamp: '30 mins ago',
+    tags: ['Assignment', 'Auto'],
+    related_entity_type: 'JOB',
+    related_entity_id: 'j3'
+  }
 ];

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useStore, store } from '../services/store';
 import { Card, Badge, Button } from '../components/ui';
@@ -144,50 +145,53 @@ export const Cases: React.FC = () => {
                </tr>
              </thead>
              <tbody className="divide-y divide-slate-100">
-               {filteredCases.map(c => (
-                 <tr key={c.id} className="hover:bg-slate-50 transition-colors group">
-                   <td className="px-4 py-3">
-                      <div className="font-mono font-medium text-slate-700">{c.id}</div>
-                      <div className="text-[10px] text-slate-400">{c.created_at}</div>
-                   </td>
-                   <td className="px-4 py-3">
-                      <div className="font-bold text-slate-900">{c.client_name}</div>
-                      <div className="text-xs text-slate-500 flex items-center gap-1">
-                         <Building2 className="w-3 h-3" /> {c.care_company_id === 'cc1' ? 'Thuiszorg West' : 'Zorg & Co'}
-                      </div>
-                   </td>
-                   <td className="px-4 py-3">
-                      <div className="flex flex-wrap gap-1">
-                        {c.items.map((item, i) => (
-                           <span key={i} className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-[10px] border border-slate-200">
-                              <Package className="w-3 h-3" /> {item}
-                           </span>
-                        ))}
-                      </div>
-                   </td>
-                   <td className="px-4 py-3">
-                      <Badge color={getStatusColor(c.status)}>{c.status.replace('_', ' ')}</Badge>
-                   </td>
-                   <td className="px-4 py-3 text-right">
-                      <div className="flex justify-end gap-2">
-                        {c.status === CaseStatus.NEW && canApprove ? (
-                           <>
-                             <Button size="sm" className="h-7 text-xs bg-green-600 hover:bg-green-700" onClick={() => handleApprove(c.id)}>
-                               <CheckCircle className="w-3 h-3 mr-1" /> Approve
+               {filteredCases.map(c => {
+                 const itemNames = store.getProductIdsToNames(c.product_ids);
+                 return (
+                   <tr key={c.id} className="hover:bg-slate-50 transition-colors group">
+                     <td className="px-4 py-3">
+                        <div className="font-mono font-medium text-slate-700">{c.id}</div>
+                        <div className="text-[10px] text-slate-400">{c.created_at}</div>
+                     </td>
+                     <td className="px-4 py-3">
+                        <div className="font-bold text-slate-900">{c.client_name}</div>
+                        <div className="text-xs text-slate-500 flex items-center gap-1">
+                           <Building2 className="w-3 h-3" /> {c.care_company_id === 'cc1' ? 'Thuiszorg West' : 'Zorg & Co'}
+                        </div>
+                     </td>
+                     <td className="px-4 py-3">
+                        <div className="flex flex-wrap gap-1">
+                          {itemNames.map((item, i) => (
+                             <span key={i} className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-[10px] border border-slate-200">
+                                <Package className="w-3 h-3" /> {item}
+                             </span>
+                          ))}
+                        </div>
+                     </td>
+                     <td className="px-4 py-3">
+                        <Badge color={getStatusColor(c.status)}>{c.status.replace('_', ' ')}</Badge>
+                     </td>
+                     <td className="px-4 py-3 text-right">
+                        <div className="flex justify-end gap-2">
+                          {c.status === CaseStatus.NEW && canApprove ? (
+                             <>
+                               <Button size="sm" className="h-7 text-xs bg-green-600 hover:bg-green-700" onClick={() => handleApprove(c.id)}>
+                                 <CheckCircle className="w-3 h-3 mr-1" /> Approve
+                               </Button>
+                               <Button size="sm" variant="outline" className="h-7 text-xs text-red-600 hover:bg-red-50 hover:border-red-200 hover:text-red-700">
+                                 <XCircle className="w-3 h-3" />
+                               </Button>
+                             </>
+                          ) : (
+                             <Button size="sm" variant="outline" className="h-7 text-xs">
+                               Manage <ArrowRight className="w-3 h-3 ml-1" />
                              </Button>
-                             <Button size="sm" variant="outline" className="h-7 text-xs text-red-600 hover:bg-red-50 hover:border-red-200 hover:text-red-700">
-                               <XCircle className="w-3 h-3" />
-                             </Button>
-                           </>
-                        ) : (
-                           <Button size="sm" variant="outline" className="h-7 text-xs">
-                             Manage <ArrowRight className="w-3 h-3 ml-1" />
-                           </Button>
-                        )}
-                      </div>
-                   </td>
-                 </tr>
-               ))}
+                          )}
+                        </div>
+                     </td>
+                   </tr>
+                 );
+               })}
              </tbody>
           </table>
           {filteredCases.length === 0 && (

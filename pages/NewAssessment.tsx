@@ -23,11 +23,8 @@ export const NewAssessment: React.FC = () => {
 
   const handleSubmit = () => {
     // 1. Run AI Analysis immediately
-    const input: Partial<Assessment> = {
-      needs_summary: form.needs_summary,
-      notes: form.notes + ' ' + form.living_situation
-    };
-    const analysis = store.analyzeAssessment(input);
+    const analysisText = `${form.needs_summary} ${form.notes} ${form.living_situation}`;
+    const analysis = store.analyzeAssessment(analysisText);
 
     // 2. Create Draft Assessment
     const newAssessment: Assessment = {
@@ -39,8 +36,7 @@ export const NewAssessment: React.FC = () => {
       risk_level: form.risk_level,
       needs_summary: form.needs_summary,
       notes: `Living Situation: ${form.living_situation}. \nNotes: ${form.notes}`,
-      recommended_devices: [], // Filled in next step
-      recommended_services: [], // Filled in next step
+      recommended_product_ids: [], // Filled in next step via AI selection
       status: 'DRAFT',
       created_at: new Date().toISOString(),
       ai_analysis: analysis

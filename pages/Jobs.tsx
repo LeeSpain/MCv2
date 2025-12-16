@@ -1,15 +1,16 @@
+
 import React, { useState } from 'react';
-import { useStore } from '../services/store';
+import { useStore, store } from '../services/store';
 import { Card, Badge, Button } from '../components/ui';
 import { JobStatus } from '../types';
 import { 
   Calendar, User, MapPin, Clock, CheckCircle, 
   AlertCircle, Wrench, RefreshCw, Search, Filter, 
-  MoreHorizontal, ArrowRight, ChevronLeft, ChevronRight 
+  Package, ChevronLeft, ChevronRight 
 } from 'lucide-react';
 
 export const Jobs: React.FC = () => {
-  const { jobs } = useStore();
+  const { jobs, cases } = useStore();
   const [filterType, setFilterType] = useState<string>('ALL');
   const [search, setSearch] = useState('');
 
@@ -88,7 +89,6 @@ export const Jobs: React.FC = () => {
             <RefreshCw className="w-8 h-8 text-slate-100" />
          </Card>
          <Card className="p-3 flex items-center justify-between border-red-100 bg-red-50/50">
-             {/* Using 'MISSED' status count for example, or hardcoded for mock visuals if 0 */}
             <div>
                <p className="text-[10px] font-bold text-red-500 uppercase">Attention</p>
                <p className="text-xl font-bold text-red-700">{jobs.filter(j => j.status === JobStatus.MISSED || j.status === JobStatus.RESCHEDULE_REQUIRED).length}</p>
@@ -139,59 +139,79 @@ export const Jobs: React.FC = () => {
                  <th className="px-4 py-3 text-xs uppercase tracking-wide w-32">Scheduled</th>
                  <th className="px-4 py-3 text-xs uppercase tracking-wide w-24">Type</th>
                  <th className="px-4 py-3 text-xs uppercase tracking-wide">Client</th>
+                 <th className="px-4 py-3 text-xs uppercase tracking-wide">Details</th>
                  <th className="px-4 py-3 text-xs uppercase tracking-wide">Installer</th>
                  <th className="px-4 py-3 text-xs uppercase tracking-wide">Status</th>
                  <th className="px-4 py-3 text-xs uppercase tracking-wide text-right">Actions</th>
                </tr>
              </thead>
              <tbody className="divide-y divide-slate-100">
-               {filteredJobs.map(job => (
-                 <tr key={job.id} className="hover:bg-slate-50 transition-colors group">
-                   <td className="px-4 py-3">
-                      {job.scheduled_for ? (
-                        <div>
-                           <div className="font-bold text-slate-900">{job.scheduled_for.split(' ')[1]}</div>
-                           <div className="text-xs text-slate-500">{job.scheduled_for.split(' ')[0]}</div>
+               {filteredJobs.map(job => {
+                 const jobCase = cases.find(c => c.id === job.case_id);
+                 const products = jobCase ? store.getProductIdsToNames(jobCase.product_ids) : [];
+                 
+                 return (
+                   <tr key={job.id} className="hover:bg-slate-50 transition-colors group">
+                     <td className="px-4 py-3">
+                        {job.scheduled_for ? (
+                          <div>
+                             <div className="font-bold text-slate-900">{job.scheduled_for.split(' ')[1]}</div>
+                             <div className="text-xs text-slate-500">{job.scheduled_for.split(' ')[0]}</div>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-slate-400 italic flex items-center gap-1">
+                             <Clock className="w-3 h-3" /> Unscheduled
+                          </span>
+                        )}
+                     </td>
+                     <td className="px-4 py-3">
+                        <div className={`flex items-center gap-2 font-medium ${job.type === 'INSTALL' ? 'text-brand-700' : 'text-purple-700'}`}>
+                           {job.type === 'INSTALL' ? <Wrench className="w-4 h-4" /> : <RefreshCw className="w-4 h-4" />}
+                           {job.type}
                         </div>
-                      ) : (
-                        <span className="text-xs text-slate-400 italic flex items-center gap-1">
-                           <Clock className="w-3 h-3" /> Unscheduled
-                        </span>
-                      )}
-                   </td>
-                   <td className="px-4 py-3">
-                      <div className={`flex items-center gap-2 font-medium ${job.type === 'INSTALL' ? 'text-brand-700' : 'text-purple-700'}`}>
-                         {job.type === 'INSTALL' ? <Wrench className="w-4 h-4" /> : <RefreshCw className="w-4 h-4" />}
-                         {job.type}
-                      </div>
-                   </td>
-                   <td className="px-4 py-3">
-                      <div className="font-medium text-slate-900">{job.client_name}</div>
-                      <div className="text-xs text-slate-500 flex items-center gap-1">
-                         <MapPin className="w-3 h-3" /> Area West
-                      </div>
-                   </td>
-                   <td className="px-4 py-3">
-                      {job.installer_name ? (
-                        <div className="flex items-center gap-2">
-                           <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-600">
-                              {job.installer_name.charAt(0)}
+                     </td>
+                     <td className="px-4 py-3">
+                        <div className="font-medium text-slate-900">{job.client_name}</div>
+                        <div className="text-xs text-slate-500 flex items-center gap-1">
+                           <MapPin className="w-3 h-3" /> Area West
+                        </div>
+                     </td>
+                     <td className="px-4 py-3">
+                        {products.length > 0 ? (
+                           <div className="flex flex-col gap-0.5">
+                              {products.slice(0, 2).map((p, i) => (
+                                 <span key={i} className="text-xs text-slate-600 flex items-center gap-1.5">
+                                    <Package className="w-3 h-3 text-slate-300" /> {p}
+                                 </span>
+                              ))}
+                              {products.length > 2 && <span className="text-[10px] text-slate-400 pl-4">+{products.length - 2} more</span>}
                            </div>
-                           <span className="text-slate-700">{job.installer_name}</span>
-                        </div>
-                      ) : (
-                        <span className="text-xs text-slate-400">Unassigned</span>
-                      )}
-                   </td>
-                   <td className="px-4 py-3">
-                      <Badge color={getStatusColor(job.status)}>{job.status.replace('_', ' ')}</Badge>
-                      {job.confirmation_needed && <span className="ml-2 text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-bold border border-amber-200">CONFIRM NEEDED</span>}
-                   </td>
-                   <td className="px-4 py-3 text-right">
-                      <Button variant="outline" size="sm" className="h-7 text-xs">Manage</Button>
-                   </td>
-                 </tr>
-               ))}
+                        ) : (
+                           <span className="text-xs text-slate-400">-</span>
+                        )}
+                     </td>
+                     <td className="px-4 py-3">
+                        {job.installer_name ? (
+                          <div className="flex items-center gap-2">
+                             <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-600">
+                                {job.installer_name.charAt(0)}
+                             </div>
+                             <span className="text-slate-700">{job.installer_name}</span>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-slate-400">Unassigned</span>
+                        )}
+                     </td>
+                     <td className="px-4 py-3">
+                        <Badge color={getStatusColor(job.status)}>{job.status.replace('_', ' ')}</Badge>
+                        {job.confirmation_needed && <span className="ml-2 text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-bold border border-amber-200">CONFIRM NEEDED</span>}
+                     </td>
+                     <td className="px-4 py-3 text-right">
+                        <Button variant="outline" size="sm" className="h-7 text-xs">Manage</Button>
+                     </td>
+                   </tr>
+                 );
+               })}
              </tbody>
           </table>
           {filteredJobs.length === 0 && (

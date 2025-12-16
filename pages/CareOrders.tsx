@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { useStore } from '../services/store';
+import { useStore, store } from '../services/store';
 import { Card, Badge } from '../components/ui';
 import { ClipboardList } from 'lucide-react';
 
@@ -44,7 +45,7 @@ export const CareOrders: React.FC = () => {
                       <span className="text-xs text-slate-400 font-mono">#{c.id}</span>
                    </div>
                    <p className="text-sm text-slate-600">
-                      {c.items.join(', ')}
+                      {store.getProductIdsToNames(c.product_ids).join(', ')}
                    </p>
                 </div>
                 

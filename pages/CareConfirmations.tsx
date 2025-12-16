@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useStore, store } from '../services/store';
 import { Card, Button, Badge } from '../components/ui';
@@ -39,7 +40,7 @@ export const CareConfirmations: React.FC = () => {
                  <div>
                     <h4 className="font-bold text-slate-900 text-lg">Confirm Device Usage</h4>
                     <p className="text-slate-600 my-1">
-                       Is the <strong>{d.product_name}</strong> for client <strong>{d.current_custodian.replace('Client: ', '')}</strong> still in active use?
+                       Is the <strong>{store.getProductName(d.product_id)}</strong> for client <strong>{d.current_custodian.replace('Client: ', '')}</strong> still in active use?
                     </p>
                     <p className="text-xs text-slate-400 flex items-center gap-1">
                        <Clock className="w-3 h-3" /> Last confirmed: {d.last_updated}

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useStore, store } from '../services/store';
@@ -26,7 +27,7 @@ export const CarePlanReview: React.FC = () => {
       care_company_id: currentUser.care_company_id,
       status: CaseStatus.NEW,
       created_at: new Date().toLocaleDateString(),
-      items: plan.agreed_devices
+      product_ids: plan.agreed_product_ids
     });
     // Navigate to order success/dashboard
     navigate('/orders');
@@ -35,6 +36,8 @@ export const CarePlanReview: React.FC = () => {
   const handleLater = () => {
     navigate(`/clients/${client.id}`);
   };
+
+  const itemNames = store.getProductIdsToNames(plan.agreed_product_ids);
 
   if (orderMode) {
      return (
@@ -50,10 +53,10 @@ export const CarePlanReview: React.FC = () => {
            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm text-left max-w-md mx-auto">
               <h4 className="font-bold text-sm text-slate-500 uppercase mb-3">Shipment Manifest</h4>
               <ul className="space-y-2">
-                 {plan.agreed_devices.map(d => (
-                    <li key={d} className="flex items-center gap-3">
+                 {itemNames.map((name, idx) => (
+                    <li key={idx} className="flex items-center gap-3">
                        <CheckCircle className="w-4 h-4 text-green-500" />
-                       <span className="font-medium text-slate-900">{d}</span>
+                       <span className="font-medium text-slate-900">{name}</span>
                     </li>
                  ))}
               </ul>
@@ -98,8 +101,8 @@ export const CarePlanReview: React.FC = () => {
          <div>
             <h4 className="text-xs font-bold text-slate-400 uppercase mb-3">Agreed Equipment</h4>
             <div className="flex flex-wrap gap-2">
-               {plan.agreed_devices.map(d => (
-                  <Badge key={d} color="blue">{d}</Badge>
+               {itemNames.map((name, idx) => (
+                  <Badge key={idx} color="blue">{name}</Badge>
                ))}
             </div>
          </div>

@@ -163,7 +163,7 @@ export const Today: React.FC = () => {
                    <tbody className="divide-y divide-slate-50">
                      {overdueDevices.map(d => (
                        <tr key={d.id} className="hover:bg-slate-50 transition-colors">
-                         <td className="px-5 py-3 font-medium text-slate-900">{d.product_name} <span className="text-slate-400 font-normal ml-1">{d.serial_number}</span></td>
+                         <td className="px-5 py-3 font-medium text-slate-900">{store.getProductName(d.product_id)} <span className="text-slate-400 font-normal ml-1">{d.serial_number}</span></td>
                          <td className="px-5 py-3"><Badge color="red">SLA Breach</Badge></td>
                          <td className="px-5 py-3 text-xs text-slate-600">{d.current_custodian}</td>
                          <td className="px-5 py-3 text-right">

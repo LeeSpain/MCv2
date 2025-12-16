@@ -1,3 +1,4 @@
+
 export enum Role {
   MC_ADMIN = 'MC_ADMIN',
   MC_OPERATIONS = 'MC_OPERATIONS',
@@ -56,6 +57,14 @@ export enum AutonomyLevel {
   AUTO_EXECUTE = 'AUTO_EXECUTE'
 }
 
+export enum ProductCategory {
+  SAFETY = "SAFETY",
+  MEDICATION = "MEDICATION",
+  VITALS = "VITALS",
+  HOME_MONITORING = "HOME_MONITORING",
+  SERVICE = "SERVICE",
+}
+
 export interface User {
   id: string;
   name: string;
@@ -78,11 +87,12 @@ export interface Client {
 }
 
 export interface AiAnalysisSnapshot {
-  suggested_devices: string[];
-  suggested_services: string[];
+  suggested_product_ids: string[];
+  suggested_devices?: string[]; // Deprecated, kept for backward compat if needed during migration
+  suggested_services?: string[]; // Deprecated
   risk_flags: string[];
-  reasoning: string;
-  confidence_score: number;
+  reasoning: string[];
+  confidence: number;
 }
 
 export interface Assessment {
@@ -93,8 +103,7 @@ export interface Assessment {
   type: 'INITIAL' | 'REVIEW' | 'CHANGE_OF_CONDITION';
   risk_level: 'LOW' | 'MEDIUM' | 'HIGH';
   needs_summary: string;
-  recommended_services: string[];
-  recommended_devices: string[];
+  recommended_product_ids: string[]; // Consolidated devices & services
   notes: string;
   status: 'DRAFT' | 'APPROVED';
   created_at: string;
@@ -107,8 +116,7 @@ export interface CarePlan {
   assessment_id?: string;
   goals: string;
   requirements: string;
-  agreed_services: string[];
-  agreed_devices: string[];
+  agreed_product_ids: string[]; // Consolidated devices & services
   review_date: string;
   review_interval_days: number;
   notes: string;
@@ -131,7 +139,7 @@ export interface ClientTimelineEvent {
 export interface Device {
   id: string;
   serial_number: string;
-  product_name: string;
+  product_id: string;
   status: DeviceStatus;
   current_custodian: string;
   last_updated: string;
@@ -146,7 +154,7 @@ export interface Case {
   client_name: string;
   status: CaseStatus;
   created_at: string;
-  items: string[]; 
+  product_ids: string[]; 
   care_company_id?: string;
   care_plan_id?: string;
 }
@@ -157,6 +165,7 @@ export interface Job {
   status: JobStatus;
   client_name: string;
   client_id?: string;
+  case_id?: string; // Links back to the order containing products
   scheduled_for?: string;
   installer_name?: string;
   confirmation_needed?: boolean;
@@ -199,4 +208,41 @@ export interface Exception {
   recommended_action: string;
   created_at: string;
   resolved_at?: string;
+}
+
+export interface Message {
+  id: string;
+  thread_id?: string;
+  category: 'DIRECT_MESSAGE' | 'SYSTEM_NOTIFICATION';
+  sender_type: 'AI' | 'HUMAN' | 'SYSTEM';
+  sender_name: string;
+  sender_role?: string; 
+  recipient_group: 'OPERATIONS' | 'INSTALLER' | 'CARE_COMPANY' | 'CEO' | 'MC_ADMIN';
+  subject: string;
+  preview: string;
+  body: string;
+  priority: 'LOW' | 'NORMAL' | 'HIGH';
+  is_read: boolean;
+  timestamp: string;
+  tags: string[];
+  action_required?: boolean;
+  related_entity_id?: string;
+  related_entity_type?: string;
+}
+
+export interface Product {
+  id: string; // e.g. "prod-sos"
+  name: string; // e.g. "SOS Pendant"
+  category: ProductCategory;
+
+  // optional metadata
+  supplier?: string; // "Dosell", "Vivago", etc.
+  sku?: string;
+
+  // behavior flags
+  is_device: boolean; // physical device vs service
+  is_active: boolean;
+
+  requires_hub?: boolean; // some devices need a hub installed
+  requires_subscription?: boolean; // some require monthly service to function/support
 }

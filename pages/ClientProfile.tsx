@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useStore, store } from '../services/store';
@@ -24,8 +25,14 @@ export const ClientProfile: React.FC = () => {
   const clientTimeline = timeline.filter(t => t.client_id === id).sort((a,b) => b.timestamp.localeCompare(a.timestamp));
   const clientCases = cases.filter(c => c.client_id === id).sort((a,b) => b.created_at.localeCompare(a.created_at));
 
-  const canEdit = [Role.CARE_COMPANY_LEAD_NURSE, Role.MC_ADMIN].includes(currentUser.role);
-  const isCareCompany = currentUser.role.includes('CARE_COMPANY');
+  // --- PERMISSION CHECK ---
+  const isInternalOps = [Role.MC_ADMIN, Role.MC_OPERATIONS, Role.CEO].includes(currentUser.role);
+  const isLeadNurse = currentUser.role === Role.CARE_COMPANY_LEAD_NURSE;
+  
+  // Edit logic: Internal Ops can edit basic profile data (address/contact). Lead Nurse can do everything.
+  const canEditProfile = isInternalOps || isLeadNurse;
+  // Clinical logic: Only Nurses can perform assessments.
+  const canPerformAssessment = isLeadNurse || currentUser.role === Role.CARE_COMPANY_NURSE;
 
   // --- ACTIONS ---
   const handleQuickOrder = () => {
@@ -38,9 +45,9 @@ export const ClientProfile: React.FC = () => {
         care_company_id: client.care_company_id,
         status: CaseStatus.NEW,
         created_at: new Date().toLocaleDateString(),
-        items: plan.agreed_devices
+        product_ids: plan.agreed_product_ids
       });
-      navigate('/orders');
+      navigate('/cases'); // Redirect to generic order list for Ops, or specific for Care
     }
   };
 
@@ -48,13 +55,16 @@ export const ClientProfile: React.FC = () => {
     navigate(`/clients/${client.id}/assessment/new`);
   };
 
+  // Determine back link based on role
+  const backLink = isInternalOps ? "/clients" : "/clients";
+
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-12">
       {/* 1. HEADER & IDENTITY */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-slate-200 pb-6">
         <div>
-           <Link to={isCareCompany ? "/clients" : "/cases"} className="text-sm text-slate-500 hover:text-slate-800 flex items-center gap-1 mb-3">
-              <ArrowLeft className="w-4 h-4" /> Back to List
+           <Link to={backLink} className="text-sm text-slate-500 hover:text-slate-800 flex items-center gap-1 mb-3">
+              <ArrowLeft className="w-4 h-4" /> Back to Directory
            </Link>
            <div className="flex items-center gap-4">
               <div className="w-16 h-16 bg-slate-200 rounded-full flex items-center justify-center text-2xl font-bold text-slate-500 border-4 border-white shadow-sm">
@@ -76,8 +86,8 @@ export const ClientProfile: React.FC = () => {
            </div>
         </div>
         <div className="flex gap-3">
-           {canEdit && <Button variant="outline"><Edit className="w-4 h-4 mr-2" /> Edit Profile</Button>}
-           {canEdit && (
+           {canEditProfile && <Button variant="outline"><Edit className="w-4 h-4 mr-2" /> Edit Profile</Button>}
+           {canPerformAssessment && (
               <Button onClick={startNewAssessment} className="bg-brand-600 hover:bg-brand-700 text-white">
                 <Activity className="w-4 h-4 mr-2" /> New Assessment
               </Button>
@@ -149,12 +159,12 @@ export const ClientProfile: React.FC = () => {
         {/* 3. MAIN CONTENT TABS */}
         <div className="lg:col-span-3">
            {/* Tab Navigation */}
-           <div className="flex border-b border-slate-200 mb-6">
+           <div className="flex border-b border-slate-200 mb-6 overflow-x-auto">
               {['OVERVIEW', 'ASSESSMENTS', 'PLAN', 'ORDERS', 'TIMELINE'].map((tab) => (
                  <button
                     key={tab}
                     onClick={() => setActiveTab(tab as any)}
-                    className={`px-6 py-3 text-sm font-bold border-b-2 transition-colors ${
+                    className={`px-6 py-3 text-sm font-bold border-b-2 transition-colors whitespace-nowrap ${
                        activeTab === tab 
                        ? 'border-brand-600 text-brand-600' 
                        : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'
@@ -192,7 +202,7 @@ export const ClientProfile: React.FC = () => {
                        ) : (
                           <div className="text-center py-8 text-slate-500">
                              <p>No active care plan.</p>
-                             {canEdit && (
+                             {canPerformAssessment && (
                                 <Button size="sm" className="mt-2" onClick={startNewAssessment}>
                                    <BrainCircuit className="w-4 h-4 mr-2" /> Start Assessment Flow
                                 </Button>
@@ -208,7 +218,7 @@ export const ClientProfile: React.FC = () => {
                                 <div className="flex items-center gap-3">
                                    <Package className="w-8 h-8 text-slate-300 p-1.5 bg-slate-100 rounded" />
                                    <div>
-                                      <p className="text-sm font-bold text-slate-900">{d.product_name}</p>
+                                      <p className="text-sm font-bold text-slate-900">{store.getProductName(d.product_id)}</p>
                                       <p className="text-xs text-slate-500 font-mono">{d.serial_number}</p>
                                    </div>
                                 </div>
@@ -253,7 +263,7 @@ export const ClientProfile: React.FC = () => {
               <div className="space-y-4">
                  <div className="flex justify-between items-center">
                     <h3 className="text-lg font-bold text-slate-900">Assessments History</h3>
-                    {canEdit && <Button size="sm" onClick={startNewAssessment}><Plus className="w-4 h-4 mr-2" /> New Assessment</Button>}
+                    {canPerformAssessment && <Button size="sm" onClick={startNewAssessment}><Plus className="w-4 h-4 mr-2" /> New Assessment</Button>}
                  </div>
                  {clientAssessments.length > 0 ? clientAssessments.map(ass => (
                     <Card key={ass.id} className="p-6">
@@ -272,7 +282,7 @@ export const ClientProfile: React.FC = () => {
                           <div className="p-3 bg-slate-50 rounded border border-slate-100">
                              <span className="text-xs font-bold text-slate-400 uppercase block mb-1">Recommendation</span>
                              <div className="flex flex-wrap gap-2 mt-1">
-                                {ass.recommended_devices.map(d => (
+                                {store.getProductIdsToNames(ass.recommended_product_ids).map(d => (
                                    <span key={d} className="px-2 py-0.5 bg-white border border-slate-200 rounded text-xs font-medium text-slate-600">{d}</span>
                                 ))}
                              </div>
@@ -300,7 +310,7 @@ export const ClientProfile: React.FC = () => {
                              <h3 className="text-xl font-bold text-slate-900">Active Care Plan</h3>
                              <p className="text-sm text-slate-500">Activated on {plan.created_at} by {plan.created_by_name}</p>
                           </div>
-                          {canEdit && <Button variant="outline" size="sm"><Edit className="w-3 h-3 mr-2" /> Revise Plan</Button>}
+                          {canPerformAssessment && <Button variant="outline" size="sm"><Edit className="w-3 h-3 mr-2" /> Revise Plan</Button>}
                        </div>
 
                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -318,7 +328,7 @@ export const ClientProfile: React.FC = () => {
                                 <Package className="w-4 h-4 text-brand-500" /> Agreed Devices
                              </h4>
                              <div className="space-y-2">
-                                {plan.agreed_devices.map(d => (
+                                {store.getProductIdsToNames(plan.agreed_product_ids).map(d => (
                                    <div key={d} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-100">
                                       <CheckCircle className="w-4 h-4 text-green-500" />
                                       <span className="text-sm font-medium text-slate-700">{d}</span>
@@ -346,7 +356,7 @@ export const ClientProfile: React.FC = () => {
                  ) : (
                     <div className="p-12 text-center border-2 border-dashed rounded-xl text-slate-400">
                        <p className="mb-4">No active care plan.</p>
-                       {canEdit && <Button onClick={startNewAssessment}>Create Initial Plan</Button>}
+                       {canPerformAssessment && <Button onClick={startNewAssessment}>Create Initial Plan</Button>}
                     </div>
                  )}
               </div>
@@ -357,7 +367,7 @@ export const ClientProfile: React.FC = () => {
               <div className="space-y-4">
                  <div className="flex justify-between items-center">
                     <h3 className="text-lg font-bold text-slate-900">Order History</h3>
-                    {canEdit && <Button size="sm" onClick={handleQuickOrder}><Plus className="w-4 h-4 mr-2" /> New Order</Button>}
+                    {canEditProfile && <Button size="sm" onClick={handleQuickOrder}><Plus className="w-4 h-4 mr-2" /> New Order</Button>}
                  </div>
                  {clientCases.length > 0 ? clientCases.map(c => (
                     <Card key={c.id} className="p-4 flex items-center justify-between">
@@ -366,7 +376,7 @@ export const ClientProfile: React.FC = () => {
                              <span className="font-bold text-slate-900">Order #{c.id}</span>
                              <span className="text-xs text-slate-500">{c.created_at}</span>
                           </div>
-                          <p className="text-sm text-slate-600">{c.items.join(', ')}</p>
+                          <p className="text-sm text-slate-600">{store.getProductIdsToNames(c.product_ids).join(', ')}</p>
                        </div>
                        <Badge color={c.status === 'CLOSED' ? 'gray' : 'blue'}>{c.status}</Badge>
                     </Card>

@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { useStore } from '../services/store';
+import { useStore, store } from '../services/store';
 import { Card, Badge, Button } from '../components/ui';
 import { DeviceStatus, JobStatus } from '../types';
 import { 
@@ -43,7 +43,7 @@ export const DailyReport: React.FC = () => {
 
   // Render Helper
   const MetricCell = ({ label, value, sub, color = 'text-slate-900' }: any) => (
-    <div className="flex-1 px-6 first:pl-2 border-r border-slate-100 last:border-0">
+    <div className="flex-1 px-4 py-3 md:py-0">
       <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1">{label}</div>
       <div className={`text-2xl font-bold ${color}`}>{value}</div>
       {sub && <div className="text-[10px] text-slate-500 font-medium mt-0.5">{sub}</div>}
@@ -75,36 +75,38 @@ export const DailyReport: React.FC = () => {
       </div>
 
       {/* 1. EXECUTIVE METRICS STRIP */}
-      <Card className="flex flex-col md:flex-row py-6 divide-y md:divide-y-0">
-        <MetricCell 
-          label="Total Assets" 
-          value={totalDevices} 
-          sub="+2 net change" 
-        />
-        <MetricCell 
-          label="Accountability" 
-          value={`${accountabilityScore.toFixed(0)}%`} 
-          sub="Target: 100%" 
-          color={accountabilityScore === 100 ? 'text-green-600' : 'text-red-600'} 
-        />
-        <MetricCell 
-          label="Missing Stock" 
-          value={unaccountedDevices} 
-          sub="Immediate Action" 
-          color={unaccountedDevices > 0 ? 'text-red-600' : 'text-slate-300'} 
-        />
-        <MetricCell 
-          label="SLA Breaches" 
-          value={overdueItems.length} 
-          sub="Overdue Items" 
-          color={overdueItems.length > 0 ? 'text-amber-600' : 'text-slate-300'} 
-        />
-        <MetricCell 
-          label="Critical Exceptions" 
-          value={criticalExceptions.length} 
-          sub="Blockers/Incidents" 
-          color={criticalExceptions.length > 0 ? 'text-red-600' : 'text-slate-300'} 
-        />
+      <Card noPadding>
+        <div className="flex flex-col md:flex-row py-4 divide-y md:divide-y-0 md:divide-x divide-slate-100">
+          <MetricCell 
+            label="Total Assets" 
+            value={totalDevices} 
+            sub="+2 net change" 
+          />
+          <MetricCell 
+            label="Accountability" 
+            value={`${accountabilityScore.toFixed(0)}%`} 
+            sub="Target: 100%" 
+            color={accountabilityScore === 100 ? 'text-green-600' : 'text-red-600'} 
+          />
+          <MetricCell 
+            label="Missing Stock" 
+            value={unaccountedDevices} 
+            sub="Immediate Action" 
+            color={unaccountedDevices > 0 ? 'text-red-600' : 'text-slate-300'} 
+          />
+          <MetricCell 
+            label="SLA Breaches" 
+            value={overdueItems.length} 
+            sub="Overdue Items" 
+            color={overdueItems.length > 0 ? 'text-amber-600' : 'text-slate-300'} 
+          />
+          <MetricCell 
+            label="Critical Exceptions" 
+            value={criticalExceptions.length} 
+            sub="Blockers/Incidents" 
+            color={criticalExceptions.length > 0 ? 'text-red-600' : 'text-slate-300'} 
+          />
+        </div>
       </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -157,7 +159,7 @@ export const DailyReport: React.FC = () => {
                     {overdueItems.slice(0, 8).map(d => (
                       <tr key={d.id} className="hover:bg-slate-50">
                         <td className="px-5 py-3 font-mono text-xs text-slate-600">{d.serial_number}</td>
-                        <td className="px-5 py-3 font-medium text-slate-900">{d.product_name}</td>
+                        <td className="px-5 py-3 font-medium text-slate-900">{store.getProductName(d.product_id)}</td>
                         <td className="px-5 py-3 text-slate-600">{d.current_custodian}</td>
                         <td className="px-5 py-3"><Badge color="red">BREACH > 24H</Badge></td>
                       </tr>

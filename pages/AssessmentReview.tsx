@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useStore, store } from '../services/store';
@@ -7,14 +8,16 @@ import { ArrowLeft, CheckCircle, BrainCircuit, AlertTriangle, Package, Activity 
 export const AssessmentReview: React.FC = () => {
   const { id, assessmentId } = useParams<{ id: string; assessmentId: string }>();
   const navigate = useNavigate();
-  const { assessments, clients } = useStore();
+  const { assessments, clients, products } = useStore();
 
   const assessment = assessments.find(a => a.id === assessmentId);
   const client = clients.find(c => c.id === id);
 
   // Local state for the final selection (Nurse can override AI)
-  const [selectedDevices, setSelectedDevices] = useState<string[]>(assessment?.ai_analysis?.suggested_devices || []);
-  const [selectedServices, setSelectedServices] = useState<string[]>(assessment?.ai_analysis?.suggested_services || []);
+  // Default to AI suggestions from the new analysis structure
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>(
+    assessment?.ai_analysis?.suggested_product_ids || []
+  );
 
   if (!assessment || !client) return <div>Data not found</div>;
 
@@ -22,21 +25,20 @@ export const AssessmentReview: React.FC = () => {
 
   const handleConfirm = () => {
     // 1. Update Assessment status to APPROVED
-    store.approveAssessment(assessment.id, selectedDevices, selectedServices);
+    store.approveAssessment(assessment.id, selectedProductIds);
     
     // 2. Create Care Plan draft from assessment
     store.createCarePlanFromAssessment(assessment.id, {
-       agreed_devices: selectedDevices,
-       agreed_services: selectedServices
+       agreed_product_ids: selectedProductIds
     });
 
     // 3. Navigate to Care Plan Review
     navigate(`/clients/${client.id}/care-plan/review`);
   };
 
-  const toggleDevice = (dev: string) => {
-    if (selectedDevices.includes(dev)) setSelectedDevices(selectedDevices.filter(d => d !== dev));
-    else setSelectedDevices([...selectedDevices, dev]);
+  const toggleProduct = (pid: string) => {
+    if (selectedProductIds.includes(pid)) setSelectedProductIds(selectedProductIds.filter(d => d !== pid));
+    else setSelectedProductIds([...selectedProductIds, pid]);
   };
 
   return (
@@ -80,13 +82,17 @@ export const AssessmentReview: React.FC = () => {
                <div className="bg-brand-50 p-4 rounded-lg border border-brand-100">
                   <h4 className="text-xs font-bold text-brand-800 uppercase mb-2 flex justify-between">
                      Analysis Summary
-                     <span className="text-brand-600">Confidence: {(analysis.confidence_score * 100).toFixed(0)}%</span>
+                     <span className="text-brand-600">Confidence: {(analysis.confidence * 100).toFixed(0)}%</span>
                   </h4>
-                  <p className="text-sm text-brand-900 leading-relaxed">
-                     {analysis.reasoning}
-                  </p>
+                  <div className="space-y-1 mb-3">
+                     {analysis.reasoning && analysis.reasoning.map((reason, idx) => (
+                        <p key={idx} className="text-sm text-brand-900 leading-relaxed flex gap-2">
+                           <span className="text-brand-400">•</span> {reason}
+                        </p>
+                     ))}
+                  </div>
                   {analysis.risk_flags.length > 0 && (
-                     <div className="mt-3 flex flex-wrap gap-2">
+                     <div className="flex flex-wrap gap-2 mt-2">
                         {analysis.risk_flags.map((flag, i) => (
                            <span key={i} className="inline-flex items-center gap-1 px-2 py-1 bg-red-100 text-red-700 text-xs font-bold rounded border border-red-200">
                               <AlertTriangle className="w-3 h-3" /> {flag}
@@ -96,32 +102,36 @@ export const AssessmentReview: React.FC = () => {
                   )}
                </div>
 
-               {/* Device Selection */}
+               {/* Product Selection */}
                <div>
                   <h4 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
-                     <Package className="w-4 h-4 text-slate-500" /> Recommended Devices
+                     <Package className="w-4 h-4 text-slate-500" /> Recommended Products
                   </h4>
                   <div className="space-y-2">
-                     {['Smart Hub', 'Fall Sensor', 'Med Dispenser', 'GPS Tracker'].map(dev => {
-                        const isRecommended = analysis.suggested_devices.includes(dev);
-                        const isSelected = selectedDevices.includes(dev);
+                     {products.map(product => {
+                        const isRecommended = analysis.suggested_product_ids.includes(product.id);
+                        const isSelected = selectedProductIds.includes(product.id);
+                        
                         return (
                            <div 
-                              key={dev} 
-                              onClick={() => toggleDevice(dev)}
+                              key={product.id} 
+                              onClick={() => toggleProduct(product.id)}
                               className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all ${
                                  isSelected 
                                  ? 'bg-green-50 border-green-200' 
-                                 : 'bg-white border-slate-200 opacity-60 hover:opacity-100'
+                                 : 'bg-white border-slate-200 opacity-80 hover:opacity-100'
                               }`}
                            >
                               <div className="flex items-center gap-3">
                                  <div className={`w-5 h-5 rounded border flex items-center justify-center ${isSelected ? 'bg-green-500 border-green-500' : 'bg-white border-slate-300'}`}>
                                     {isSelected && <CheckCircle className="w-3.5 h-3.5 text-white" />}
                                  </div>
-                                 <span className={`text-sm font-medium ${isSelected ? 'text-green-900' : 'text-slate-600'}`}>{dev}</span>
+                                 <div>
+                                    <span className={`text-sm font-medium block ${isSelected ? 'text-green-900' : 'text-slate-600'}`}>{product.name}</span>
+                                    <span className="text-[10px] text-slate-400 uppercase">{product.category.replace('_', ' ')}</span>
+                                 </div>
                               </div>
-                              {isRecommended && <span className="text-[10px] bg-brand-100 text-brand-700 px-2 py-0.5 rounded font-bold">AI SUGGESTION</span>}
+                              {isRecommended && <span className="text-[10px] bg-brand-100 text-brand-700 px-2 py-0.5 rounded font-bold">SUGGESTED</span>}
                            </div>
                         );
                      })}

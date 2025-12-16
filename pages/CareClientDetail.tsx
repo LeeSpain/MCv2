@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { useStore } from '../services/store';
+import { useStore, store } from '../services/store';
 import { useParams, Link } from 'react-router-dom';
 import { Card, Button, Badge } from '../components/ui';
 import { ArrowLeft, FileText, Package, Plus, AlertCircle, Edit } from 'lucide-react';
@@ -81,7 +82,7 @@ export const CareClientDetail: React.FC = () => {
             <div className="space-y-3">
                {clientDevices.map(d => (
                   <Card key={d.id} className="flex justify-between items-center p-4">
-                     <span className="font-medium text-slate-900">{d.product_name}</span>
+                     <span className="font-medium text-slate-900">{store.getProductName(d.product_id)}</span>
                      {d.status === 'INSTALLED_ACTIVE' ? (
                         <Badge color="green">Active</Badge>
                      ) : d.status === 'AWAITING_RETURN' ? (

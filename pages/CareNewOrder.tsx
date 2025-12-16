@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useStore, store } from '../services/store';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -8,27 +9,20 @@ import { CaseStatus } from '../types';
 export const CareNewOrder: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { clients, currentUser } = useStore();
+  const { clients, currentUser, products } = useStore();
   
   const client = clients.find(c => c.id === id);
-  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
   const [notes, setNotes] = useState('');
   const [submitted, setSubmitted] = useState(false);
 
   if (!client) return <div>Client not found</div>;
 
-  const products = [
-    { id: 'p1', name: 'Smart Hub', desc: 'Central connectivity unit' },
-    { id: 'p2', name: 'Fall Sensor', desc: 'Automatic fall detection' },
-    { id: 'p3', name: 'Med Dispenser', desc: 'Automated medication scheduling' },
-    { id: 'p4', name: 'Lifestyle Monitoring', desc: 'Activity pattern tracking' },
-  ];
-
-  const toggleItem = (name: string) => {
-    if (selectedItems.includes(name)) {
-      setSelectedItems(selectedItems.filter(i => i !== name));
+  const toggleItem = (pid: string) => {
+    if (selectedProductIds.includes(pid)) {
+      setSelectedProductIds(selectedProductIds.filter(i => i !== pid));
     } else {
-      setSelectedItems([...selectedItems, name]);
+      setSelectedProductIds([...selectedProductIds, pid]);
     }
   };
 
@@ -40,7 +34,7 @@ export const CareNewOrder: React.FC = () => {
       care_company_id: currentUser.care_company_id,
       status: CaseStatus.NEW,
       created_at: new Date().toLocaleDateString(),
-      items: selectedItems
+      product_ids: selectedProductIds
     });
     setSubmitted(true);
   };
@@ -61,6 +55,10 @@ export const CareNewOrder: React.FC = () => {
     );
   }
 
+  // Filter out services/products that might not be selectable in this quick flow if needed
+  // For now, show all active products
+  const availableProducts = products.filter(p => p.is_active);
+
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <Button variant="outline" onClick={() => navigate(-1)} className="mb-4">
@@ -74,19 +72,19 @@ export const CareNewOrder: React.FC = () => {
 
       <Card className="p-6 space-y-6">
          <div>
-            <h3 className="font-bold text-slate-800 mb-4">Select Devices</h3>
+            <h3 className="font-bold text-slate-800 mb-4">Select Devices & Services</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-               {products.map(p => (
+               {availableProducts.map(p => (
                  <div 
                    key={p.id} 
-                   onClick={() => toggleItem(p.name)}
-                   className={`p-4 border rounded-xl cursor-pointer transition-all ${selectedItems.includes(p.name) ? 'bg-brand-50 border-brand-500 ring-1 ring-brand-500' : 'border-slate-200 hover:border-brand-300'}`}
+                   onClick={() => toggleItem(p.id)}
+                   className={`p-4 border rounded-xl cursor-pointer transition-all ${selectedProductIds.includes(p.id) ? 'bg-brand-50 border-brand-500 ring-1 ring-brand-500' : 'border-slate-200 hover:border-brand-300'}`}
                  >
                     <div className="flex justify-between items-center mb-1">
                        <span className="font-bold text-slate-900">{p.name}</span>
-                       {selectedItems.includes(p.name) && <CheckCircle className="w-5 h-5 text-brand-600" />}
+                       {selectedProductIds.includes(p.id) && <CheckCircle className="w-5 h-5 text-brand-600" />}
                     </div>
-                    <p className="text-xs text-slate-500">{p.desc}</p>
+                    <p className="text-xs text-slate-500">{p.category.replace('_', ' ')}</p>
                  </div>
                ))}
             </div>
@@ -104,7 +102,7 @@ export const CareNewOrder: React.FC = () => {
          </div>
 
          <div className="pt-4 border-t border-slate-100 flex justify-end">
-            <Button onClick={handleSubmit} disabled={selectedItems.length === 0} className="w-full md:w-auto">
+            <Button onClick={handleSubmit} disabled={selectedProductIds.length === 0} className="w-full md:w-auto">
                Submit Order Request
             </Button>
          </div>
