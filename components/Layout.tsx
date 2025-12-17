@@ -28,7 +28,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     '/clients', 
     '/orders', 
     '/confirmations',
-    '/landing' // Allow Landing Page
+    '/' // Allow Landing Page
   ];
 
   // --- ROLE SWITCH HANDLER ---
@@ -40,7 +40,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
       store.setUser(userId);
       
       // Force navigation to the specific dashboard root for the new role
-      let targetPath = '/';
+      let targetPath = '/dashboard'; // Default
       switch (user.role) {
         case Role.CEO:
           targetPath = '/ceo-dashboard';
@@ -55,7 +55,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
         case Role.MC_ADMIN:
         case Role.MC_OPERATIONS:
         default:
-          targetPath = '/'; // Ops Dashboard
+          targetPath = '/dashboard'; // Ops Dashboard Main View
           break;
       }
       navigate(targetPath);
@@ -64,8 +64,8 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   
   // --- STRICT REDIRECT LOGIC ---
   useEffect(() => {
-    // Exception: Always allow the Landing Page
-    if (location.pathname === '/landing') {
+    // Exception: Always allow the Landing Page (Root)
+    if (location.pathname === '/') {
         setIsRedirecting(false);
         return;
     }
@@ -87,19 +87,19 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
       // Prevent Ops/Admin/Nurses from seeing CEO dashboard
       if (location.pathname === '/ceo-dashboard' && currentUser.role !== Role.CEO) {
          shouldRedirect = true;
-         target = currentUser.role === Role.CARE_COMPANY_LEAD_NURSE ? '/care-dashboard' : '/';
+         target = currentUser.role === Role.CARE_COMPANY_LEAD_NURSE ? '/care-dashboard' : '/dashboard';
       }
       // Prevent access to mobile-specific dashboards if accessed directly on desktop
       else if (location.pathname === '/installer-dashboard') {
         shouldRedirect = true;
-        target = '/';
+        target = '/dashboard';
       }
     }
 
     if (shouldRedirect) {
         setIsRedirecting(true);
         navigate(target, { replace: true });
-        // Small timeout to allow state to settle, though navigation usually handles it
+        // Small timeout to allow state to settle
         setTimeout(() => setIsRedirecting(false), 500);
     } else {
         setIsRedirecting(false);
@@ -107,12 +107,12 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   }, [isMobile, location.pathname, navigate, currentUser.role]);
 
   // --- RENDER GUARD ---
-  // If explicitly on landing, render children immediately (Layout doesn't wrap landing content usually, but here we might strip sidebar)
-  if (location.pathname === '/landing') {
+  // If explicitly on landing (root), render children immediately (Layout disabled)
+  if (location.pathname === '/') {
       return <>{children}</>;
   }
 
-  // Instead of returning null, we show a loading state if we are in an invalid state waiting for redirect
+  // Loading state during redirects
   const isInvalidMobileState = isMobile && !mobilePaths.some(p => location.pathname.startsWith(p));
   const isInvalidDesktopState = !isMobile && location.pathname === '/installer-dashboard';
   const isInvalidCeoState = !isMobile && location.pathname === '/ceo-dashboard' && currentUser.role !== Role.CEO;
@@ -127,11 +127,10 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   }
 
   // Navigation items definition with allowed roles
-  // ORDER: Dashboards -> Messages -> Workflows -> Lists -> Settings
   const allNavItems = [
     // --- 1. DASHBOARDS ---
     {
-      path: '/',
+      path: '/dashboard', // Updated from '/'
       label: 'Dashboard',
       icon: Home,
       allowed: [Role.MC_ADMIN, Role.MC_OPERATIONS, Role.CEO]
@@ -156,12 +155,12 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     },
     {
       path: '/care-dashboard',
-      label: 'Dashboard', // Mobile Nurse Home
+      label: 'Dashboard',
       icon: LayoutDashboard,
       allowed: [Role.CARE_COMPANY_LEAD_NURSE, Role.CARE_COMPANY_NURSE]
     },
 
-    // --- 2. COMMUNICATION (High Priority) ---
+    // --- 2. COMMUNICATION ---
     { 
       path: '/messages', 
       label: 'Messages', 
@@ -246,7 +245,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
         <main className="flex-1 overflow-y-auto overflow-x-hidden pb-24 relative bg-slate-100 touch-pan-y">
            {children}
            
-           {/* Mobile Role Switcher (Dev Tool) - pushed to bottom of content */}
+           {/* Mobile Role Switcher (Dev Tool) */}
            <div className="p-8 pb-32 text-center opacity-60">
               <label className="text-[10px] font-bold text-slate-400 uppercase block mb-2">Dev: Simulate Role</label>
               <select 
@@ -259,13 +258,13 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                 ))}
               </select>
               <div className="mt-4">
-                 <Link to="/landing" className="text-xs font-bold text-brand-600 underline">Back to Portal</Link>
+                 <Link to="/" className="text-xs font-bold text-brand-600 underline">Back to Portal</Link>
               </div>
            </div>
         </main>
 
         <nav className="fixed bottom-0 w-full bg-white border-t border-slate-200 grid grid-cols-4 h-[calc(4rem+env(safe-area-inset-bottom))] pb-[env(safe-area-inset-bottom)] z-50 shadow-[0_-4px_15px_rgba(0,0,0,0.05)]">
-           {navItems.slice(0, 3).map(item => { // Take top 3 relevant items
+           {navItems.slice(0, 3).map(item => { 
               const isActive = location.pathname === item.path;
               const Icon = item.icon;
               return (
@@ -275,7 +274,6 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                 </Link>
               );
            })}
-           {/* Mobile Profile Tab (Always Last) */}
            <Link to="/settings" className={`flex flex-col items-center justify-center active:bg-slate-50 transition-colors ${location.pathname === '/settings' ? 'text-brand-600' : 'text-slate-400'}`}>
               <UserCircle className={`w-6 h-6 mb-1 ${location.pathname === '/settings' ? 'fill-brand-100' : ''}`} strokeWidth={location.pathname === '/settings' ? 2.5 : 2} />
               <span className="text-[10px] font-bold">Profile</span>
@@ -291,7 +289,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
       {/* Sidebar */}
       <aside className="w-64 bg-slate-900 text-white flex flex-col shadow-xl z-20 transition-all">
         <div className="p-6 border-b border-slate-700">
-          <Link to="/landing" className="block group">
+          <Link to="/" className="block group">
             <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-2 group-hover:text-brand-400 transition-colors">
               <span className="w-8 h-8 bg-brand-500 rounded-lg flex items-center justify-center">MC</span>
               MobileCare
@@ -309,11 +307,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
         <nav className="flex-1 px-4 py-6 space-y-1">
           {navItems.map((item) => {
-            // Updated logic to handle root path correctly
-            const isActive = item.path === '/' 
-              ? location.pathname === '/' 
-              : location.pathname.startsWith(item.path);
-              
+            const isActive = location.pathname.startsWith(item.path);
             const Icon = item.icon;
             return (
               <Link
@@ -355,7 +349,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           </select>
           
           <button 
-             onClick={() => navigate('/landing')}
+             onClick={() => navigate('/')}
              className="w-full flex items-center justify-center gap-2 text-xs font-bold text-slate-400 hover:text-white py-2 rounded hover:bg-slate-800 transition-colors"
           >
              <LogOut className="w-3 h-3" /> Exit to Portal

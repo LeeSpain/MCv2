@@ -39,11 +39,11 @@ const App: React.FC = () => {
     <Router>
       <Layout>
         <Routes>
-          {/* Default Route Logic handled in Layout or Landing */}
-          <Route path="/landing" element={<Landing />} />
+          {/* Landing is now the Root Entry Point */}
+          <Route path="/" element={<Landing />} />
           
-          {/* Admin / Ops */}
-          <Route path="/" element={<Today />} />
+          {/* Admin / Ops Main View */}
+          <Route path="/dashboard" element={<Today />} />
           <Route path="/ops-dashboard" element={<OpsDashboard />} />
           
           {/* Executive */}
@@ -79,7 +79,7 @@ const App: React.FC = () => {
           <Route path="/orders" element={<CareOrders />} />
           <Route path="/confirmations" element={<CareConfirmations />} />
 
-          <Route path="*" element={<Navigate to="/landing" replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Layout>
     </Router>
