@@ -194,7 +194,7 @@ const SystemArchitectureModal: React.FC<{ onClose: () => void }> = ({ onClose })
                         </div>
                         <div className="space-y-2">
                            <div className="flex gap-2"><span className="text-slate-300">10:00:01</span> <span className="text-blue-600">ORDER_CREATED</span> <span className="text-slate-400">#C123</span></div>
-                           <div className="flex gap-2"><span className="text-slate-300">10:00:02</span> <span className="text-purple-600">AI_STOCK_ALLOCATED</span> <span className="text-slate-400">#D555 -> #C123</span></div>
+                           <div className="flex gap-2"><span className="text-slate-300">10:00:02</span> <span className="text-purple-600">AI_STOCK_ALLOCATED</span> <span className="text-slate-400">#D555 &rarr; #C123</span></div>
                            <div className="flex gap-2"><span className="text-slate-300">10:00:03</span> <span className="text-purple-600">AI_JOB_CREATED</span> <span className="text-slate-400">Install @ Client</span></div>
                            <div className="flex gap-2"><span className="text-slate-300">14:20:00</span> <span className="text-amber-600">INSTALLER_COMPLETED</span> <span className="text-slate-400">Photo Verified</span></div>
                            <div className="flex gap-2"><span className="text-slate-300">14:20:01</span> <span className="text-green-600">ASSET_ACTIVE</span> <span className="text-slate-400">Billing Started</span></div>
