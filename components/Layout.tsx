@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useStore, store } from '../services/store';
 import { MOCK_USERS } from '../services/mockData';
@@ -7,13 +7,14 @@ import { Role } from '../types';
 import { 
   LayoutDashboard, Box, ClipboardList, Wrench, MessageSquare, Settings, 
   AlertOctagon, FileText, AlertCircle, Users, CheckCircle, TrendingUp, MapPin, UserCircle,
-  Tag, Home
+  Tag, Home, Loader
 } from 'lucide-react';
 
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { currentUser, killSwitch } = useStore();
   const location = useLocation();
   const navigate = useNavigate();
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   // Mobile Users: Installers AND Standard Nurses
   const isMobile = currentUser.role === Role.INSTALLER || currentUser.role === Role.CARE_COMPANY_NURSE;
@@ -31,30 +32,50 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   
   // --- STRICT REDIRECT LOGIC ---
   useEffect(() => {
+    let shouldRedirect = false;
+    let target = '';
+
     // Case 1: User IS a Mobile User (Installer or Nurse)
     if (isMobile) {
       // If they are NOT on a mobile-allowed path, force them to their specific dashboard
       const isOnAllowedPath = mobilePaths.some(p => location.pathname.startsWith(p));
       if (!isOnAllowedPath) {
-        if (currentUser.role === Role.INSTALLER) {
-            navigate('/installer-dashboard', { replace: true });
-        } else {
-            navigate('/care-dashboard', { replace: true });
-        }
+        shouldRedirect = true;
+        target = currentUser.role === Role.INSTALLER ? '/installer-dashboard' : '/care-dashboard';
       }
     } 
     // Case 2: User is Desktop (CEO, Admin, Ops, Lead Nurse)
     else {
       // Prevent access to mobile-specific dashboards if accessed directly
       if (location.pathname === '/installer-dashboard') {
-        navigate('/', { replace: true });
+        shouldRedirect = true;
+        target = '/';
       }
+    }
+
+    if (shouldRedirect) {
+        setIsRedirecting(true);
+        navigate(target, { replace: true });
+        // Small timeout to allow state to settle, though navigation usually handles it
+        setTimeout(() => setIsRedirecting(false), 500);
+    } else {
+        setIsRedirecting(false);
     }
   }, [isMobile, location.pathname, navigate, currentUser.role]);
 
   // --- RENDER GUARD ---
-  if (isMobile && !mobilePaths.some(p => location.pathname.startsWith(p))) return null;
-  if (!isMobile && location.pathname === '/installer-dashboard') return null;
+  // Instead of returning null, we show a loading state if we are in an invalid state waiting for redirect
+  const isInvalidMobileState = isMobile && !mobilePaths.some(p => location.pathname.startsWith(p));
+  const isInvalidDesktopState = !isMobile && location.pathname === '/installer-dashboard';
+
+  if (isRedirecting || isInvalidMobileState || isInvalidDesktopState) {
+      return (
+          <div className="h-screen w-full flex flex-col items-center justify-center bg-slate-50 text-slate-400">
+              <Loader className="w-8 h-8 animate-spin mb-4 text-brand-600" />
+              <p className="text-sm font-medium">Redirecting...</p>
+          </div>
+      );
+  }
 
   // Navigation items definition with allowed roles
   // ORDER: Dashboards -> Messages -> Workflows -> Lists -> Settings
