@@ -2,7 +2,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useStore, store } from '../services/store';
-import { MOCK_USERS } from '../services/mockData';
 import { Role } from '../types';
 import { 
   LayoutDashboard, Box, ClipboardList, Wrench, MessageSquare, Settings, 
@@ -31,37 +30,6 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     '/' // Allow Landing Page
   ];
 
-  // --- ROLE SWITCH HANDLER ---
-  const handleRoleSwitch = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const userId = e.target.value;
-    const user = MOCK_USERS.find(u => u.id === userId);
-    
-    if (user) {
-      store.setUser(userId);
-      
-      // Force navigation to the specific dashboard root for the new role
-      let targetPath = '/dashboard'; // Default
-      switch (user.role) {
-        case Role.CEO:
-          targetPath = '/ceo-dashboard';
-          break;
-        case Role.INSTALLER:
-          targetPath = '/installer-dashboard';
-          break;
-        case Role.CARE_COMPANY_LEAD_NURSE:
-        case Role.CARE_COMPANY_NURSE:
-          targetPath = '/care-dashboard';
-          break;
-        case Role.MC_ADMIN:
-        case Role.MC_OPERATIONS:
-        default:
-          targetPath = '/dashboard'; // Ops Dashboard Main View
-          break;
-      }
-      navigate(targetPath);
-    }
-  };
-  
   // --- STRICT REDIRECT LOGIC ---
   useEffect(() => {
     // Exception: Always allow the Landing Page (Root)
@@ -107,7 +75,6 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   }, [isMobile, location.pathname, navigate, currentUser.role]);
 
   // --- RENDER GUARD ---
-  // If explicitly on landing (root), render children immediately (Layout disabled)
   if (location.pathname === '/') {
       return <>{children}</>;
   }
@@ -128,9 +95,8 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
   // Navigation items definition with allowed roles
   const allNavItems = [
-    // --- 1. DASHBOARDS ---
     {
-      path: '/dashboard', // Updated from '/'
+      path: '/dashboard', 
       label: 'Dashboard',
       icon: Home,
       allowed: [Role.MC_ADMIN, Role.MC_OPERATIONS, Role.CEO]
@@ -159,16 +125,12 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
       icon: LayoutDashboard,
       allowed: [Role.CARE_COMPANY_LEAD_NURSE, Role.CARE_COMPANY_NURSE]
     },
-
-    // --- 2. COMMUNICATION ---
     { 
       path: '/messages', 
       label: 'Messages', 
       icon: MessageSquare, 
       allowed: [Role.MC_ADMIN, Role.MC_OPERATIONS, Role.CEO, Role.CARE_COMPANY_LEAD_NURSE, Role.CARE_COMPANY_NURSE, Role.INSTALLER] 
     },
-
-    // --- 3. CARE SPECIFIC WORKFLOWS ---
     {
       path: '/orders',
       label: 'Orders',
@@ -181,8 +143,6 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
       icon: CheckCircle,
       allowed: [Role.CARE_COMPANY_LEAD_NURSE, Role.CARE_COMPANY_NURSE]
     },
-
-    // --- 4. LISTS & DIRECTORIES ---
     { 
       path: '/clients', 
       label: 'Clients', 
@@ -225,8 +185,6 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
       icon: FileText, 
       allowed: [Role.MC_ADMIN, Role.MC_OPERATIONS, Role.CEO] 
     },
-
-    // --- 5. SETTINGS ---
     { 
       path: '/settings', 
       label: 'Settings', 
@@ -235,12 +193,10 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     },
   ];
 
-  // Filter items based on current user role
   const navItems = allNavItems.filter(item => item.allowed.includes(currentUser.role));
 
-  // --- MOBILE LAYOUT (INSTALLER & NURSE) ---
+  // --- MOBILE LAYOUT ---
   if (isMobile) {
-    // SPECIAL CASE: Mobile Dashboards now have self-contained nav inside their phone frames.
     const hideNav = location.pathname === '/installer-dashboard' || location.pathname === '/care-dashboard';
 
     return (
@@ -248,21 +204,11 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
         <main className={`flex-1 overflow-y-auto overflow-x-hidden relative bg-slate-100 touch-pan-y ${hideNav ? '' : 'pb-24'}`}>
            {children}
            
-           {/* Mobile Role Switcher (Dev Tool) */}
-           <div className="p-8 pb-32 text-center opacity-60">
-              <label className="text-[10px] font-bold text-slate-400 uppercase block mb-2">Dev: Simulate Role</label>
-              <select 
-                className="bg-white border border-slate-300 text-xs p-2 rounded shadow-sm w-full max-w-xs appearance-none text-center"
-                value={currentUser.id}
-                onChange={handleRoleSwitch}
-              >
-                {MOCK_USERS.map(u => (
-                  <option key={u.id} value={u.id}>{u.name} ({u.role})</option>
-                ))}
-              </select>
-              <div className="mt-4">
-                 <Link to="/" className="text-xs font-bold text-brand-600 underline">Back to Portal</Link>
-              </div>
+           {/* Mobile Footer Area (Clean) */}
+           <div className="p-8 pb-32 text-center opacity-40">
+              <Link to="/" className="text-xs font-bold text-slate-500 hover:text-brand-600 flex items-center justify-center gap-2">
+                 <LogOut className="w-3 h-3" /> Exit to Portal
+              </Link>
            </div>
         </main>
 
@@ -288,10 +234,9 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     );
   }
 
-  // --- DESKTOP LAYOUT (DEFAULT) ---
+  // --- DESKTOP LAYOUT ---
   return (
     <div className="flex h-screen bg-slate-50 text-slate-900 font-sans">
-      {/* Sidebar */}
       <aside className="w-64 bg-slate-900 text-white flex flex-col shadow-xl z-20 transition-all">
         <div className="p-6 border-b border-slate-700">
           <Link to="/" className="block group">
@@ -342,27 +287,15 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
             </div>
           </div>
           
-          <label className="text-xs text-slate-500 block mb-2 font-bold uppercase tracking-wider">Simulate Role:</label>
-          <select 
-            className="w-full bg-slate-800 border border-slate-700 text-xs text-slate-300 rounded p-2 focus:outline-none focus:border-brand-500 mb-3"
-            value={currentUser.id}
-            onChange={handleRoleSwitch}
-          >
-            {MOCK_USERS.map(u => (
-              <option key={u.id} value={u.id}>{u.name} ({u.role})</option>
-            ))}
-          </select>
-          
           <button 
              onClick={() => navigate('/')}
-             className="w-full flex items-center justify-center gap-2 text-xs font-bold text-slate-400 hover:text-white py-2 rounded hover:bg-slate-800 transition-colors"
+             className="w-full flex items-center justify-center gap-2 text-xs font-bold text-slate-400 hover:text-white py-3 rounded bg-slate-800 hover:bg-slate-700 transition-colors shadow-sm"
           >
              <LogOut className="w-3 h-3" /> Exit to Portal
           </button>
         </div>
       </aside>
 
-      {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden relative">
         <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shadow-sm">
           <h2 className="text-xl font-semibold text-slate-800 flex items-center gap-2">
