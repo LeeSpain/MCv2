@@ -62,7 +62,7 @@ export const Messages: React.FC = () => {
  * MOBILE INTERFACE
  * A WhatsApp/iMessage style interface optimized for touch and small screens.
  */
-const MobileMessagesInterface: React.FC<{ messages: Message[], currentUser: any }> = ({ messages, currentUser }) => {
+export const MobileMessagesInterface: React.FC<{ messages: Message[], currentUser: any }> = ({ messages, currentUser }) => {
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
   const [activeTab, setActiveTab] = useState<'CHATS' | 'ALERTS'>('CHATS');
   const [replyText, setReplyText] = useState('');
@@ -105,9 +105,9 @@ const MobileMessagesInterface: React.FC<{ messages: Message[], currentUser: any 
   // --- MOBILE DETAIL VIEW ---
   if (selectedMessage) {
     return (
-      <div className="fixed inset-0 bg-slate-50 z-50 flex flex-col font-sans">
+      <div className="absolute inset-0 bg-slate-50 z-50 flex flex-col font-sans">
         {/* Detail Header */}
-        <div className="bg-slate-900 text-white p-4 pt-safe-top flex items-center gap-3 shadow-md">
+        <div className="bg-slate-900 text-white p-4 pt-16 flex items-center gap-3 shadow-md">
            <button onClick={() => setSelectedMessage(null)} className="p-2 -ml-2 rounded-full active:bg-white/10">
               <ArrowLeft className="w-6 h-6" />
            </button>
@@ -201,7 +201,7 @@ const MobileMessagesInterface: React.FC<{ messages: Message[], currentUser: any 
   return (
     <div className="flex flex-col h-full bg-slate-50">
        {/* Mobile Header */}
-       <div className="bg-slate-900 text-white pt-8 pb-4 px-6 rounded-b-[2rem] shadow-lg mb-4 flex-none">
+       <div className="bg-slate-900 text-white pt-12 pb-4 px-6 rounded-b-[2rem] shadow-lg mb-4 flex-none">
           <div className="flex justify-between items-center mb-4">
              <div>
                 <h1 className="text-2xl font-bold">Inbox</h1>

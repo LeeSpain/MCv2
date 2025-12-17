@@ -1,12 +1,12 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useStore } from '../services/store';
 import { Card, Button, Badge } from '../components/ui';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   Users, ClipboardList, CheckCircle, Clock, Heart, Plus, Activity, 
   AlertCircle, FileText, ArrowRight, Phone, MapPin, ChevronRight,
-  Shield, Calendar
+  Shield, Calendar, Signal, Wifi, Battery, Home, UserCircle, Bell
 } from 'lucide-react';
 import { Role } from '../types';
 
@@ -31,15 +31,16 @@ export const CareDashboard: React.FC = () => {
 // ============================================================================
 const MobileNurseView: React.FC<{ clients: any[], currentUser: any, devices: any[], jobs: any[] }> = ({ clients, currentUser, devices, jobs }) => {
   const navigate = useNavigate();
+  const [currentView, setCurrentView] = useState<'HOME' | 'PATIENTS' | 'ALERTS'>('HOME');
   
   // Identify high risk or attention needed
   const highRiskClients = clients.filter(c => c.risk_level === 'HIGH');
-  const myVisits = jobs.filter(j => j.status === 'SCHEDULED'); // Mock: jobs assigned to company
+  const myVisits = jobs.filter(j => j.status === 'SCHEDULED');
 
-  return (
-    <div className="space-y-6">
-       {/* 1. Header Card */}
-       <div className="bg-slate-900 text-white pt-10 pb-10 px-6 rounded-b-[2.5rem] shadow-xl relative overflow-hidden">
+  const HomeTab = () => (
+    <div className="space-y-6 pb-20">
+       {/* Header Card */}
+       <div className="bg-slate-900 text-white pt-12 pb-10 px-6 rounded-b-[2.5rem] shadow-xl relative overflow-hidden -mt-8">
           <div className="absolute top-0 right-0 p-12 bg-blue-500 rounded-full blur-3xl opacity-20 -mr-10 -mt-10 pointer-events-none"></div>
           
           <div className="relative z-10">
@@ -57,23 +58,23 @@ const MobileNurseView: React.FC<{ clients: any[], currentUser: any, devices: any
              <div className="flex gap-3 mt-4">
                 <div className="flex-1 bg-white/10 backdrop-blur-md p-3 rounded-2xl border border-white/10 text-center">
                    <span className="block text-2xl font-bold">{clients.length}</span>
-                   <span className="text-[10px] uppercase tracking-wider text-slate-300 font-bold">Patients</span>
+                   <span className="text-[9px] uppercase tracking-wider text-slate-300 font-bold">Patients</span>
                 </div>
                 <div className="flex-1 bg-white/10 backdrop-blur-md p-3 rounded-2xl border border-white/10 text-center">
                    <span className={`block text-2xl font-bold ${highRiskClients.length > 0 ? 'text-red-400' : 'text-white'}`}>{highRiskClients.length}</span>
-                   <span className="text-[10px] uppercase tracking-wider text-slate-300 font-bold">Alerts</span>
+                   <span className="text-[9px] uppercase tracking-wider text-slate-300 font-bold">Alerts</span>
                 </div>
              </div>
           </div>
        </div>
 
-       <div className="px-4 space-y-6 pb-20">
+       <div className="px-4 space-y-6">
           
-          {/* 2. Priority Alerts */}
+          {/* Priority Alerts */}
           {highRiskClients.length > 0 && (
              <div className="space-y-3">
                 <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider px-1">Attention Required</h3>
-                {highRiskClients.map(c => (
+                {highRiskClients.slice(0, 2).map(c => (
                    <div key={c.id} onClick={() => navigate(`/clients/${c.id}`)} className="bg-red-50 border border-red-100 p-4 rounded-2xl flex items-center gap-4 active:scale-[0.98] transition-transform">
                       <div className="w-10 h-10 rounded-full bg-red-100 text-red-600 flex items-center justify-center shrink-0">
                          <Activity className="w-5 h-5" />
@@ -85,10 +86,13 @@ const MobileNurseView: React.FC<{ clients: any[], currentUser: any, devices: any
                       <ChevronRight className="w-5 h-5 text-red-300" />
                    </div>
                 ))}
+                {highRiskClients.length > 2 && (
+                   <button onClick={() => setCurrentView('ALERTS')} className="text-xs text-slate-500 font-bold w-full text-center">View {highRiskClients.length - 2} more alerts</button>
+                )}
              </div>
           )}
 
-          {/* 3. Quick Actions Grid */}
+          {/* Quick Actions Grid */}
           <div>
              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider px-1 mb-3">Quick Actions</h3>
              <div className="grid grid-cols-2 gap-3">
@@ -103,15 +107,15 @@ const MobileNurseView: React.FC<{ clients: any[], currentUser: any, devices: any
              </div>
           </div>
 
-          {/* 4. Patient Directory List */}
+          {/* Patient Directory List */}
           <div>
              <div className="flex justify-between items-center px-1 mb-3">
                 <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">My Patients</h3>
-                <Link to="/clients" className="text-xs font-bold text-brand-600">See All</Link>
+                <button onClick={() => setCurrentView('PATIENTS')} className="text-xs font-bold text-brand-600">See All</button>
              </div>
              
              <div className="space-y-3">
-                {clients.slice(0, 5).map(c => (
+                {clients.slice(0, 3).map(c => (
                    <div key={c.id} className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-3">
                       <div className="flex items-start justify-between">
                          <div className="flex items-center gap-3">
@@ -141,6 +145,119 @@ const MobileNurseView: React.FC<{ clients: any[], currentUser: any, devices: any
              </div>
           </div>
        </div>
+    </div>
+  );
+
+  const PatientsTab = () => (
+      <div className="bg-slate-50 min-h-full pb-24 pt-8 px-4">
+          <div className="mb-6">
+              <h1 className="text-2xl font-bold text-slate-900">Patients</h1>
+              <p className="text-sm text-slate-500">Directory ({clients.length})</p>
+          </div>
+          <div className="space-y-3">
+              {clients.map(c => (
+                  <div key={c.id} onClick={() => navigate(`/clients/${c.id}`)} className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between active:scale-[0.98] transition-transform">
+                      <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold">
+                              {c.full_name.charAt(0)}
+                          </div>
+                          <div>
+                              <h4 className="font-bold text-slate-900">{c.full_name}</h4>
+                              <p className="text-xs text-slate-500">{c.address.split(',')[0]}</p>
+                          </div>
+                      </div>
+                      <ChevronRight className="w-5 h-5 text-slate-300" />
+                  </div>
+              ))}
+          </div>
+      </div>
+  );
+
+  const AlertsTab = () => (
+      <div className="bg-slate-50 min-h-full pb-24 pt-8 px-4">
+          <div className="mb-6">
+              <h1 className="text-2xl font-bold text-slate-900">Alerts</h1>
+              <p className="text-sm text-slate-500">High Priority Items ({highRiskClients.length})</p>
+          </div>
+          {highRiskClients.length === 0 ? (
+              <div className="text-center text-slate-400 py-12">
+                  <CheckCircle className="w-12 h-12 mx-auto mb-2 opacity-20" />
+                  <p>No high risk alerts.</p>
+              </div>
+          ) : (
+              <div className="space-y-3">
+                  {highRiskClients.map(c => (
+                      <div key={c.id} onClick={() => navigate(`/clients/${c.id}`)} className="bg-red-50 border border-red-100 p-4 rounded-2xl flex items-center gap-4 active:scale-[0.98] transition-transform">
+                          <div className="w-10 h-10 rounded-full bg-red-100 text-red-600 flex items-center justify-center shrink-0">
+                              <Activity className="w-5 h-5" />
+                          </div>
+                          <div className="flex-1">
+                              <h4 className="font-bold text-red-900">{c.full_name}</h4>
+                              <p className="text-xs text-red-700">Risk: HIGH • Review Needed</p>
+                          </div>
+                          <ChevronRight className="w-5 h-5 text-red-300" />
+                      </div>
+                  ))}
+              </div>
+          )}
+      </div>
+  );
+
+  return (
+    <div className="w-full flex justify-center py-6">
+        <div className="relative w-full max-w-[375px] h-[812px] bg-slate-50 rounded-[3rem] border-[14px] border-slate-900 shadow-2xl overflow-hidden ring-1 ring-slate-900/5 flex flex-col">
+            
+            {/* Notch */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-7 bg-slate-900 rounded-b-2xl z-50"></div>
+            
+            {/* Status Bar Mock */}
+            <div className="h-8 bg-white w-full flex items-center justify-between px-6 pt-3 text-[10px] font-bold z-40 select-none absolute top-0 left-0 right-0">
+               <span className="text-slate-900 ml-2">9:41</span>
+               <div className="flex gap-1.5 items-center mr-2 text-slate-900">
+                  <Signal className="w-3 h-3" />
+                  <Wifi className="w-3 h-3" />
+                  <Battery className="w-4 h-4" />
+               </div>
+            </div>
+
+            {/* Scrollable Screen Area */}
+            <div className="flex-1 overflow-y-auto overflow-x-hidden relative bg-slate-50 no-scrollbar pt-8">
+                {currentView === 'HOME' && <HomeTab />}
+                {currentView === 'PATIENTS' && <PatientsTab />}
+                {currentView === 'ALERTS' && <AlertsTab />}
+            </div>
+
+            {/* Simulated Bottom Navigation */}
+            <div className="absolute bottom-0 w-full bg-white border-t border-slate-200 h-20 pb-6 z-50 grid grid-cols-3">
+               <button 
+                  onClick={() => setCurrentView('HOME')}
+                  className={`flex flex-col items-center justify-center transition-colors ${currentView === 'HOME' ? 'text-blue-600' : 'text-slate-400'}`}
+               >
+                  <Home className={`w-6 h-6 mb-1 ${currentView === 'HOME' ? 'fill-blue-100' : ''}`} strokeWidth={currentView === 'HOME' ? 2.5 : 2} />
+                  <span className="text-[10px] font-bold">Home</span>
+               </button>
+               <button 
+                  onClick={() => setCurrentView('PATIENTS')}
+                  className={`flex flex-col items-center justify-center transition-colors ${currentView === 'PATIENTS' ? 'text-blue-600' : 'text-slate-400'}`}
+               >
+                  <Users className={`w-6 h-6 mb-1 ${currentView === 'PATIENTS' ? 'fill-blue-100' : ''}`} strokeWidth={currentView === 'PATIENTS' ? 2.5 : 2} />
+                  <span className="text-[10px] font-bold">Patients</span>
+               </button>
+               <button 
+                  onClick={() => setCurrentView('ALERTS')}
+                  className={`flex flex-col items-center justify-center transition-colors ${currentView === 'ALERTS' ? 'text-blue-600' : 'text-slate-400'}`}
+               >
+                  <div className="relative">
+                      <Bell className={`w-6 h-6 mb-1 ${currentView === 'ALERTS' ? 'fill-blue-100' : ''}`} strokeWidth={currentView === 'ALERTS' ? 2.5 : 2} />
+                      {highRiskClients.length > 0 && <div className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></div>}
+                  </div>
+                  <span className="text-[10px] font-bold">Alerts</span>
+               </button>
+            </div>
+
+            {/* Home Indicator */}
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1 bg-slate-300 rounded-full z-[60] pointer-events-none"></div>
+        </div>
     </div>
   );
 };

@@ -240,9 +240,12 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
   // --- MOBILE LAYOUT (INSTALLER & NURSE) ---
   if (isMobile) {
+    // SPECIAL CASE: Mobile Dashboards now have self-contained nav inside their phone frames.
+    const hideNav = location.pathname === '/installer-dashboard' || location.pathname === '/care-dashboard';
+
     return (
       <div className="flex flex-col h-screen bg-slate-50 font-sans">
-        <main className="flex-1 overflow-y-auto overflow-x-hidden pb-24 relative bg-slate-100 touch-pan-y">
+        <main className={`flex-1 overflow-y-auto overflow-x-hidden relative bg-slate-100 touch-pan-y ${hideNav ? '' : 'pb-24'}`}>
            {children}
            
            {/* Mobile Role Switcher (Dev Tool) */}
@@ -263,22 +266,24 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
            </div>
         </main>
 
-        <nav className="fixed bottom-0 w-full bg-white border-t border-slate-200 grid grid-cols-4 h-[calc(4rem+env(safe-area-inset-bottom))] pb-[env(safe-area-inset-bottom)] z-50 shadow-[0_-4px_15px_rgba(0,0,0,0.05)]">
-           {navItems.slice(0, 3).map(item => { 
-              const isActive = location.pathname === item.path;
-              const Icon = item.icon;
-              return (
-                <Link key={item.path} to={item.path} className={`flex flex-col items-center justify-center active:bg-slate-50 transition-colors ${isActive ? 'text-brand-600' : 'text-slate-400'}`}>
-                   <Icon className={`w-6 h-6 mb-1 ${isActive ? 'fill-brand-100' : ''}`} strokeWidth={isActive ? 2.5 : 2} />
-                   <span className="text-[10px] font-bold">{item.label}</span>
-                </Link>
-              );
-           })}
-           <Link to="/settings" className={`flex flex-col items-center justify-center active:bg-slate-50 transition-colors ${location.pathname === '/settings' ? 'text-brand-600' : 'text-slate-400'}`}>
-              <UserCircle className={`w-6 h-6 mb-1 ${location.pathname === '/settings' ? 'fill-brand-100' : ''}`} strokeWidth={location.pathname === '/settings' ? 2.5 : 2} />
-              <span className="text-[10px] font-bold">Profile</span>
-           </Link>
-        </nav>
+        {!hideNav && (
+          <nav className="fixed bottom-0 w-full bg-white border-t border-slate-200 grid grid-cols-4 h-[calc(4rem+env(safe-area-inset-bottom))] pb-[env(safe-area-inset-bottom)] z-50 shadow-[0_-4px_15px_rgba(0,0,0,0.05)]">
+             {navItems.slice(0, 3).map(item => { 
+                const isActive = location.pathname === item.path;
+                const Icon = item.icon;
+                return (
+                  <Link key={item.path} to={item.path} className={`flex flex-col items-center justify-center active:bg-slate-50 transition-colors ${isActive ? 'text-brand-600' : 'text-slate-400'}`}>
+                     <Icon className={`w-6 h-6 mb-1 ${isActive ? 'fill-brand-100' : ''}`} strokeWidth={isActive ? 2.5 : 2} />
+                     <span className="text-[10px] font-bold">{item.label}</span>
+                  </Link>
+                );
+             })}
+             <Link to="/settings" className={`flex flex-col items-center justify-center active:bg-slate-50 transition-colors ${location.pathname === '/settings' ? 'text-brand-600' : 'text-slate-400'}`}>
+                <UserCircle className={`w-6 h-6 mb-1 ${location.pathname === '/settings' ? 'fill-brand-100' : ''}`} strokeWidth={location.pathname === '/settings' ? 2.5 : 2} />
+                <span className="text-[10px] font-bold">Profile</span>
+             </Link>
+          </nav>
+        )}
       </div>
     );
   }
