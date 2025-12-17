@@ -1,12 +1,12 @@
 
 import React, { useState } from 'react';
-import { useStore } from '../services/store';
+import { useStore, store } from '../services/store';
 import { Card, Button, Badge } from '../components/ui';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   Users, ClipboardList, CheckCircle, Clock, Heart, Plus, Activity, 
   AlertCircle, FileText, ArrowRight, Phone, MapPin, ChevronRight,
-  Shield, Calendar, Signal, Wifi, Battery, Home, UserCircle, Bell
+  Shield, Calendar, Signal, Wifi, Battery, Home, UserCircle, Bell, ArrowLeft, Mail
 } from 'lucide-react';
 import { Role } from '../types';
 
@@ -30,15 +30,104 @@ export const CareDashboard: React.FC = () => {
 // MOBILE NURSE VIEW (End Worker on Phone)
 // ============================================================================
 const MobileNurseView: React.FC<{ clients: any[], currentUser: any, devices: any[], jobs: any[] }> = ({ clients, currentUser, devices, jobs }) => {
-  const navigate = useNavigate();
   const [currentView, setCurrentView] = useState<'HOME' | 'PATIENTS' | 'ALERTS'>('HOME');
+  const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   
   // Identify high risk or attention needed
   const highRiskClients = clients.filter(c => c.risk_level === 'HIGH');
-  const myVisits = jobs.filter(j => j.status === 'SCHEDULED');
+
+  // --- SUB-COMPONENTS ---
+
+  const MobileClientDetail = ({ clientId }: { clientId: string }) => {
+      const client = clients.find(c => c.id === clientId);
+      if (!client) return <div className="p-4 text-center">Client not found</div>;
+      
+      const clientDevices = devices.filter(d => d.assigned_client_id === clientId);
+
+      return (
+          <div className="bg-slate-50 min-h-full pb-24 font-sans">
+              <div className="bg-slate-900 text-white p-4 pt-12 pb-6 flex items-start gap-4 shadow-lg relative z-10">
+                  <button onClick={() => setSelectedClientId(null)} className="p-2 -ml-2 rounded-full active:bg-white/10">
+                      <ArrowLeft className="w-6 h-6" />
+                  </button>
+                  <div className="flex-1">
+                      <h2 className="text-xl font-bold">{client.full_name}</h2>
+                      <div className="flex items-center gap-2 text-slate-400 text-xs mt-1">
+                          <span className="bg-slate-800 px-2 py-0.5 rounded">{client.status}</span>
+                          <span>•</span>
+                          <span>{client.care_company_name}</span>
+                      </div>
+                  </div>
+                  {client.risk_level === 'HIGH' && (
+                      <div className="bg-red-500 p-2 rounded-full animate-pulse">
+                          <Activity className="w-5 h-5 text-white" />
+                      </div>
+                  )}
+              </div>
+
+              <div className="p-4 space-y-4">
+                  {/* Contact Card */}
+                  <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+                      <h3 className="text-xs font-bold text-slate-400 uppercase mb-3">Contact Info</h3>
+                      <div className="space-y-3">
+                          <div className="flex items-start gap-3">
+                              <MapPin className="w-5 h-5 text-slate-400 mt-0.5" />
+                              <span className="text-sm text-slate-800 font-medium">{client.address}</span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                              <Phone className="w-5 h-5 text-slate-400" />
+                              <a href={`tel:${client.phone}`} className="text-sm text-blue-600 font-bold underline">{client.phone}</a>
+                          </div>
+                      </div>
+                      <div className="mt-4 grid grid-cols-2 gap-2">
+                          <button className="flex items-center justify-center py-2.5 bg-slate-900 text-white rounded-xl text-sm font-bold shadow-md active:scale-95 transition-transform">
+                              <Phone className="w-4 h-4 mr-2" /> Call Now
+                          </button>
+                          <button className="flex items-center justify-center py-2.5 bg-white border border-slate-300 text-slate-700 rounded-xl text-sm font-bold shadow-sm active:bg-slate-50">
+                              <MapPin className="w-4 h-4 mr-2" /> Navigate
+                          </button>
+                      </div>
+                  </div>
+
+                  {/* Devices Card */}
+                  <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+                      <h3 className="text-xs font-bold text-slate-400 uppercase mb-3 flex justify-between">
+                          <span>Active Devices</span>
+                          <span className="text-slate-300">{clientDevices.length}</span>
+                      </h3>
+                      <div className="space-y-2">
+                          {clientDevices.length > 0 ? clientDevices.map(d => (
+                              <div key={d.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                  <div className="flex items-center gap-3">
+                                      <div className={`w-2 h-2 rounded-full ${d.status === 'INSTALLED_ACTIVE' ? 'bg-green-500' : 'bg-amber-500'}`}></div>
+                                      <span className="text-sm font-bold text-slate-700">{store.getProductName(d.product_id)}</span>
+                                  </div>
+                                  <span className="text-[10px] font-mono text-slate-400">{d.serial_number.slice(-4)}</span>
+                              </div>
+                          )) : (
+                              <div className="text-center py-4 text-slate-400 italic text-sm">No devices installed</div>
+                          )}
+                      </div>
+                  </div>
+
+                  {/* Risk Card */}
+                  {client.risk_level === 'HIGH' && (
+                      <div className="bg-red-50 p-4 rounded-2xl border border-red-100">
+                          <h3 className="text-xs font-bold text-red-800 uppercase mb-2 flex items-center gap-2">
+                              <AlertCircle className="w-4 h-4" /> High Risk Alert
+                          </h3>
+                          <p className="text-sm text-red-700 leading-snug">
+                              Client flagged for frequent falls. Ensure SOS pendant is worn at all times during visit.
+                          </p>
+                      </div>
+                  )}
+              </div>
+          </div>
+      )
+  };
 
   const HomeTab = () => (
-    <div className="space-y-6 pb-20">
+    <div className="space-y-6 pb-24">
        {/* Header Card */}
        <div className="bg-slate-900 text-white pt-12 pb-10 px-6 rounded-b-[2.5rem] shadow-xl relative overflow-hidden -mt-8">
           <div className="absolute top-0 right-0 p-12 bg-blue-500 rounded-full blur-3xl opacity-20 -mr-10 -mt-10 pointer-events-none"></div>
@@ -75,7 +164,7 @@ const MobileNurseView: React.FC<{ clients: any[], currentUser: any, devices: any
              <div className="space-y-3">
                 <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider px-1">Attention Required</h3>
                 {highRiskClients.slice(0, 2).map(c => (
-                   <div key={c.id} onClick={() => navigate(`/clients/${c.id}`)} className="bg-red-50 border border-red-100 p-4 rounded-2xl flex items-center gap-4 active:scale-[0.98] transition-transform">
+                   <div key={c.id} onClick={() => setSelectedClientId(c.id)} className="bg-red-50 border border-red-100 p-4 rounded-2xl flex items-center gap-4 active:scale-[0.98] transition-transform">
                       <div className="w-10 h-10 rounded-full bg-red-100 text-red-600 flex items-center justify-center shrink-0">
                          <Activity className="w-5 h-5" />
                       </div>
@@ -96,7 +185,7 @@ const MobileNurseView: React.FC<{ clients: any[], currentUser: any, devices: any
           <div>
              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider px-1 mb-3">Quick Actions</h3>
              <div className="grid grid-cols-2 gap-3">
-                <button onClick={() => navigate('/clients')} className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center gap-2 active:bg-slate-50">
+                <button className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center gap-2 active:bg-slate-50">
                    <div className="p-2 bg-blue-50 text-blue-600 rounded-full"><Plus className="w-6 h-6" /></div>
                    <span className="text-xs font-bold text-slate-700">New Request</span>
                 </button>
@@ -136,7 +225,7 @@ const MobileNurseView: React.FC<{ clients: any[], currentUser: any, devices: any
                          <a href={`tel:${c.phone}`} className="flex items-center justify-center py-2 bg-slate-50 rounded-lg text-xs font-bold text-slate-600 border border-slate-100 active:bg-slate-200">
                             <Phone className="w-3.5 h-3.5 mr-2" /> Call
                          </a>
-                         <button onClick={() => navigate(`/clients/${c.id}`)} className="flex items-center justify-center py-2 bg-slate-900 rounded-lg text-xs font-bold text-white shadow active:scale-[0.97]">
+                         <button onClick={() => setSelectedClientId(c.id)} className="flex items-center justify-center py-2 bg-slate-900 rounded-lg text-xs font-bold text-white shadow active:scale-[0.97]">
                             View Profile
                          </button>
                       </div>
@@ -156,7 +245,7 @@ const MobileNurseView: React.FC<{ clients: any[], currentUser: any, devices: any
           </div>
           <div className="space-y-3">
               {clients.map(c => (
-                  <div key={c.id} onClick={() => navigate(`/clients/${c.id}`)} className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between active:scale-[0.98] transition-transform">
+                  <div key={c.id} onClick={() => setSelectedClientId(c.id)} className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between active:scale-[0.98] transition-transform">
                       <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold">
                               {c.full_name.charAt(0)}
@@ -187,7 +276,7 @@ const MobileNurseView: React.FC<{ clients: any[], currentUser: any, devices: any
           ) : (
               <div className="space-y-3">
                   {highRiskClients.map(c => (
-                      <div key={c.id} onClick={() => navigate(`/clients/${c.id}`)} className="bg-red-50 border border-red-100 p-4 rounded-2xl flex items-center gap-4 active:scale-[0.98] transition-transform">
+                      <div key={c.id} onClick={() => setSelectedClientId(c.id)} className="bg-red-50 border border-red-100 p-4 rounded-2xl flex items-center gap-4 active:scale-[0.98] transition-transform">
                           <div className="w-10 h-10 rounded-full bg-red-100 text-red-600 flex items-center justify-center shrink-0">
                               <Activity className="w-5 h-5" />
                           </div>
@@ -210,50 +299,60 @@ const MobileNurseView: React.FC<{ clients: any[], currentUser: any, devices: any
             {/* Notch */}
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-7 bg-slate-900 rounded-b-2xl z-50"></div>
             
-            {/* Status Bar Mock */}
-            <div className="h-8 bg-white w-full flex items-center justify-between px-6 pt-3 text-[10px] font-bold z-40 select-none absolute top-0 left-0 right-0">
-               <span className="text-slate-900 ml-2">9:41</span>
-               <div className="flex gap-1.5 items-center mr-2 text-slate-900">
-                  <Signal className="w-3 h-3" />
-                  <Wifi className="w-3 h-3" />
-                  <Battery className="w-4 h-4" />
-               </div>
-            </div>
+            {/* Status Bar Mock (Hidden on detail view for immersive header) */}
+            {!selectedClientId && (
+                <div className="h-8 bg-white w-full flex items-center justify-between px-6 pt-3 text-[10px] font-bold z-40 select-none absolute top-0 left-0 right-0">
+                   <span className="text-slate-900 ml-2">9:41</span>
+                   <div className="flex gap-1.5 items-center mr-2 text-slate-900">
+                      <Signal className="w-3 h-3" />
+                      <Wifi className="w-3 h-3" />
+                      <Battery className="w-4 h-4" />
+                   </div>
+                </div>
+            )}
 
             {/* Scrollable Screen Area */}
-            <div className="flex-1 overflow-y-auto overflow-x-hidden relative bg-slate-50 no-scrollbar pt-8">
-                {currentView === 'HOME' && <HomeTab />}
-                {currentView === 'PATIENTS' && <PatientsTab />}
-                {currentView === 'ALERTS' && <AlertsTab />}
+            <div className="flex-1 overflow-y-auto overflow-x-hidden relative bg-slate-50 no-scrollbar">
+                {selectedClientId ? (
+                    <MobileClientDetail clientId={selectedClientId} />
+                ) : (
+                    <div className="pt-8">
+                        {currentView === 'HOME' && <HomeTab />}
+                        {currentView === 'PATIENTS' && <PatientsTab />}
+                        {currentView === 'ALERTS' && <AlertsTab />}
+                    </div>
+                )}
             </div>
 
-            {/* Simulated Bottom Navigation */}
-            <div className="absolute bottom-0 w-full bg-white border-t border-slate-200 h-20 pb-6 z-50 grid grid-cols-3">
-               <button 
-                  onClick={() => setCurrentView('HOME')}
-                  className={`flex flex-col items-center justify-center transition-colors ${currentView === 'HOME' ? 'text-blue-600' : 'text-slate-400'}`}
-               >
-                  <Home className={`w-6 h-6 mb-1 ${currentView === 'HOME' ? 'fill-blue-100' : ''}`} strokeWidth={currentView === 'HOME' ? 2.5 : 2} />
-                  <span className="text-[10px] font-bold">Home</span>
-               </button>
-               <button 
-                  onClick={() => setCurrentView('PATIENTS')}
-                  className={`flex flex-col items-center justify-center transition-colors ${currentView === 'PATIENTS' ? 'text-blue-600' : 'text-slate-400'}`}
-               >
-                  <Users className={`w-6 h-6 mb-1 ${currentView === 'PATIENTS' ? 'fill-blue-100' : ''}`} strokeWidth={currentView === 'PATIENTS' ? 2.5 : 2} />
-                  <span className="text-[10px] font-bold">Patients</span>
-               </button>
-               <button 
-                  onClick={() => setCurrentView('ALERTS')}
-                  className={`flex flex-col items-center justify-center transition-colors ${currentView === 'ALERTS' ? 'text-blue-600' : 'text-slate-400'}`}
-               >
-                  <div className="relative">
-                      <Bell className={`w-6 h-6 mb-1 ${currentView === 'ALERTS' ? 'fill-blue-100' : ''}`} strokeWidth={currentView === 'ALERTS' ? 2.5 : 2} />
-                      {highRiskClients.length > 0 && <div className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></div>}
-                  </div>
-                  <span className="text-[10px] font-bold">Alerts</span>
-               </button>
-            </div>
+            {/* Simulated Bottom Navigation (Hide on Detail View) */}
+            {!selectedClientId && (
+                <div className="absolute bottom-0 w-full bg-white border-t border-slate-200 h-20 pb-6 z-50 grid grid-cols-3">
+                   <button 
+                      onClick={() => setCurrentView('HOME')}
+                      className={`flex flex-col items-center justify-center transition-colors ${currentView === 'HOME' ? 'text-blue-600' : 'text-slate-400'}`}
+                   >
+                      <Home className={`w-6 h-6 mb-1 ${currentView === 'HOME' ? 'fill-blue-100' : ''}`} strokeWidth={currentView === 'HOME' ? 2.5 : 2} />
+                      <span className="text-[10px] font-bold">Home</span>
+                   </button>
+                   <button 
+                      onClick={() => setCurrentView('PATIENTS')}
+                      className={`flex flex-col items-center justify-center transition-colors ${currentView === 'PATIENTS' ? 'text-blue-600' : 'text-slate-400'}`}
+                   >
+                      <Users className={`w-6 h-6 mb-1 ${currentView === 'PATIENTS' ? 'fill-blue-100' : ''}`} strokeWidth={currentView === 'PATIENTS' ? 2.5 : 2} />
+                      <span className="text-[10px] font-bold">Patients</span>
+                   </button>
+                   <button 
+                      onClick={() => setCurrentView('ALERTS')}
+                      className={`flex flex-col items-center justify-center transition-colors ${currentView === 'ALERTS' ? 'text-blue-600' : 'text-slate-400'}`}
+                   >
+                      <div className="relative">
+                          <Bell className={`w-6 h-6 mb-1 ${currentView === 'ALERTS' ? 'fill-blue-100' : ''}`} strokeWidth={currentView === 'ALERTS' ? 2.5 : 2} />
+                          {highRiskClients.length > 0 && <div className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></div>}
+                      </div>
+                      <span className="text-[10px] font-bold">Alerts</span>
+                   </button>
+                </div>
+            )}
 
             {/* Home Indicator */}
             <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1 bg-slate-300 rounded-full z-[60] pointer-events-none"></div>

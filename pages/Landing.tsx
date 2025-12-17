@@ -441,7 +441,7 @@ const ProcessFlowModal: React.FC<{ onClose: () => void }> = ({ onClose }) => (
                                <div className="text-xs font-bold text-purple-400 uppercase tracking-wider mb-1">AI Oversight</div>
                                <h5 className="text-sm font-bold text-white mb-2">Watchdog & SLA Monitor</h5>
                                <p className="text-xs text-slate-400 leading-relaxed">
-                                  Continuously checks heartbeat. If device goes offline > 24h or battery low, auto-creates support ticket for Care Team.
+                                  Continuously checks heartbeat. If device goes offline &gt; 24h or battery low, auto-creates support ticket for Care Team.
                                </p>
                             </div>
                             <div className="mt-1"><Bot className="w-5 h-5 text-purple-400" /></div>
