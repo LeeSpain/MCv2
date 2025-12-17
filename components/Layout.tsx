@@ -15,71 +15,116 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   const location = useLocation();
   const navigate = useNavigate();
 
-  const isMobile = currentUser.role === Role.INSTALLER;
+  // Mobile Users: Installers AND Standard Nurses
+  const isMobile = currentUser.role === Role.INSTALLER || currentUser.role === Role.CARE_COMPANY_NURSE;
   
-  // Define allowed paths for mobile installers
-  const mobilePaths = ['/installer-dashboard', '/messages', '/settings'];
+  // Define allowed paths for mobile users
+  const mobilePaths = [
+    '/installer-dashboard', 
+    '/care-dashboard', 
+    '/messages', 
+    '/settings', 
+    '/clients', 
+    '/orders', 
+    '/confirmations'
+  ];
   
   // --- STRICT REDIRECT LOGIC ---
   useEffect(() => {
-    // Case 1: User IS an Installer
+    // Case 1: User IS a Mobile User (Installer or Nurse)
     if (isMobile) {
-      // If they are NOT on a mobile-allowed path, force them to their dashboard
+      // If they are NOT on a mobile-allowed path, force them to their specific dashboard
       const isOnAllowedPath = mobilePaths.some(p => location.pathname.startsWith(p));
       if (!isOnAllowedPath) {
-        navigate('/installer-dashboard', { replace: true });
+        if (currentUser.role === Role.INSTALLER) {
+            navigate('/installer-dashboard', { replace: true });
+        } else {
+            navigate('/care-dashboard', { replace: true });
+        }
       }
     } 
-    // Case 2: User is NOT an Installer (CEO, Admin, etc.)
+    // Case 2: User is Desktop (CEO, Admin, Ops, Lead Nurse)
     else {
-      // If they ARE on the installer dashboard, force them to the main home page
+      // Prevent access to mobile-specific dashboards if accessed directly
       if (location.pathname === '/installer-dashboard') {
         navigate('/', { replace: true });
       }
     }
-  }, [isMobile, location.pathname, navigate]);
+  }, [isMobile, location.pathname, navigate, currentUser.role]);
 
   // --- RENDER GUARD ---
-  // prevent rendering the wrong layout layout/content mismatch while the useEffect triggers the redirect
   if (isMobile && !mobilePaths.some(p => location.pathname.startsWith(p))) return null;
   if (!isMobile && location.pathname === '/installer-dashboard') return null;
 
   // Navigation items definition with allowed roles
+  // ORDER: Dashboards -> Messages -> Workflows -> Lists -> Settings
   const allNavItems = [
-    // PRIMARY DASHBOARD (TODAY VIEW)
+    // --- 1. DASHBOARDS ---
     {
       path: '/',
       label: 'Dashboard',
       icon: Home,
       allowed: [Role.MC_ADMIN, Role.MC_OPERATIONS, Role.CEO]
     },
-
-    // EXECUTIVE
     {
       path: '/ceo-dashboard',
       label: 'Executive View',
       icon: TrendingUp,
       allowed: [Role.CEO]
     },
-
-    // OPS / ADMIN ROUTES
     { 
       path: '/ops-dashboard', 
       label: 'Ops Control', 
       icon: LayoutDashboard, 
       allowed: [Role.MC_ADMIN, Role.MC_OPERATIONS] 
     },
+    {
+      path: '/installer-dashboard',
+      label: 'My Route',
+      icon: MapPin,
+      allowed: [Role.INSTALLER]
+    },
+    {
+      path: '/care-dashboard',
+      label: 'Dashboard', // Mobile Nurse Home
+      icon: LayoutDashboard,
+      allowed: [Role.CARE_COMPANY_LEAD_NURSE, Role.CARE_COMPANY_NURSE]
+    },
+
+    // --- 2. COMMUNICATION (High Priority) ---
+    { 
+      path: '/messages', 
+      label: 'Messages', 
+      icon: MessageSquare, 
+      allowed: [Role.MC_ADMIN, Role.MC_OPERATIONS, Role.CEO, Role.CARE_COMPANY_LEAD_NURSE, Role.CARE_COMPANY_NURSE, Role.INSTALLER] 
+    },
+
+    // --- 3. CARE SPECIFIC WORKFLOWS ---
+    {
+      path: '/orders',
+      label: 'Orders',
+      icon: ClipboardList,
+      allowed: [Role.CARE_COMPANY_LEAD_NURSE, Role.CARE_COMPANY_NURSE]
+    },
+    {
+      path: '/confirmations',
+      label: 'Tasks',
+      icon: CheckCircle,
+      allowed: [Role.CARE_COMPANY_LEAD_NURSE, Role.CARE_COMPANY_NURSE]
+    },
+
+    // --- 4. LISTS & DIRECTORIES ---
+    { 
+      path: '/clients', 
+      label: 'Clients', 
+      icon: Users, 
+      allowed: [Role.MC_ADMIN, Role.MC_OPERATIONS, Role.CARE_COMPANY_LEAD_NURSE, Role.CARE_COMPANY_NURSE] 
+    },
     { 
       path: '/exceptions', 
       label: 'Exceptions', 
       icon: AlertCircle, 
       allowed: [Role.MC_ADMIN, Role.MC_OPERATIONS, Role.CEO] 
-    },
-    { 
-      path: '/clients', 
-      label: 'Client Directory', // Shared with Care, but Ops sees Global
-      icon: Users, 
-      allowed: [Role.MC_ADMIN, Role.MC_OPERATIONS, Role.CARE_COMPANY_LEAD_NURSE, Role.CARE_COMPANY_NURSE] 
     },
     { 
       path: '/cases', 
@@ -111,47 +156,12 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
       icon: FileText, 
       allowed: [Role.MC_ADMIN, Role.MC_OPERATIONS, Role.CEO] 
     },
+
+    // --- 5. SETTINGS ---
     { 
       path: '/settings', 
       label: 'Settings', 
       icon: Settings, 
-      allowed: [Role.MC_ADMIN, Role.MC_OPERATIONS, Role.CEO, Role.CARE_COMPANY_LEAD_NURSE, Role.CARE_COMPANY_NURSE, Role.INSTALLER] 
-    },
-
-    // INSTALLER ROUTES
-    {
-      path: '/installer-dashboard',
-      label: 'My Route',
-      icon: MapPin,
-      allowed: [Role.INSTALLER]
-    },
-
-    // CARE COMPANY ROUTES (Specific Dashboard)
-    {
-      path: '/care-dashboard',
-      label: 'Dashboard',
-      icon: LayoutDashboard,
-      allowed: [Role.CARE_COMPANY_LEAD_NURSE, Role.CARE_COMPANY_NURSE]
-    },
-    // Note: 'Clients' route is handled in the shared block above now
-    {
-      path: '/orders',
-      label: 'My Active Orders',
-      icon: ClipboardList,
-      allowed: [Role.CARE_COMPANY_LEAD_NURSE, Role.CARE_COMPANY_NURSE]
-    },
-    {
-      path: '/confirmations',
-      label: 'Confirmations',
-      icon: CheckCircle,
-      allowed: [Role.CARE_COMPANY_LEAD_NURSE, Role.CARE_COMPANY_NURSE]
-    },
-
-    // SHARED
-    { 
-      path: '/messages', 
-      label: 'Messages', 
-      icon: MessageSquare, 
       allowed: [Role.MC_ADMIN, Role.MC_OPERATIONS, Role.CEO, Role.CARE_COMPANY_LEAD_NURSE, Role.CARE_COMPANY_NURSE, Role.INSTALLER] 
     },
   ];
@@ -159,7 +169,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   // Filter items based on current user role
   const navItems = allNavItems.filter(item => item.allowed.includes(currentUser.role));
 
-  // --- MOBILE LAYOUT (INSTALLER) ---
+  // --- MOBILE LAYOUT (INSTALLER & NURSE) ---
   if (isMobile) {
     return (
       <div className="flex flex-col h-screen bg-slate-50 font-sans">
@@ -181,8 +191,8 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
            </div>
         </main>
 
-        <nav className="fixed bottom-0 w-full bg-white border-t border-slate-200 grid grid-cols-3 h-[calc(4rem+env(safe-area-inset-bottom))] pb-[env(safe-area-inset-bottom)] z-50 shadow-[0_-4px_15px_rgba(0,0,0,0.05)]">
-           {navItems.map(item => {
+        <nav className="fixed bottom-0 w-full bg-white border-t border-slate-200 grid grid-cols-4 h-[calc(4rem+env(safe-area-inset-bottom))] pb-[env(safe-area-inset-bottom)] z-50 shadow-[0_-4px_15px_rgba(0,0,0,0.05)]">
+           {navItems.slice(0, 3).map(item => { // Take top 3 relevant items
               const isActive = location.pathname === item.path;
               const Icon = item.icon;
               return (
@@ -192,7 +202,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                 </Link>
               );
            })}
-           {/* Mobile Profile Tab */}
+           {/* Mobile Profile Tab (Always Last) */}
            <Link to="/settings" className={`flex flex-col items-center justify-center active:bg-slate-50 transition-colors ${location.pathname === '/settings' ? 'text-brand-600' : 'text-slate-400'}`}>
               <UserCircle className={`w-6 h-6 mb-1 ${location.pathname === '/settings' ? 'fill-brand-100' : ''}`} strokeWidth={location.pathname === '/settings' ? 2.5 : 2} />
               <span className="text-[10px] font-bold">Profile</span>
