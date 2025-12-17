@@ -305,8 +305,8 @@ export const CeoDashboard: React.FC = () => {
 // --- MODAL SUB-COMPONENTS ---
 
 /**
- * HIGH-FIDELITY LIVE COMMAND MONITOR
- * Designed for professional strategic operations with real-time feedback loops.
+ * PROFESSIONAL LIVE COMMAND MONITOR
+ * Advanced Operational HUD for High-Density Intelligence
  */
 const LiveCommandModal = ({ criticalIssues, activeAssets, agentRunLogs, agents, onClose }: any) => {
     const [scannedItems, setScannedItems] = useState(12402);
@@ -315,7 +315,7 @@ const LiveCommandModal = ({ criticalIssues, activeAssets, agentRunLogs, agents, 
     const [liveLogs, setLiveLogs] = useState<any[]>([]);
     const logContainerRef = useRef<HTMLDivElement>(null);
     
-    // Simulation: Telemetry jitter
+    // Simulate real-time jitter for telemetry
     useEffect(() => {
         const interval = setInterval(() => {
             setScannedItems(prev => prev + Math.floor(Math.random() * 5));
@@ -325,7 +325,7 @@ const LiveCommandModal = ({ criticalIssues, activeAssets, agentRunLogs, agents, 
         return () => clearInterval(interval);
     }, []);
 
-    // Simulation: Log feeder for a more active "live" feel
+    // Simulate active log stream
     useEffect(() => {
         const baseLogs = agentRunLogs.length > 0 ? [...agentRunLogs].reverse() : [];
         let index = 0;
@@ -335,12 +335,11 @@ const LiveCommandModal = ({ criticalIssues, activeAssets, agentRunLogs, agents, 
                setLiveLogs(prev => [...prev, baseLogs[index % baseLogs.length]].slice(-100));
                index++;
             } else {
-               // Placeholder feeder
                const dummyLog = {
                  id: `sys-${Date.now()}`,
                  finished_at: new Date().toISOString(),
-                 agent_id: 'SYSTEM_WATCHER',
-                 plan: { actions: [{ summary: 'Global state integrity verified. All nodes responding.' }] },
+                 agent_id: 'SYSTEM_MONITOR',
+                 plan: { actions: [{ summary: 'Global state integrity verified. All mesh nodes reporting nominal.' }] },
                  applied_actions: [{ status: 'APPLIED' }],
                  autonomy: 'AUTO'
                };
@@ -348,8 +347,8 @@ const LiveCommandModal = ({ criticalIssues, activeAssets, agentRunLogs, agents, 
             }
         };
 
-        const interval = setInterval(feedLog, 4000);
-        feedLog(); // Initial
+        const interval = setInterval(feedLog, 3000);
+        feedLog();
         return () => clearInterval(interval);
     }, [agentRunLogs]);
 
@@ -361,141 +360,110 @@ const LiveCommandModal = ({ criticalIssues, activeAssets, agentRunLogs, agents, 
     }, [liveLogs]);
 
     return (
-        <div className="fixed inset-0 z-[100] bg-[#02040a] text-slate-300 font-sans flex flex-col animate-in fade-in duration-500 overflow-hidden select-none">
-            {/* HUD HEADER */}
+        <div className="fixed inset-0 z-[100] bg-[#020408] text-slate-300 font-sans flex flex-col animate-in fade-in duration-500 overflow-hidden select-none">
+            {/* TACTICAL HUD HEADER */}
             <header className="flex-none h-20 border-b border-brand-500/20 bg-slate-900/60 backdrop-blur-2xl flex justify-between items-center px-10 relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-brand-500 to-transparent opacity-60"></div>
-                
-                <div className="flex items-center gap-10">
-                    <div className="flex items-center gap-5">
+                <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-brand-500 to-transparent opacity-40"></div>
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_-20%,_rgba(14,165,233,0.1),transparent)]"></div>
+
+                <div className="flex items-center gap-8 relative z-10">
+                    <div className="flex items-center gap-4">
                         <div className="relative">
-                            <div className="w-12 h-12 bg-brand-500/10 rounded-2xl border border-brand-500/30 flex items-center justify-center shadow-[0_0_25px_rgba(14,165,233,0.15)]">
+                            <div className="w-12 h-12 bg-brand-500/10 rounded-xl border border-brand-500/30 flex items-center justify-center shadow-[0_0_20px_rgba(14,165,233,0.15)]">
                                 <ActivityIcon className="w-7 h-7 text-brand-500 animate-pulse" />
                             </div>
-                            <div className="absolute -top-1 -right-1 w-4 h-4 bg-brand-500 rounded-full border-4 border-[#02040a] animate-ping"></div>
+                            <div className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-brand-500 rounded-full border-2 border-[#020408] animate-ping"></div>
                         </div>
                         <div>
-                           <h1 className="text-xl font-black tracking-[0.3em] text-white uppercase italic flex items-center gap-2">
-                              Ops_Command <span className="text-brand-500 opacity-30 font-light">|</span> Live_Monitor
+                           <h1 className="text-xl font-black tracking-[0.25em] text-white uppercase italic flex items-center gap-2">
+                              Ops_Command <span className="text-brand-500 opacity-50 font-light">//</span> Live_Monitor
                            </h1>
-                           <div className="flex items-center gap-4 text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mt-0.5">
-                               <span className="flex items-center gap-2 text-green-500">
-                                  <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" /> 
-                                  Cluster_State: Optimized
-                               </span>
-                               <span className="flex items-center gap-2">
-                                  <Clock className="w-3 h-3 text-brand-400" /> {new Date().toLocaleTimeString()}
-                               </span>
-                               <span className="font-mono text-slate-600">v4.2.1-stable</span>
+                           <div className="flex items-center gap-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">
+                               <span className="flex items-center gap-1.5 text-green-500"><span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" /> Cluster: Stable</span>
+                               <span className="flex items-center gap-1.5"><Clock className="w-3 h-3 text-brand-400" /> {new Date().toLocaleTimeString()}</span>
+                               <span className="flex items-center gap-1.5 text-slate-400 font-mono">B-OS_V4.2.0</span>
                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-12">
-                    {/* Live Telemetry Panels */}
-                    <div className="hidden lg:flex items-center gap-16 border-x border-white/5 px-16 h-full">
-                        <div className="flex flex-col items-center">
-                           <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5">Node Load</div>
-                           <div className="text-2xl font-mono font-black text-white leading-none tracking-tighter flex items-end gap-1">
-                             {systemLoad}
-                             <span className="text-[10px] text-brand-500 mb-0.5">%</span>
-                           </div>
-                           <div className="w-20 h-1 bg-slate-800 rounded-full mt-2 overflow-hidden shadow-inner">
-                              <div style={{ width: `${systemLoad}%` }} className="h-full bg-brand-500 transition-all duration-700" />
-                           </div>
+                <div className="flex items-center gap-10 relative z-10 h-full">
+                    {/* Live Telemetry Bar */}
+                    <div className="hidden lg:flex items-center gap-12 border-x border-white/5 px-12 h-full text-center">
+                        <div>
+                           <div className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">CPU Load</div>
+                           <div className="text-2xl font-mono font-black text-white leading-none tracking-tighter">{systemLoad}%</div>
                         </div>
-                        <div className="flex flex-col items-center">
-                           <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5">Latency</div>
-                           <div className="text-2xl font-mono font-black text-brand-400 leading-none tracking-tighter flex items-end gap-1">
-                             {networkLat.toFixed(1)}
-                             <span className="text-[10px] text-brand-500 mb-0.5">ms</span>
-                           </div>
-                           <div className="w-20 h-1 bg-slate-800 rounded-full mt-2 overflow-hidden shadow-inner">
-                              <div style={{ width: `${(networkLat/30)*100}%` }} className="h-full bg-brand-400 transition-all duration-700" />
-                           </div>
+                        <div>
+                           <div className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">Latency</div>
+                           <div className="text-2xl font-mono font-black text-brand-400 leading-none tracking-tighter">{networkLat.toFixed(1)}ms</div>
                         </div>
-                        <div className="flex flex-col items-center">
-                           <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5">Cycles_24h</div>
-                           <div className="text-2xl font-mono font-black text-emerald-400 leading-none tracking-tighter">
-                             {scannedItems.toLocaleString()}
-                           </div>
-                           <div className="text-[9px] font-bold text-emerald-500/40 mt-1 uppercase tracking-tighter italic">Ledger_Committed</div>
+                        <div>
+                           <div className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">Cycles_24h</div>
+                           <div className="text-2xl font-mono font-black text-emerald-400 leading-none tracking-tighter">{scannedItems.toLocaleString()}</div>
                         </div>
                     </div>
                     
                     <button 
                         onClick={onClose} 
-                        className="p-4 bg-white/5 hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-all border border-white/10 rounded-2xl group shadow-lg active:scale-95"
+                        className="p-3.5 bg-white/5 hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-all border border-white/10 rounded-2xl group shadow-lg"
                     >
                         <X className="w-7 h-7 group-hover:rotate-90 transition-transform duration-300" />
                     </button>
                 </div>
             </header>
 
-            {/* OPERATIONAL Theater */}
+            {/* OPERATIONAL THEATER (GRID) */}
             <main className="flex-1 p-8 grid grid-cols-12 grid-rows-6 gap-8 relative">
                 
-                {/* GEOSPATIAL CLUSTER TOPOLOGY */}
-                <div className="col-span-12 lg:col-span-5 row-span-4 bg-slate-900/30 rounded-[3rem] border border-white/5 p-12 relative overflow-hidden group shadow-2xl backdrop-blur-sm">
+                {/* GEOSPATIAL TOPOLOGY (Netherlands Region) */}
+                <div className="col-span-12 lg:col-span-5 row-span-4 bg-slate-900/30 rounded-[3rem] border border-white/5 p-12 relative overflow-hidden group shadow-inner">
                     <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.02] pointer-events-none"></div>
                     <div className="absolute top-10 left-12 z-10">
-                        <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.5em] flex items-center gap-3 mb-1">
-                            <Globe className="w-4 h-4 text-brand-500 animate-spin-slow" /> Regional_Flow_State
+                        <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.4em] flex items-center gap-3 mb-1">
+                            <Globe className="w-4 h-4 text-brand-500" /> Regional_Network_State
                         </h3>
                         <div className="flex items-center gap-2 text-[9px] font-bold text-slate-600 uppercase tracking-widest">
-                           <div className="w-2 h-2 rounded-full bg-brand-500/40 border border-brand-500 animate-pulse" /> High Availability Link: Active
+                           <span className="w-1.5 h-1.5 rounded-full bg-brand-500 animate-pulse" /> High Availability Network
                         </div>
                     </div>
 
-                    {/* Animated Map Visual */}
                     <div className="w-full h-full flex items-center justify-center relative">
                          {/* Depth Layers */}
-                         <div className="absolute w-full h-full rounded-full border border-white/[0.02] animate-ping duration-[6s]"></div>
+                         <div className="absolute w-[450px] h-[450px] rounded-full border border-white/[0.02] animate-ping duration-[6s]"></div>
                          
-                         <svg viewBox="0 0 400 400" className="w-full h-full max-h-[420px] drop-shadow-[0_0_50px_rgba(14,165,233,0.1)] transform group-hover:scale-[1.03] transition-transform duration-[3s] ease-out">
-                            {/* Stylized NL Outline */}
+                         <svg viewBox="0 0 400 400" className="w-full h-full max-h-[420px] drop-shadow-[0_0_30px_rgba(14,165,233,0.1)] transform group-hover:scale-[1.02] transition-transform duration-[3s]">
+                            {/* NL Contour */}
                             <path 
                                 d="M120,60 L180,45 L260,30 L320,80 L360,150 L340,300 L220,360 L100,320 L50,200 L70,120 Z" 
-                                fill="rgba(14,165,233,0.02)" 
-                                stroke="rgba(14,165,233,0.15)" 
+                                fill="rgba(14,165,233,0.03)" 
+                                stroke="rgba(14,165,233,0.1)" 
                                 strokeWidth="2" 
-                                className="transition-all duration-700 group-hover:stroke-brand-500/30" 
+                                className="transition-all duration-700 group-hover:stroke-brand-500/20" 
                             />
                             
-                            {/* Pro Scanline */}
+                            {/* Scanline Animation */}
                             <rect width="400" height="2" fill="url(#grad-scan)" className="animate-scan" />
                             
-                            {/* Tactical Node Clusters */}
+                            {/* Nodes */}
                             <g className="nodes">
-                                {/* Amsterdam HQ */}
-                                <circle cx="180" cy="140" r="6" className="fill-brand-500 shadow-brand-500 shadow-2xl" />
-                                <circle cx="180" cy="140" r="14" className="stroke-brand-500/30 fill-none animate-ping" />
-                                <text x="195" y="145" className="text-[11px] fill-white font-mono font-black tracking-tighter">MC_AMS_HQ</text>
+                                <circle cx="180" cy="140" r="6" className="fill-brand-500 animate-pulse shadow-[0_0_20px_#0ea5e9]" />
+                                <circle cx="180" cy="140" r="14" className="stroke-brand-500/20 fill-none animate-ping" />
+                                <text x="195" y="145" className="text-[11px] fill-white font-mono font-black tracking-tighter">HQ_AMS</text>
                                 
-                                {/* Rotterdam Distribution */}
-                                <circle cx="140" cy="200" r="4" className="fill-brand-400/50" />
-                                <text x="100" y="218" className="text-[9px] fill-slate-500 font-mono font-bold tracking-widest uppercase">Node_RDM</text>
+                                <circle cx="140" cy="200" r="4" className="fill-brand-400/40" />
+                                <text x="100" y="215" className="text-[9px] fill-slate-500 font-mono font-bold tracking-widest uppercase">NODE_RDM</text>
 
-                                {/* Utrecht Central Hub */}
-                                <circle cx="195" cy="185" r="4" className="fill-brand-400/50" />
-                                <text x="210" y="195" className="text-[9px] fill-slate-500 font-mono font-bold tracking-widest uppercase">Node_UTR</text>
+                                <circle cx="195" cy="185" r="4" className="fill-brand-400/40" />
+                                <text x="205" y="185" className="text-[9px] fill-slate-500 font-mono font-bold tracking-widest uppercase">NODE_UTR</text>
 
-                                {/* Eindhoven Tech Node */}
-                                <circle cx="260" cy="285" r="4" className="fill-brand-400/50" />
-                                <text x="275" y="295" className="text-[9px] fill-slate-500 font-mono font-bold tracking-widest uppercase">Node_EHV</text>
+                                <circle cx="260" cy="285" r="4" className="fill-brand-400/40" />
+                                <text x="270" y="285" className="text-[9px] fill-slate-500 font-mono font-bold tracking-widest uppercase">NODE_EHV</text>
 
-                                {/* Animated Data Flow (Particles) */}
-                                <g className="data-particles">
-                                   <circle r="2" className="fill-white shadow-white shadow-lg animate-flow-1" />
-                                   <circle r="1.5" className="fill-brand-500 animate-flow-2" />
-                                   <circle r="1.5" className="fill-brand-400 animate-flow-3" />
-                                </g>
-
-                                {/* Flow Connections */}
-                                <line x1="180" y1="140" x2="140" y2="200" stroke="rgba(14,165,233,0.1)" strokeWidth="1" strokeDasharray="5 5" className="animate-dash" />
-                                <line x1="180" y1="140" x2="195" y2="185" stroke="rgba(14,165,233,0.1)" strokeWidth="1" strokeDasharray="5 5" />
-                                <line x1="195" y1="185" x2="260" y2="285" stroke="rgba(14,165,233,0.1)" strokeWidth="1" strokeDasharray="5 5" />
+                                {/* Animated Flow Lines */}
+                                <line x1="180" y1="140" x2="140" y2="200" stroke="rgba(14,165,233,0.05)" strokeWidth="1" strokeDasharray="5 5" className="animate-dash" />
+                                <line x1="180" y1="140" x2="195" y2="185" stroke="rgba(14,165,233,0.05)" strokeWidth="1" strokeDasharray="5 5" />
+                                <line x1="195" y1="185" x2="260" y2="285" stroke="rgba(14,165,233,0.05)" strokeWidth="1" strokeDasharray="5 5" />
                             </g>
 
                             <defs>
@@ -509,50 +477,33 @@ const LiveCommandModal = ({ criticalIssues, activeAssets, agentRunLogs, agents, 
                     </div>
 
                     <div className="absolute bottom-12 left-12 right-12 flex justify-between items-end border-t border-white/5 pt-8">
-                        <div className="space-y-4">
-                           <div>
-                              <div className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-1">Total Mesh Endpoints</div>
-                              <div className="text-xl font-mono font-bold text-white tracking-tighter">1,402 ACTIVE</div>
-                           </div>
-                           <div className="flex gap-6">
-                              <div className="flex flex-col">
-                                 <span className="text-[9px] font-bold text-slate-600 uppercase">Primary DC</span>
-                                 <span className="text-xs font-bold text-brand-500">AMS-01</span>
-                              </div>
-                              <div className="flex flex-col">
-                                 <span className="text-[9px] font-bold text-slate-600 uppercase">Redundancy</span>
-                                 <span className="text-xs font-bold text-emerald-500">READY</span>
-                              </div>
-                           </div>
+                        <div>
+                           <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Active Endpoints</div>
+                           <div className="text-xl font-mono font-bold text-white tracking-tighter">1,402 NODES</div>
                         </div>
                         <div className="text-right">
-                           <div className="text-[9px] font-black text-brand-500/50 uppercase tracking-widest italic mb-2">SECURE_LINK_ENCRYPTED</div>
-                           <div className="flex items-center gap-2 justify-end">
-                              <div className="w-1.5 h-1.5 rounded-full bg-brand-500 animate-ping" />
-                              <span className="text-[10px] font-black text-white">SYNC_ENABLED</span>
-                           </div>
+                           <div className="text-[10px] font-black text-brand-500/50 uppercase italic mb-1">G-LINK_ESTABLISHED</div>
+                           <div className="text-xs font-mono font-bold text-green-400">100% NOMINAL</div>
                         </div>
                     </div>
                 </div>
 
                 {/* CENTRAL ORCHESTRATION FEED (LOGS) */}
-                <div className="col-span-12 lg:col-span-7 row-span-4 bg-black/50 rounded-[3rem] border border-white/10 flex flex-col shadow-2xl backdrop-blur-3xl overflow-hidden group">
-                    <div className="flex-none h-16 bg-white/[0.03] border-b border-white/10 px-10 flex justify-between items-center relative">
-                        <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 to-transparent pointer-events-none"></div>
-                        <div className="flex items-center gap-4 relative z-10">
+                <div className="col-span-12 lg:col-span-7 row-span-4 bg-black/40 rounded-[3rem] border border-white/10 flex flex-col shadow-2xl backdrop-blur-md overflow-hidden">
+                    <div className="flex-none h-16 bg-white/[0.03] border-b border-white/10 px-10 flex justify-between items-center">
+                        <div className="flex items-center gap-4">
                            <Terminal className="w-5 h-5 text-emerald-400" />
                            <span className="text-xs font-black uppercase tracking-[0.4em] text-emerald-400 italic">Central_Orchestration_Ledger</span>
                         </div>
-                        <div className="flex items-center gap-8 relative z-10">
-                           <div className="flex items-center gap-3">
-                              <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_10px_#22c55e]" />
+                        <div className="flex items-center gap-6">
+                           <div className="flex items-center gap-2">
+                              <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
                               <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">INGEST_STREAM: ACTIVE</span>
                            </div>
-                           <button className="text-[10px] font-black text-slate-400 hover:text-white uppercase tracking-widest border border-white/10 px-4 py-1.5 rounded-lg transition-all hover:bg-white/5 active:scale-95">Flush_Cache</button>
+                           <button className="text-[10px] font-black text-slate-400 hover:text-white uppercase tracking-widest border-l border-white/10 pl-6 transition-colors">Flush_Cache</button>
                         </div>
                     </div>
                     
-                    {/* Log Stream Body */}
                     <div 
                         ref={logContainerRef}
                         className="flex-1 overflow-y-auto p-10 font-mono text-[11px] custom-scrollbar space-y-4 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] bg-repeat"
@@ -560,28 +511,28 @@ const LiveCommandModal = ({ criticalIssues, activeAssets, agentRunLogs, agents, 
                         {liveLogs.map((log: any, idx: number) => {
                             const isAuto = log.autonomy === 'AUTO';
                             return (
-                                <div key={log.id} className={`flex gap-8 p-4 rounded-2xl border transition-all duration-500 animate-in slide-in-from-left-6 ${
-                                    isAuto ? 'bg-brand-500/[0.03] border-white/5 hover:bg-brand-500/[0.08]' : 'bg-white/[0.02] border-transparent hover:bg-white/[0.05]'
+                                <div key={log.id} className={`flex gap-8 p-4 rounded-[1.5rem] border transition-all duration-500 animate-in slide-in-from-left-6 ${
+                                    isAuto ? 'bg-brand-500/[0.03] border-white/5 hover:bg-brand-500/[0.08]' : 'bg-white/[0.02] border-transparent hover:bg-white/[0.04]'
                                 }`}>
                                     <span className="text-slate-600 shrink-0 font-bold tabular-nums tracking-tighter">[{new Date(log.finished_at).toLocaleTimeString()}]</span>
-                                    <div className="shrink-0 flex items-center gap-3 min-w-[120px]">
-                                        <div className={`w-2 h-2 rounded-full ${isAuto ? 'bg-brand-500 animate-pulse' : 'bg-slate-700'}`} />
+                                    <div className="shrink-0 flex items-center gap-3">
+                                        <div className={`w-1.5 h-1.5 rounded-full ${isAuto ? 'bg-brand-500' : 'bg-slate-700'}`} />
                                         <span className={`font-black tracking-tighter uppercase ${isAuto ? 'text-brand-400' : 'text-slate-500'}`}>
-                                            {log.agent_id.split('-').pop()?.substring(0, 12)}
+                                            AGNT_{log.agent_id.split('-').pop()?.toUpperCase()}
                                         </span>
                                     </div>
                                     <span className="text-slate-300 flex-1 leading-relaxed font-medium">
-                                        {log.plan?.actions?.[0]?.summary || 'Orchestration cycle complete. Validation successful.'}
+                                        {log.plan?.actions?.[0]?.summary || 'Orchestration cycle complete. State validated.'}
                                     </span>
                                     <div className="flex items-center gap-4">
-                                        <span className={`px-3 py-1 rounded-[8px] text-[9px] font-black uppercase tracking-tighter border ${
+                                        <span className={`px-2.5 py-0.5 rounded-[6px] text-[9px] font-black uppercase tracking-tighter border ${
                                             log.applied_actions?.[0]?.status === 'APPLIED' 
                                             ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
                                             : 'bg-slate-800 text-slate-500 border-slate-700'
                                         }`}>
                                             {log.applied_actions?.[0]?.status || 'IDLE'}
                                         </span>
-                                        <span className="text-[10px] text-slate-800 font-mono font-bold select-all">0x{log.id.slice(-4).toUpperCase()}</span>
+                                        <span className="text-[10px] text-slate-800 font-mono font-bold">0x{log.id.slice(-4).toUpperCase()}</span>
                                     </div>
                                 </div>
                             );
@@ -589,56 +540,52 @@ const LiveCommandModal = ({ criticalIssues, activeAssets, agentRunLogs, agents, 
                     </div>
                 </div>
 
-                {/* OPERATIONAL CLUSTER STATUS GRID */}
-                <div className="col-span-12 lg:col-span-9 row-span-2 bg-slate-900/10 rounded-[3rem] border border-white/5 p-10 flex items-center gap-8 overflow-x-auto no-scrollbar relative shadow-inner">
-                    <div className="absolute inset-0 bg-gradient-to-t from-brand-500/[0.02] to-transparent pointer-events-none"></div>
+                {/* ACTIVE AGENT CLUSTER GRID */}
+                <div className="col-span-12 lg:col-span-9 row-span-2 bg-slate-900/10 rounded-[3rem] border border-white/5 p-10 flex items-center gap-8 overflow-x-auto no-scrollbar shadow-inner">
                     {agents.map((agent: any) => (
-                        <div key={agent.id} className="flex-none w-72 h-full p-6 rounded-[2rem] bg-white/[0.03] border border-white/5 hover:border-brand-500/40 hover:bg-white/[0.06] transition-all cursor-pointer group flex flex-col justify-between shadow-lg">
+                        <div key={agent.id} className="flex-none w-72 h-full p-6 rounded-[2rem] bg-white/[0.03] border border-white/5 hover:border-brand-500/30 hover:bg-white/[0.06] transition-all cursor-pointer group flex flex-col justify-between shadow-lg">
                             <div className="flex justify-between items-start mb-4">
                                 <div className={`p-3 rounded-2xl transition-colors ${agent.status === 'ENABLED' ? 'bg-brand-500/10 text-brand-400' : 'bg-slate-800 text-slate-600'}`}>
                                     <Zap className="w-6 h-6 group-hover:scale-110 transition-transform" />
                                 </div>
                                 <div className="text-right">
-                                    <div className="text-[9px] font-black text-slate-600 uppercase tracking-widest mb-1">Logic_Mode</div>
+                                    <div className="text-[9px] font-black text-slate-600 uppercase tracking-widest mb-1">Strategy</div>
                                     <div className={`text-xs font-black tracking-tight ${agent.autonomy === 'AUTO_EXECUTE' ? 'text-red-400' : 'text-blue-400'}`}>
-                                        {agent.autonomy.replace('_', ' ')}
+                                        {agent.autonomy.split('_')[0]}
                                     </div>
                                 </div>
                             </div>
                             <div>
-                                <div className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1 italic opacity-60">specialist_node</div>
                                 <div className="text-sm font-black text-white mb-2 group-hover:text-brand-400 transition-colors truncate uppercase tracking-tighter">{agent.name}</div>
                                 <div className="flex justify-between items-center text-[10px] font-bold text-slate-500 uppercase tracking-widest">
                                     <span className="flex items-center gap-1.5"><ActivityIcon className="w-3 h-3 text-brand-500" /> Pulse: OK</span>
                                     <span>Risk: {agent.risk_level}</span>
                                 </div>
                                 <div className="mt-5 h-2 w-full bg-slate-800/50 rounded-full overflow-hidden shadow-inner">
-                                    <div className={`h-full transition-all duration-2000 ${agent.status === 'ENABLED' ? 'bg-emerald-500 w-full animate-pulse' : 'bg-slate-700 w-0'}`} />
+                                    <div className={`h-full transition-all duration-1000 ${agent.status === 'ENABLED' ? 'bg-emerald-500 w-full animate-pulse' : 'bg-slate-700 w-0'}`} />
                                 </div>
                             </div>
                         </div>
                     ))}
                 </div>
 
-                {/* VITAL PERFORMANCE SUMMARY */}
+                {/* PERFORMANCE CARDS SUMMARY */}
                 <div className="col-span-12 lg:col-span-3 row-span-2 space-y-6">
-                    {/* Revenue Fleet Card */}
-                    <div className="bg-brand-600 p-10 rounded-[3rem] flex flex-col justify-between h-[calc(50%-0.75rem)] shadow-2xl shadow-brand-900/40 group relative overflow-hidden ring-4 ring-brand-500/20">
-                        <Waves className="absolute -bottom-12 -right-12 w-48 h-48 text-white/10 group-hover:scale-150 transition-transform duration-[3s] pointer-events-none ease-in-out" />
+                    <div className="bg-brand-600 p-10 rounded-[3rem] flex flex-col justify-between h-[calc(50%-0.75rem)] shadow-2xl shadow-brand-900/40 group relative overflow-hidden">
+                        <Waves className="absolute -bottom-12 -right-12 w-48 h-48 text-white/10 group-hover:scale-150 transition-transform duration-[3s] pointer-events-none" />
                         <div className="relative z-10">
-                           <span className="text-[11px] font-black text-brand-900 uppercase tracking-[0.4em] opacity-70">Fleet_Penetration</span>
+                           <span className="text-[11px] font-black text-brand-900 uppercase tracking-[0.4em] opacity-70">Revenue_Fleet</span>
                            <div className="flex items-end gap-3 mt-3">
-                              <span className="text-6xl font-black text-white tracking-tighter italic leading-none drop-shadow-lg">{activeAssets}</span>
-                              <span className="text-xs font-bold text-brand-200 mb-2 uppercase tracking-widest opacity-80">Endpoints</span>
+                              <span className="text-6xl font-black text-white tracking-tighter italic leading-none">{activeAssets}</span>
+                              <span className="text-xs font-bold text-brand-200 mb-2 uppercase tracking-widest opacity-80">Units</span>
                            </div>
                         </div>
                         <div className="relative z-10 flex justify-between items-center text-[10px] font-black text-white/40 uppercase tracking-[0.2em] pt-4 border-t border-white/10">
-                           <span>Uptime_99.98%</span>
+                           <span>99.98% SLA_HEALTH</span>
                            <ActivityIcon className="w-5 h-5 animate-pulse" />
                         </div>
                     </div>
 
-                    {/* Blocker Card */}
                     <div className={`p-10 rounded-[3rem] flex flex-col justify-between h-[calc(50%-0.75rem)] shadow-2xl transition-all duration-700 border-2 ${
                         criticalIssues > 0 
                         ? 'bg-red-600 border-red-500 shadow-red-900/40 ring-4 ring-red-500/20' 
@@ -647,9 +594,9 @@ const LiveCommandModal = ({ criticalIssues, activeAssets, agentRunLogs, agents, 
                         <div>
                            <span className={`text-[11px] font-black uppercase tracking-[0.4em] opacity-70 ${
                                criticalIssues > 0 ? 'text-red-950' : 'text-slate-600'
-                           }`}>System_Friction</span>
+                           }`}>Strategic_Friction</span>
                            <div className="flex items-end gap-3 mt-3">
-                              <span className={`text-6xl font-black tracking-tighter italic leading-none drop-shadow-lg ${
+                              <span className={`text-6xl font-black tracking-tighter italic leading-none ${
                                   criticalIssues > 0 ? 'text-white animate-pulse' : 'text-slate-400'
                               }`}>{criticalIssues}</span>
                               <span className={`text-xs font-bold mb-2 uppercase tracking-widest ${
@@ -668,7 +615,7 @@ const LiveCommandModal = ({ criticalIssues, activeAssets, agentRunLogs, agents, 
 
             </main>
             
-            {/* AMBIENT SCREEN EFFECTS */}
+            {/* AMBIENT CRT OVERLAY */}
             <div className="absolute inset-0 pointer-events-none opacity-[0.04] select-none mix-blend-overlay">
                 <div className="h-full w-full bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_6px,3px_100%]"></div>
             </div>
@@ -682,27 +629,8 @@ const LiveCommandModal = ({ criticalIssues, activeAssets, agentRunLogs, agents, 
                 @keyframes dash {
                     to { stroke-dashoffset: -20; }
                 }
-                @keyframes flow-1 {
-                   0% { transform: translate(180px, 140px); opacity: 0; }
-                   10% { opacity: 1; }
-                   100% { transform: translate(140px, 200px); opacity: 0; }
-                }
-                @keyframes flow-2 {
-                   0% { transform: translate(180px, 140px); opacity: 0; }
-                   10% { opacity: 1; }
-                   100% { transform: translate(195px, 185px); opacity: 0; }
-                }
-                @keyframes flow-3 {
-                   0% { transform: translate(195px, 185px); opacity: 0; }
-                   10% { opacity: 1; }
-                   100% { transform: translate(260px, 285px); opacity: 0; }
-                }
                 .animate-scan { animation: scan 10s linear infinite; }
                 .animate-dash { animation: dash 2s linear infinite; }
-                .animate-flow-1 { animation: flow-1 3s linear infinite; }
-                .animate-flow-2 { animation: flow-2 2.5s linear infinite; animation-delay: 1s; }
-                .animate-flow-3 { animation: flow-3 4s linear infinite; animation-delay: 0.5s; }
-                .animate-spin-slow { animation: spin 20s linear infinite; }
                 .no-scrollbar::-webkit-scrollbar { display: none; }
                 .custom-scrollbar::-webkit-scrollbar { width: 4px; }
                 .custom-scrollbar::-webkit-scrollbar-track { background: rgba(255,255,255,0.01); }
