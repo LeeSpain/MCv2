@@ -317,7 +317,7 @@ const ProcessFlowModal: React.FC<{ onClose: () => void }> = ({ onClose }) => (
                 {/* 2. LOGISTICS */}
                 <div className="relative flex flex-col md:flex-row gap-8 md:gap-0 items-center md:items-start group">
                    <div className="md:w-1/2 md:pr-16 order-2 md:order-1">
-                      <div className="bg-slate-900 p-5 rounded-xl border border-slate-800 shadow-xl group-hover:border-purple-500/30 transition-all text-right">
+                      <div className="bg-slate-900 p-5 rounded-xl border border-slate-800 shadow-xl group-hover:border-purple-50/30 transition-all text-right">
                          <div className="flex items-start gap-4 justify-end">
                             <div className="text-right">
                                <h5 className="text-sm font-bold text-white mb-2">Logistics Optimizer</h5>
@@ -377,7 +377,7 @@ const ProcessFlowModal: React.FC<{ onClose: () => void }> = ({ onClose }) => (
                 {/* 4. MONITORING */}
                 <div className="relative flex flex-col md:flex-row gap-8 md:gap-0 items-center md:items-start group">
                    <div className="md:w-1/2 md:pr-16 order-2 md:order-1">
-                      <div className="bg-slate-900 p-5 rounded-xl border border-slate-800 shadow-xl group-hover:border-purple-500/30 transition-all text-right">
+                      <div className="bg-slate-900 p-5 rounded-xl border border-slate-800 shadow-xl group-hover:border-purple-50/30 transition-all text-right">
                          <div className="flex items-start gap-4 justify-end">
                             <div className="text-right">
                                <h5 className="text-sm font-bold text-white mb-2">Watchdog Agent</h5>
