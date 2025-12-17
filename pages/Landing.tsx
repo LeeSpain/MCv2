@@ -64,7 +64,7 @@ const SystemArchitectureModal: React.FC<{ onClose: () => void }> = ({ onClose })
                      </div>
                      <h4 className="font-bold text-slate-900 text-sm mb-1">1. Continuous Scan</h4>
                      <p className="text-xs text-slate-500 leading-relaxed">
-                        Agents scan the unified state every cycle for anomalies, SLA breaches, and new intake events without human polling.
+                        Agents scan the live state (SQL) for anomalies like <code>stock &lt; min</code> every cycle without human polling.
                      </p>
                   </div>
 
@@ -75,7 +75,7 @@ const SystemArchitectureModal: React.FC<{ onClose: () => void }> = ({ onClose })
                      </div>
                      <h4 className="font-bold text-slate-900 text-sm mb-1">2. Risk Reasoning</h4>
                      <p className="text-xs text-slate-500 leading-relaxed">
-                        The Logic Engine evaluates anomalies against business rules, calculating a <strong>Risk Score (0-100)</strong> to determine autonomy.
+                        The Logic Engine evaluates anomalies against business rules, calculating a <strong>Risk Score (0-100)</strong> to determine safety.
                      </p>
                   </div>
 
@@ -86,7 +86,7 @@ const SystemArchitectureModal: React.FC<{ onClose: () => void }> = ({ onClose })
                      </div>
                      <h4 className="font-bold text-slate-900 text-sm mb-1">3. Decision Fork</h4>
                      <p className="text-xs text-slate-500 leading-relaxed">
-                        <strong>Low Risk:</strong> Auto-Execute corrective action. <strong>High Risk:</strong> Halt & Draft a human proposal (HITL).
+                        <strong>Low Risk:</strong> Auto-Execute fix. <strong>High Risk:</strong> Halt & Draft a proposal for human review (Human-in-the-Loop).
                      </p>
                   </div>
 
@@ -97,7 +97,7 @@ const SystemArchitectureModal: React.FC<{ onClose: () => void }> = ({ onClose })
                      </div>
                      <h4 className="font-bold text-slate-900 text-sm mb-1">4. Distributed Action</h4>
                      <p className="text-xs text-slate-500 leading-relaxed">
-                        Actions are committed to the ledger, and dispatched to mobile endpoints for field execution.
+                        Actions committed to the ledger, and dispatched to mobile endpoints for real-world field execution.
                      </p>
                   </div>
                </div>
@@ -124,7 +124,7 @@ const SystemArchitectureModal: React.FC<{ onClose: () => void }> = ({ onClose })
                      <div className="w-2 h-2 rounded-full bg-purple-600 animate-pulse"></div> The Neural Layer
                   </h4>
                   <p className="text-sm text-slate-600 mb-6 font-medium">
-                     Handles high-volume, repetitive tasks where speed and precision are critical.
+                     Handles high-volume tasks where speed and precision are critical.
                   </p>
                   <ul className="space-y-4">
                      {[
@@ -152,14 +152,14 @@ const SystemArchitectureModal: React.FC<{ onClose: () => void }> = ({ onClose })
                      <div className="w-2 h-2 rounded-full bg-blue-600"></div> The Human Layer
                   </h4>
                   <p className="text-sm text-slate-600 mb-6 font-medium">
-                     Handles low-volume, high-context tasks requiring empathy and judgment.
+                     Handles high-context tasks requiring empathy and judgment.
                   </p>
                   <ul className="space-y-4">
                      {[
-                        { label: "Clinical Judgement", desc: "Final approval of care plans and product needs" },
+                        { label: "Clinical Judgement", desc: "Final approval of care plans and products" },
                         { label: "Exception Resolution", desc: "Solving unique blockers flagged by AI" },
-                        { label: "Physical Installation", desc: "Face-to-face training and hardware setup" },
-                        { label: "Relationship Ops", desc: "Strategic management of care organization partners" }
+                        { label: "Field Excellence", desc: "Face-to-face training and hardware setup" },
+                        { label: "Strategic Oversight", desc: "Management of care organization partners" }
                      ].map((item, i) => (
                         <li key={i} className="flex gap-3 text-xs">
                            <div className="w-4 h-4 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 shrink-0 text-[10px] font-bold">H</div>
@@ -179,7 +179,7 @@ const SystemArchitectureModal: React.FC<{ onClose: () => void }> = ({ onClose })
             <div className="flex items-center gap-3 mb-6">
                 <div className="p-2 bg-emerald-50 text-emerald-700 rounded-lg border border-emerald-100"><Server className="w-5 h-5" /></div>
                 <div>
-                   <h3 className="text-lg font-bold text-slate-900">Unified State Machine</h3>
+                   <h3 className="text-lg font-bold text-slate-900">Unified Data Architecture</h3>
                    <p className="text-xs text-slate-500">Every persona, one source of truth.</p>
                 </div>
             </div>
@@ -192,22 +192,15 @@ const SystemArchitectureModal: React.FC<{ onClose: () => void }> = ({ onClose })
                      <div className="bg-slate-800 p-4 rounded-xl border border-slate-700 flex items-center gap-4">
                         <Smartphone className="w-6 h-6 text-brand-400" />
                         <div>
-                           <div className="text-xs font-bold text-white uppercase">Client/Nurse App</div>
-                           <div className="text-[10px] text-slate-500 font-mono tracking-tight">POST /api/intake</div>
-                        </div>
-                     </div>
-                     <div className="bg-slate-800 p-4 rounded-xl border border-slate-700 flex items-center gap-4">
-                        <Truck className="w-6 h-6 text-emerald-400" />
-                        <div>
-                           <div className="text-xs font-bold text-white uppercase">Field App</div>
-                           <div className="text-[10px] text-slate-500 font-mono tracking-tight">POST /api/complete</div>
+                           <div className="text-xs font-bold text-white uppercase">Field Apps</div>
+                           <div className="text-[10px] text-slate-500 font-mono">Mobile Node</div>
                         </div>
                      </div>
                      <div className="bg-slate-800 p-4 rounded-xl border border-slate-700 flex items-center gap-4">
                         <Terminal className="w-6 h-6 text-purple-400" />
                         <div>
-                           <div className="text-xs font-bold text-white uppercase">Ops Engine</div>
-                           <div className="text-[10px] text-slate-500 font-mono tracking-tight">GET /api/anomalies</div>
+                           <div className="text-xs font-bold text-white uppercase">Orchestrator</div>
+                           <div className="text-[10px] text-slate-500 font-mono">Logic Node</div>
                         </div>
                      </div>
                   </div>
@@ -218,20 +211,20 @@ const SystemArchitectureModal: React.FC<{ onClose: () => void }> = ({ onClose })
                      </div>
                      <div className="mt-4 text-center">
                         <div className="text-sm font-bold text-white tracking-widest uppercase">The Ledger</div>
-                        <div className="text-[10px] text-slate-500 font-mono">Immutable State & Event Log</div>
+                        <div className="text-[10px] text-slate-500 font-mono">Immutable Event Store</div>
                      </div>
                   </div>
 
                   <div className="bg-slate-950 p-6 rounded-xl border border-slate-800 font-mono text-[10px] text-slate-400 leading-relaxed shadow-inner">
                      <div className="flex justify-between items-center mb-4 border-b border-slate-800 pb-2">
-                        <span className="text-brand-400">STATE_LOG.BIN</span>
-                        <span className="text-green-500">LIVE</span>
+                        <span className="text-brand-400">EVENT_STREAM</span>
+                        <span className="text-green-500">CONNECTED</span>
                      </div>
                      <div className="space-y-1">
-                        <div className="flex gap-2"><span className="text-slate-600">09:41</span> <span className="text-blue-400">INTAKE_SUBMITTED</span> <span className="text-white">#CL12</span></div>
-                        <div className="flex gap-2"><span className="text-slate-600">09:41</span> <span className="text-purple-400">AI_SCORING_START</span> <span className="text-white">...</span></div>
-                        <div className="flex gap-2"><span className="text-slate-600">09:42</span> <span className="text-green-400">AI_AUTO_ALLOCATE</span> <span className="text-white">DEVICE_X99</span></div>
-                        <div className="flex gap-2"><span className="text-slate-600">09:43</span> <span className="text-brand-400">JOB_PUSH_ENDPOINTS</span> <span className="text-white">#BOB</span></div>
+                        <div className="flex gap-2"><span className="text-slate-600">09:41</span> <span className="text-blue-400">INTAKE_NEW</span> <span className="text-white">#C12</span></div>
+                        <div className="flex gap-2"><span className="text-slate-600">09:41</span> <span className="text-purple-400">AI_RISK_SCORE</span> <span className="text-white">82</span></div>
+                        <div className="flex gap-2"><span className="text-slate-600">09:42</span> <span className="text-green-400">STOCK_LOCK</span> <span className="text-white">#X99</span></div>
+                        <div className="flex gap-2"><span className="text-slate-600">09:43</span> <span className="text-brand-400">JOB_PUSH</span> <span className="text-white">#BOB</span></div>
                      </div>
                   </div>
 
@@ -242,7 +235,7 @@ const SystemArchitectureModal: React.FC<{ onClose: () => void }> = ({ onClose })
       </div>
 
       <div className="p-6 bg-slate-50 border-t border-slate-200 flex justify-between items-center shrink-0">
-         <p className="text-xs text-slate-500 font-medium italic">Confidential MobileCare Engineering Document • Internal Use Only</p>
+         <p className="text-xs text-slate-500 font-medium">Confidential MobileCare Engineering Document • Internal Use Only</p>
          <button onClick={onClose} className="bg-slate-900 hover:bg-slate-800 text-white px-8 py-2.5 rounded-lg font-bold text-sm transition-all shadow-md active:scale-95">Close & Resume</button>
       </div>
     </div>
@@ -276,10 +269,10 @@ const ProcessFlowModal: React.FC<{ onClose: () => void }> = ({ onClose }) => (
          
          <div className="bg-slate-900 text-white p-10 flex flex-col md:flex-row gap-8 items-center">
             <div className="flex-1">
-                <h3 className="text-xl font-bold mb-3 flex items-center gap-2"><ShieldCheck className="w-6 h-6 text-brand-400" /> The Secure Chain of Custody</h3>
+                <h3 className="text-xl font-bold mb-3 flex items-center gap-2"><ShieldCheck className="w-6 h-6 text-brand-400" /> Secure Chain of Custody</h3>
                 <p className="text-slate-400 text-sm leading-relaxed max-w-2xl">
                    Every asset move is verified through multiple checkpoints. If a device moves from the warehouse to a client, 
-                   the system requires a scan from the Installer and a digital signature from the Care Pro. AI monitors the gaps.
+                   the system requires a scan from the Installer and a digital signature from the Care Pro.
                 </p>
             </div>
             <div className="flex gap-6 text-[10px] font-bold uppercase tracking-widest text-slate-500">
@@ -299,7 +292,7 @@ const ProcessFlowModal: React.FC<{ onClose: () => void }> = ({ onClose }) => (
                          <div className="absolute top-0 right-0 w-16 h-16 bg-blue-50 rounded-bl-full -mr-8 -mt-8"></div>
                          <h4 className="text-lg font-bold text-slate-900 mb-2">1. Intake & Assessment</h4>
                          <p className="text-sm text-slate-600 leading-relaxed mb-4">
-                            Care organization nurse evaluates the patient at home. Identifies safety risks (falls, medication adherence).
+                            Care organization nurse evaluates the patient at home, identifying risks like falls or isolation.
                          </p>
                          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-xs font-bold border border-blue-100">
                             <User className="w-3.5 h-3.5" /> Nurse Submission
@@ -312,9 +305,9 @@ const ProcessFlowModal: React.FC<{ onClose: () => void }> = ({ onClose }) => (
                          <div className="flex items-start gap-4">
                             <Bot className="w-5 h-5 text-purple-400 mt-1 shrink-0" />
                             <div>
-                               <h5 className="text-sm font-bold text-white mb-2">Intake Auditor Agent</h5>
+                               <h5 className="text-sm font-bold text-white mb-2">Auditor Agent</h5>
                                <p className="text-xs text-slate-400 leading-relaxed">
-                                  Instantly scans clinical notes for risk keywords. Flags high-risk cases for immediate Ops priority.
+                                  Instantly scans clinical notes for risk keywords and flags high-priority cases.
                                </p>
                             </div>
                          </div>
@@ -328,9 +321,9 @@ const ProcessFlowModal: React.FC<{ onClose: () => void }> = ({ onClose }) => (
                       <div className="bg-slate-900 p-5 rounded-xl border border-slate-800 shadow-xl group-hover:border-purple-500/30 transition-all text-right">
                          <div className="flex items-start gap-4 justify-end">
                             <div className="text-right">
-                               <h5 className="text-sm font-bold text-white mb-2">Logistics Optimizer Agent</h5>
+                               <h5 className="text-sm font-bold text-white mb-2">Logistics Optimizer</h5>
                                <p className="text-xs text-slate-400 leading-relaxed">
-                                  Reserves stock from the nearest warehouse. Checks for circular stock (recovered devices) before ordering new.
+                                  Reserves stock and validates circular stock availability before fulfillment.
                                </p>
                             </div>
                             <Bot className="w-5 h-5 text-purple-400 mt-1 shrink-0" />
@@ -343,7 +336,7 @@ const ProcessFlowModal: React.FC<{ onClose: () => void }> = ({ onClose }) => (
                          <div className="absolute top-0 left-0 w-16 h-16 bg-slate-50 rounded-br-full -ml-8 -mt-8"></div>
                          <h4 className="text-lg font-bold text-slate-900 mb-2">2. Fulfillment & Allocation</h4>
                          <p className="text-sm text-slate-600 leading-relaxed mb-4">
-                            Operations reviews and approves the request. System locks specific serial numbers to the patient.
+                            Operations approves the request and system locks specific serial numbers to the patient.
                          </p>
                          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg text-xs font-bold border border-slate-200">
                             <Shield className="w-3.5 h-3.5" /> Ops Approval
@@ -359,7 +352,7 @@ const ProcessFlowModal: React.FC<{ onClose: () => void }> = ({ onClose }) => (
                          <div className="absolute top-0 right-0 w-16 h-16 bg-emerald-50 rounded-bl-full -mr-8 -mt-8"></div>
                          <h4 className="text-lg font-bold text-slate-900 mb-2">3. Field Installation</h4>
                          <p className="text-sm text-slate-600 leading-relaxed mb-4">
-                            Installer arrives at the home. Sets up Smart Hub and sensors. Conducts testing and photo verification.
+                            Installer sets up hardware, conducts training, and performs photo verification.
                          </p>
                          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-lg text-xs font-bold border border-emerald-100">
                             <Truck className="w-3.5 h-3.5" /> Technician Stop
@@ -368,13 +361,13 @@ const ProcessFlowModal: React.FC<{ onClose: () => void }> = ({ onClose }) => (
                    </div>
                    <div className="absolute left-8 md:left-1/2 -ml-4 w-8 h-8 rounded-full border-4 border-white bg-emerald-600 shadow-md flex items-center justify-center text-white z-10 order-1 md:order-2 text-[10px] font-bold">03</div>
                    <div className="md:w-1/2 md:pl-16 order-3">
-                      <div className="bg-slate-900 p-5 rounded-xl border border-slate-800 shadow-xl group-hover:border-purple-500/30 transition-all">
+                      <div className="bg-slate-900 p-5 rounded-xl border border-slate-800 shadow-xl group-hover:border-purple-50/30 transition-all">
                          <div className="flex items-start gap-4">
                             <Bot className="w-5 h-5 text-purple-400 mt-1 shrink-0" />
                             <div>
                                <h5 className="text-sm font-bold text-white mb-2">Verification Agent</h5>
                                <p className="text-xs text-slate-400 leading-relaxed">
-                                  Pings device heartbeat API. Checks photo metadata for GPS match. Advances case to "Active Service" only after sync.
+                                  Pings device API and checks photo GPS metadata to ensure signal is LIVE.
                                </p>
                             </div>
                          </div>
@@ -390,7 +383,7 @@ const ProcessFlowModal: React.FC<{ onClose: () => void }> = ({ onClose }) => (
                             <div className="text-right">
                                <h5 className="text-sm font-bold text-white mb-2">Watchdog Agent</h5>
                                <p className="text-xs text-slate-400 leading-relaxed">
-                                  Scans for signal drop-offs or battery warnings. Automatically creates support tickets if device is offline &gt; 24h.
+                                  Scans for signal drop-offs. Auto-creates support tickets if device is offline &gt; 24h.
                                </p>
                             </div>
                             <Bot className="w-5 h-5 text-purple-400 mt-1 shrink-0" />
@@ -403,7 +396,7 @@ const ProcessFlowModal: React.FC<{ onClose: () => void }> = ({ onClose }) => (
                          <div className="absolute top-0 left-0 w-16 h-16 bg-amber-50 rounded-br-full -ml-8 -mt-8"></div>
                          <h4 className="text-lg font-bold text-slate-900 mb-2">4. Active Service</h4>
                          <p className="text-sm text-slate-600 leading-relaxed mb-4">
-                            Patient lives safely with 24/7 monitoring. MobileCare handles the technology; the care org handles the patient.
+                            Patient lives safely with 24/7 monitoring while system maintains uptime.
                          </p>
                          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-amber-50 text-amber-700 rounded-lg text-xs font-bold border border-amber-100">
                             <Activity className="w-3.5 h-3.5" /> Live Uptime
@@ -529,7 +522,7 @@ export const Landing: React.FC = () => {
                 className="flex items-center justify-center gap-3 px-8 py-4 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-full text-sm font-bold text-white transition-all shadow-xl hover:shadow-brand-500/20 active:scale-95"
               >
                 <Info className="w-5 h-5 text-brand-400" />
-                Explore Architecture
+                Architecture
               </button>
               
               <button 
@@ -583,7 +576,7 @@ export const Landing: React.FC = () => {
                <span className="font-bold text-white tracking-tight">MobileCare Operations</span>
             </div>
             <div className="text-xs font-medium">
-               &copy; {new Date().getFullYear()} MobileCare B.V. Internal Control Systems. Dutch Engineering.
+               &copy; {new Date().getFullYear()} MobileCare B.V. Internal Control Systems.
             </div>
          </div>
       </footer>
