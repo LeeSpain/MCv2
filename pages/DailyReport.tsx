@@ -1,4 +1,3 @@
-
 import React, { useMemo } from 'react';
 import { useStore, store } from '../services/store';
 import { Card, Badge, Button } from '../components/ui';
@@ -82,35 +81,11 @@ export const DailyReport: React.FC = () => {
       {/* 1. EXECUTIVE METRICS STRIP */}
       <Card noPadding>
         <div className="flex flex-col md:flex-row py-4 divide-y md:divide-y-0 md:divide-x divide-slate-100">
-          <MetricCell 
-            label="Total Assets" 
-            value={totalDevices} 
-            sub="+2 net change" 
-          />
-          <MetricCell 
-            label="Accountability" 
-            value={`${accountabilityScore.toFixed(0)}%`} 
-            sub="Target: 100%" 
-            color={accountabilityScore === 100 ? 'text-green-600' : 'text-red-600'} 
-          />
-          <MetricCell 
-            label="Missing Stock" 
-            value={unaccountedDevices} 
-            sub="Immediate Action" 
-            color={unaccountedDevices > 0 ? 'text-red-600' : 'text-slate-300'} 
-          />
-          <MetricCell 
-            label="SLA Breaches" 
-            value={overdueItems.length} 
-            sub="Overdue Items" 
-            color={overdueItems.length > 0 ? 'text-amber-600' : 'text-slate-300'} 
-          />
-          <MetricCell 
-            label="Critical Exceptions" 
-            value={criticalExceptions.length} 
-            sub="Blockers/Incidents" 
-            color={criticalExceptions.length > 0 ? 'text-red-600' : 'text-slate-300'} 
-          />
+          <MetricCell label="Total Assets" value={totalDevices} sub="+2 net change" />
+          <MetricCell label="Accountability" value={`${accountabilityScore.toFixed(0)}%`} sub="Target: 100%" color={accountabilityScore === 100 ? 'text-green-600' : 'text-red-600'} />
+          <MetricCell label="Missing Stock" value={unaccountedDevices} sub="Immediate Action" color={unaccountedDevices > 0 ? 'text-red-600' : 'text-slate-300'} />
+          <MetricCell label="SLA Breaches" value={overdueItems.length} sub="Overdue Items" color={overdueItems.length > 0 ? 'text-amber-600' : 'text-slate-300'} />
+          <MetricCell label="Critical Exceptions" value={criticalExceptions.length} sub="Blockers/Incidents" color={criticalExceptions.length > 0 ? 'text-red-600' : 'text-slate-300'} />
         </div>
       </Card>
 
@@ -237,9 +212,7 @@ export const DailyReport: React.FC = () => {
                  </h3>
               </div>
               <p className="text-xs text-slate-600 leading-relaxed">
-                 {isHealthy 
-                   ? "All chains of custody verified. No blockers detected." 
-                   : "Critical exceptions exist. Accountability risk detected."}
+                 {isHealthy ? "All chains of custody verified. No blockers detected." : "Critical exceptions exist. Accountability risk detected."}
               </p>
            </Card>
 

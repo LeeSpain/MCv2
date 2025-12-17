@@ -7,7 +7,7 @@ import { Role } from '../types';
 import { 
   LayoutDashboard, Box, ClipboardList, Wrench, MessageSquare, Settings, 
   AlertOctagon, FileText, AlertCircle, Users, CheckCircle, TrendingUp, MapPin, UserCircle,
-  Tag, Home, Loader
+  Tag, Home, Loader, LogOut
 } from 'lucide-react';
 
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -27,11 +27,49 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     '/settings', 
     '/clients', 
     '/orders', 
-    '/confirmations'
+    '/confirmations',
+    '/landing' // Allow Landing Page
   ];
+
+  // --- ROLE SWITCH HANDLER ---
+  const handleRoleSwitch = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const userId = e.target.value;
+    const user = MOCK_USERS.find(u => u.id === userId);
+    
+    if (user) {
+      store.setUser(userId);
+      
+      // Force navigation to the specific dashboard root for the new role
+      let targetPath = '/';
+      switch (user.role) {
+        case Role.CEO:
+          targetPath = '/ceo-dashboard';
+          break;
+        case Role.INSTALLER:
+          targetPath = '/installer-dashboard';
+          break;
+        case Role.CARE_COMPANY_LEAD_NURSE:
+        case Role.CARE_COMPANY_NURSE:
+          targetPath = '/care-dashboard';
+          break;
+        case Role.MC_ADMIN:
+        case Role.MC_OPERATIONS:
+        default:
+          targetPath = '/'; // Ops Dashboard
+          break;
+      }
+      navigate(targetPath);
+    }
+  };
   
   // --- STRICT REDIRECT LOGIC ---
   useEffect(() => {
+    // Exception: Always allow the Landing Page
+    if (location.pathname === '/landing') {
+        setIsRedirecting(false);
+        return;
+    }
+
     let shouldRedirect = false;
     let target = '';
 
@@ -46,8 +84,13 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     } 
     // Case 2: User is Desktop (CEO, Admin, Ops, Lead Nurse)
     else {
-      // Prevent access to mobile-specific dashboards if accessed directly
-      if (location.pathname === '/installer-dashboard') {
+      // Prevent Ops/Admin/Nurses from seeing CEO dashboard
+      if (location.pathname === '/ceo-dashboard' && currentUser.role !== Role.CEO) {
+         shouldRedirect = true;
+         target = currentUser.role === Role.CARE_COMPANY_LEAD_NURSE ? '/care-dashboard' : '/';
+      }
+      // Prevent access to mobile-specific dashboards if accessed directly on desktop
+      else if (location.pathname === '/installer-dashboard') {
         shouldRedirect = true;
         target = '/';
       }
@@ -64,11 +107,17 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   }, [isMobile, location.pathname, navigate, currentUser.role]);
 
   // --- RENDER GUARD ---
+  // If explicitly on landing, render children immediately (Layout doesn't wrap landing content usually, but here we might strip sidebar)
+  if (location.pathname === '/landing') {
+      return <>{children}</>;
+  }
+
   // Instead of returning null, we show a loading state if we are in an invalid state waiting for redirect
   const isInvalidMobileState = isMobile && !mobilePaths.some(p => location.pathname.startsWith(p));
   const isInvalidDesktopState = !isMobile && location.pathname === '/installer-dashboard';
+  const isInvalidCeoState = !isMobile && location.pathname === '/ceo-dashboard' && currentUser.role !== Role.CEO;
 
-  if (isRedirecting || isInvalidMobileState || isInvalidDesktopState) {
+  if (isRedirecting || isInvalidMobileState || isInvalidDesktopState || isInvalidCeoState) {
       return (
           <div className="h-screen w-full flex flex-col items-center justify-center bg-slate-50 text-slate-400">
               <Loader className="w-8 h-8 animate-spin mb-4 text-brand-600" />
@@ -203,12 +252,15 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
               <select 
                 className="bg-white border border-slate-300 text-xs p-2 rounded shadow-sm w-full max-w-xs appearance-none text-center"
                 value={currentUser.id}
-                onChange={(e) => store.setUser(e.target.value)}
+                onChange={handleRoleSwitch}
               >
                 {MOCK_USERS.map(u => (
                   <option key={u.id} value={u.id}>{u.name} ({u.role})</option>
                 ))}
               </select>
+              <div className="mt-4">
+                 <Link to="/landing" className="text-xs font-bold text-brand-600 underline">Back to Portal</Link>
+              </div>
            </div>
         </main>
 
@@ -239,11 +291,13 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
       {/* Sidebar */}
       <aside className="w-64 bg-slate-900 text-white flex flex-col shadow-xl z-20 transition-all">
         <div className="p-6 border-b border-slate-700">
-          <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
-            <span className="w-8 h-8 bg-brand-500 rounded-lg flex items-center justify-center">MC</span>
-            MobileCare
-          </h1>
-          <p className="text-xs text-slate-400 mt-1">Operations Platform</p>
+          <Link to="/landing" className="block group">
+            <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-2 group-hover:text-brand-400 transition-colors">
+              <span className="w-8 h-8 bg-brand-500 rounded-lg flex items-center justify-center">MC</span>
+              MobileCare
+            </h1>
+            <p className="text-xs text-slate-400 mt-1">Operations Platform</p>
+          </Link>
         </div>
 
         {killSwitch && (
@@ -291,14 +345,21 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           
           <label className="text-xs text-slate-500 block mb-2 font-bold uppercase tracking-wider">Simulate Role:</label>
           <select 
-            className="w-full bg-slate-800 border border-slate-700 text-xs text-slate-300 rounded p-2 focus:outline-none focus:border-brand-500"
+            className="w-full bg-slate-800 border border-slate-700 text-xs text-slate-300 rounded p-2 focus:outline-none focus:border-brand-500 mb-3"
             value={currentUser.id}
-            onChange={(e) => store.setUser(e.target.value)}
+            onChange={handleRoleSwitch}
           >
             {MOCK_USERS.map(u => (
               <option key={u.id} value={u.id}>{u.name} ({u.role})</option>
             ))}
           </select>
+          
+          <button 
+             onClick={() => navigate('/landing')}
+             className="w-full flex items-center justify-center gap-2 text-xs font-bold text-slate-400 hover:text-white py-2 rounded hover:bg-slate-800 transition-colors"
+          >
+             <LogOut className="w-3 h-3" /> Exit to Portal
+          </button>
         </div>
       </aside>
 

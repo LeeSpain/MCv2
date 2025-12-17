@@ -2,6 +2,7 @@
 import React, { useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Layout } from './components/Layout';
+import { Landing } from './pages/Landing';
 import { Today } from './pages/Today';
 import { OpsDashboard } from './pages/OpsDashboard';
 import { CeoDashboard } from './pages/CeoDashboard';
@@ -39,6 +40,7 @@ const App: React.FC = () => {
       <Layout>
         <Routes>
           {/* Default Route Logic handled in Layout or Landing */}
+          <Route path="/landing" element={<Landing />} />
           
           {/* Admin / Ops */}
           <Route path="/" element={<Today />} />
@@ -77,7 +79,7 @@ const App: React.FC = () => {
           <Route path="/orders" element={<CareOrders />} />
           <Route path="/confirmations" element={<CareConfirmations />} />
 
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<Navigate to="/landing" replace />} />
         </Routes>
       </Layout>
     </Router>
