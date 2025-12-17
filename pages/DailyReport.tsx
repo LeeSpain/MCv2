@@ -166,7 +166,7 @@ export const DailyReport: React.FC = () => {
                         <td className="px-5 py-3 font-mono text-xs text-slate-600">{d.serial_number}</td>
                         <td className="px-5 py-3 font-medium text-slate-900">{store.getProductName(d.product_id)}</td>
                         <td className="px-5 py-3 text-slate-600">{d.current_custodian}</td>
-                        <td className="px-5 py-3"><Badge color="red">BREACH > 24H</Badge></td>
+                        <td className="px-5 py-3"><Badge color="red">BREACH &gt; 24H</Badge></td>
                       </tr>
                     ))}
                   </tbody>
