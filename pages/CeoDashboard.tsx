@@ -1,20 +1,284 @@
 
+
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { useStore, store } from '../services/store';
-import { Card, Button, Badge } from '../components/ui';
+import { useStore } from '../services/store';
+import { Card, Button } from '../components/ui';
 import { 
-  TrendingUp, Users, Box, ShieldCheck, Activity, 
-  ArrowUpRight, ArrowDownRight, Globe, AlertTriangle,
-  Maximize2, X, Zap, Server, DollarSign, Clock, MapPin,
-  Cpu, HeartPulse, Shield, Truck, Terminal, Wifi, Layers,
-  Crosshair, Radio, Network, Database, Lock, Search, 
-  ChevronRight, ZoomIn, ZoomOut, Navigation
+  TrendingUp, ArrowUpRight, ArrowDownRight,
+  Maximize2, X, Activity,
+  HeartPulse, ShieldCheck, Terminal,
+  Database, Lock, Navigation, Download,
+  Printer, Share2, FileText, ChevronRight, ZoomIn, ZoomOut, Box, Truck, Radio, Zap, Network,
+  Server, Users, AlertTriangle
 } from 'lucide-react';
-import { DeviceStatus, AgentStatus, Agent } from '../types';
+import { DeviceStatus, AgentStatus } from '../types';
+
+// --- HELPER: Report Generator ---
+const generateReportHtml = (metrics: any, reportDate: string, generatedTime: string) => {
+  return `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>MobileCare Board Report - ${reportDate}</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+        <style>
+          @page { size: A4; margin: 0; }
+          body { 
+            font-family: 'Inter', sans-serif; 
+            -webkit-print-color-adjust: exact; 
+            print-color-adjust: exact; 
+          }
+          .watermark {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            font-size: 120px;
+            color: rgba(0,0,0,0.03);
+            font-weight: 800;
+            pointer-events: none;
+            z-index: 0;
+            white-space: nowrap;
+          }
+          @media print { 
+            .no-print { display: none; } 
+            body { padding: 0; }
+            .page-break { page-break-before: always; }
+          }
+        </style>
+      </head>
+      <body class="bg-white text-slate-900">
+        <div class="watermark">CONFIDENTIAL</div>
+        
+        <div class="max-w-[210mm] mx-auto bg-white min-h-[297mm] p-[15mm] relative z-10 shadow-xl print:shadow-none">
+          
+          <!-- Header -->
+          <div class="flex justify-between items-start border-b-2 border-slate-900 pb-6 mb-8">
+            <div>
+              <div class="flex items-center gap-3 mb-2">
+                <div class="w-8 h-8 bg-slate-900 rounded flex items-center justify-center text-white font-bold">MC</div>
+                <h1 class="text-2xl font-extrabold tracking-tight uppercase">MobileCare Ops</h1>
+              </div>
+              <p class="text-xs font-bold text-slate-500 uppercase tracking-[0.2em]">Board Briefing Document</p>
+            </div>
+            <div class="text-right">
+              <div class="text-xl font-bold text-slate-900">${reportDate}</div>
+              <p class="text-[10px] text-slate-400 font-mono uppercase mt-1">Ref: ${Date.now().toString(36).toUpperCase()}</p>
+            </div>
+          </div>
+
+          <!-- Executive Summary -->
+          <div class="mb-10 bg-slate-50 p-6 border-l-4 border-brand-600">
+            <h2 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">01 // Executive Summary</h2>
+            <p class="text-base text-slate-800 leading-relaxed font-medium">
+              MobileCare is currently operating at <span class="font-bold text-brand-700">${metrics.utilizationRate}% asset utilization</span>. 
+              The ecosystem manages <span class="font-bold text-slate-900">${metrics.totalAssets} units</span> across <span class="font-bold text-slate-900">${metrics.partnerCount} strategic care partners</span>.
+              ${metrics.criticalIssues === 0 
+                ? '<span class="text-green-700 font-bold block mt-2">✓ Operational risk is minimized with zero critical blockers.</span>' 
+                : `<span class="text-red-600 font-bold block mt-2">⚠ Action Required: ${metrics.criticalIssues} active critical incidents affecting stability.</span>`}
+            </p>
+          </div>
+
+          <!-- KPIs Grid -->
+          <div class="mb-12">
+            <h2 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 border-b border-slate-200 pb-2">02 // Key Performance Indicators</h2>
+            <div class="grid grid-cols-2 gap-x-8 gap-y-8">
+              
+              <!-- Metric 1 -->
+              <div class="flex justify-between items-end border-b border-slate-100 pb-2">
+                <div>
+                  <div class="text-[10px] uppercase font-bold text-slate-500 mb-1">Asset Accountability</div>
+                  <div class="text-4xl font-extrabold text-slate-900">${metrics.accountabilityScore}%</div>
+                </div>
+                <div class="text-right">
+                  <div class="text-xs font-bold text-green-600 mb-1">Target: 99.0%</div>
+                  <div class="h-1.5 w-24 bg-slate-100 rounded-full overflow-hidden">
+                    <div style="width: ${metrics.accountabilityScore}%" class="h-full bg-green-500"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Metric 2 -->
+              <div class="flex justify-between items-end border-b border-slate-100 pb-2">
+                <div>
+                  <div class="text-[10px] uppercase font-bold text-slate-500 mb-1">Active Fleet</div>
+                  <div class="text-4xl font-extrabold text-slate-900">${metrics.activeAssets}</div>
+                </div>
+                <div class="text-right">
+                  <div class="text-xs font-bold text-brand-600 mb-1">+${metrics.weeklyGrowth}% WoW</div>
+                  <div class="h-1.5 w-24 bg-slate-100 rounded-full overflow-hidden">
+                    <div style="width: ${metrics.utilizationRate}%" class="h-full bg-brand-500"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Metric 3 -->
+              <div class="flex justify-between items-end border-b border-slate-100 pb-2">
+                <div>
+                  <div class="text-[10px] uppercase font-bold text-slate-500 mb-1">Risk Index</div>
+                  <div class="text-4xl font-extrabold ${metrics.criticalIssues > 0 ? 'text-red-600' : 'text-slate-900'}">${metrics.criticalIssues}</div>
+                </div>
+                <div class="text-right">
+                  <div class="text-xs font-bold text-slate-400 mb-1">Blockers</div>
+                  <div class="h-1.5 w-24 bg-slate-100 rounded-full overflow-hidden">
+                    <div style="width: ${metrics.criticalIssues * 10}%" class="h-full bg-red-500"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Metric 4 -->
+              <div class="flex justify-between items-end border-b border-slate-100 pb-2">
+                <div>
+                  <div class="text-[10px] uppercase font-bold text-slate-500 mb-1">AI Orchestration</div>
+                  <div class="text-4xl font-extrabold text-slate-900">${metrics.agentCount}</div>
+                </div>
+                <div class="text-right">
+                  <div class="text-xs font-bold text-purple-600 mb-1">Active Agents</div>
+                  <div class="h-1.5 w-24 bg-slate-100 rounded-full overflow-hidden">
+                    <div style="width: 100%" class="h-full bg-purple-500"></div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Detailed Status Table -->
+          <div class="mb-10">
+             <h2 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 border-b border-slate-200 pb-2">03 // Operational Detail</h2>
+             <table class="w-full text-sm">
+                <thead class="bg-slate-100 text-slate-500 font-bold uppercase text-[10px]">
+                   <tr>
+                      <th class="py-2 px-3 text-left">Metric</th>
+                      <th class="py-2 px-3 text-right">Value</th>
+                      <th class="py-2 px-3 text-right">Status</th>
+                   </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                   <tr>
+                      <td class="py-3 px-3 font-medium text-slate-700">Warehouse Stock</td>
+                      <td class="py-3 px-3 text-right font-mono">${metrics.stockCount}</td>
+                      <td class="py-3 px-3 text-right text-xs font-bold text-green-600">OPTIMAL</td>
+                   </tr>
+                   <tr>
+                      <td class="py-3 px-3 font-medium text-slate-700">SLA Breaches</td>
+                      <td class="py-3 px-3 text-right font-mono">${metrics.slaBreaches}</td>
+                      <td class="py-3 px-3 text-right text-xs font-bold ${metrics.slaBreaches > 0 ? 'text-red-600' : 'text-slate-400'}">${metrics.slaBreaches > 0 ? 'ATTENTION' : 'NONE'}</td>
+                   </tr>
+                   <tr>
+                      <td class="py-3 px-3 font-medium text-slate-700">Total Partners</td>
+                      <td class="py-3 px-3 text-right font-mono">${metrics.partnerCount}</td>
+                      <td class="py-3 px-3 text-right text-xs font-bold text-slate-400">STABLE</td>
+                   </tr>
+                </tbody>
+             </table>
+          </div>
+
+          <!-- Strategy Footer -->
+          <div class="bg-slate-900 text-white p-6 rounded-lg mt-auto">
+             <h4 class="text-[10px] font-bold text-brand-400 uppercase tracking-widest mb-2">Strategic Outlook</h4>
+             <p class="text-xs text-slate-300 leading-relaxed">
+               Focus for the upcoming cycle is shifting from acquisition to retention, leveraging AI Agents for proactive "Status Confirmation" to reduce dormant inventory. 
+               Projected savings: <span class="text-white font-bold">€45k / Quarter</span>.
+             </p>
+          </div>
+
+          <!-- Document Footer -->
+          <div class="mt-8 border-t border-slate-100 pt-4 flex justify-between items-center text-[9px] text-slate-400 uppercase tracking-wider">
+             <div>MobileCare Operations Platform</div>
+             <div>Page 1 of 1</div>
+          </div>
+
+        </div>
+      </body>
+    </html>
+  `;
+};
+
+// --- COMPONENT: REPORT PREVIEW MODAL ---
+const ReportModal: React.FC<{ isOpen: boolean; onClose: () => void; metrics: any }> = ({ isOpen, onClose, metrics }) => {
+  const [reportHtml, setReportHtml] = useState<string>('');
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  useEffect(() => {
+    if (isOpen && metrics) {
+        const date = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        const time = new Date().toLocaleTimeString();
+        setReportHtml(generateReportHtml(metrics, date, time));
+    }
+  }, [isOpen, metrics]);
+
+  if (!isOpen) return null;
+
+  const handlePrint = () => {
+      if (iframeRef.current?.contentWindow) {
+          iframeRef.current.contentWindow.print();
+      }
+  };
+
+  const handleDownload = () => {
+      const blob = new Blob([reportHtml], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `MobileCare_Board_Report_${new Date().toISOString().split('T')[0]}.html`;
+      a.click();
+      URL.revokeObjectURL(url);
+  };
+
+  const handleShare = () => {
+      alert("Report link copied to clipboard (Mock)");
+  };
+
+  return (
+    <div className="fixed inset-0 z-[60] bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+       <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl h-[90vh] flex flex-col overflow-hidden">
+          
+          {/* Toolbar */}
+          <div className="bg-slate-900 p-4 flex justify-between items-center text-white shrink-0">
+             <div className="flex items-center gap-3">
+                <div className="p-2 bg-brand-600 rounded-lg"><FileText className="w-5 h-5" /></div>
+                <div>
+                   <h3 className="font-bold text-sm">Board Report Preview</h3>
+                   <p className="text-xs text-slate-400">Generated {new Date().toLocaleTimeString()}</p>
+                </div>
+             </div>
+             <div className="flex items-center gap-2">
+                <Button size="sm" variant="secondary" onClick={handleShare} className="hidden sm:flex bg-slate-800 hover:bg-slate-700">
+                   <Share2 className="w-4 h-4 mr-2" /> Share
+                </Button>
+                <Button size="sm" variant="secondary" onClick={handleDownload} className="bg-slate-800 hover:bg-slate-700">
+                   <Download className="w-4 h-4 mr-2" /> Save HTML
+                </Button>
+                <Button size="sm" onClick={handlePrint} className="bg-brand-600 hover:bg-brand-700 text-white">
+                   <Printer className="w-4 h-4 mr-2" /> Print / PDF
+                </Button>
+                <div className="w-px h-8 bg-slate-700 mx-2"></div>
+                <button onClick={onClose} className="p-2 hover:bg-slate-800 rounded-full transition-colors text-slate-400 hover:text-white">
+                   <X className="w-6 h-6" />
+                </button>
+             </div>
+          </div>
+
+          {/* Preview Area */}
+          <div className="flex-1 bg-slate-100 overflow-hidden flex justify-center p-8 relative">
+             <iframe 
+               ref={iframeRef}
+               srcDoc={reportHtml} 
+               className="w-full h-full max-w-[210mm] bg-white shadow-lg"
+               title="Report Preview"
+             />
+          </div>
+       </div>
+    </div>
+  );
+};
 
 export const CeoDashboard: React.FC = () => {
   const { devices, cases, exceptions, clients, agents, agentRunLogs, timeline } = useStore();
   const [showLiveView, setShowLiveView] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
 
   // --- KPI CALCULATIONS ---
   const totalAssets = devices.length;
@@ -25,6 +289,20 @@ export const CeoDashboard: React.FC = () => {
   const criticalIssues = exceptions.filter(e => e.severity === 'BLOCKER' || e.severity === 'INCIDENT').length;
   const weeklyGrowth = 2.4; 
   const accountabilityScore = 99.8; 
+
+  // Aggregated metrics for report
+  const reportMetrics = {
+      totalAssets,
+      activeAssets,
+      utilizationRate: utilizationRate.toFixed(1),
+      accountabilityScore,
+      criticalIssues,
+      weeklyGrowth,
+      slaBreaches: devices.filter(d => d.sla_breach).length,
+      stockCount: devices.filter(d => d.status === 'IN_STOCK').length,
+      partnerCount: Array.from(new Set(clients.map(c => c.care_company_name))).length,
+      agentCount: agents.filter(a => a.status === AgentStatus.ENABLED).length
+  };
 
   const KPICard = ({ label, value, sub, trend, positive }: any) => (
     <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between h-32 hover:border-brand-300 transition-all">
@@ -47,9 +325,7 @@ export const CeoDashboard: React.FC = () => {
   // --- LIVE COMMAND INTERNAL COMPONENTS ---
 
   const TelemetryGraph = ({ color = '#10b981' }: { color?: string }) => {
-      // Simulates a scrolling line chart for system load
       const canvasRef = useRef<HTMLCanvasElement>(null);
-      
       useEffect(() => {
           const ctx = canvasRef.current?.getContext('2d');
           if (!ctx) return;
@@ -58,15 +334,12 @@ export const CeoDashboard: React.FC = () => {
           let animationFrameId: number;
 
           const draw = () => {
-              // Shift data
               const last = dataPoints[dataPoints.length - 1];
               const next = last + (Math.random() - 0.5) * 15;
               dataPoints.push(Math.max(5, Math.min(95, next)));
               dataPoints.shift();
 
               ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-              
-              // Draw Grid (Subtle)
               ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
               ctx.lineWidth = 1;
               ctx.beginPath();
@@ -74,7 +347,6 @@ export const CeoDashboard: React.FC = () => {
               for(let j=0; j<ctx.canvas.height; j+=15) { ctx.moveTo(0,j); ctx.lineTo(ctx.canvas.width, j); }
               ctx.stroke();
 
-              // Draw Line
               ctx.strokeStyle = color;
               ctx.lineWidth = 2;
               ctx.lineJoin = 'round';
@@ -90,16 +362,15 @@ export const CeoDashboard: React.FC = () => {
               });
               ctx.stroke();
 
-              // Draw Fill Gradient
               const gradient = ctx.createLinearGradient(0, 0, 0, ctx.canvas.height);
-              gradient.addColorStop(0, `${color}40`); // 25% opacity
-              gradient.addColorStop(1, `${color}00`); // 0% opacity
+              gradient.addColorStop(0, `${color}40`); 
+              gradient.addColorStop(1, `${color}00`); 
               
               ctx.fillStyle = gradient;
               ctx.lineTo(ctx.canvas.width, ctx.canvas.height);
               ctx.lineTo(0, ctx.canvas.height);
               ctx.fill();
-              ctx.shadowBlur = 0; // Reset shadow
+              ctx.shadowBlur = 0; 
 
               setTimeout(() => {
                   animationFrameId = requestAnimationFrame(draw);
@@ -118,7 +389,6 @@ export const CeoDashboard: React.FC = () => {
      const [mapCenter, setMapCenter] = useState({ x: 50, y: 50 });
      const [zoom, setZoom] = useState(1);
 
-     // Define static "Zones" simulating Dutch cities relative to a 100x100 grid
      const zones = [
          { name: 'AMSTERDAM', x: 45, y: 35 },
          { name: 'ROTTERDAM', x: 30, y: 65 },
@@ -126,12 +396,10 @@ export const CeoDashboard: React.FC = () => {
      ];
 
      useEffect(() => {
-        // Init assets clustered around zones
         const generate = () => Array.from({length: 12}).map((_, i) => {
            const zone = zones[i % zones.length];
            return {
                id: i,
-               // Randomize around city center
                x: zone.x + (Math.random() - 0.5) * 15,
                y: zone.y + (Math.random() - 0.5) * 15,
                status: Math.random() > 0.8 ? 'moving' : 'idle',
@@ -156,13 +424,12 @@ export const CeoDashboard: React.FC = () => {
         return () => clearInterval(interval);
      }, []);
 
-     // Target Lock Logic
      useEffect(() => {
          if (selectedBlip !== null) {
              const target = blips.find(b => b.id === selectedBlip);
              if (target) {
                  setMapCenter({ x: target.x, y: target.y });
-                 setZoom(2.5); // Zoom in on lock
+                 setZoom(2.5); 
              }
          } else {
              setZoom(1);
@@ -172,8 +439,6 @@ export const CeoDashboard: React.FC = () => {
 
      return (
         <div className="relative w-full h-full bg-[#0f172a] overflow-hidden rounded-xl border border-slate-800 shadow-[inset_0_0_50px_rgba(0,0,0,0.5)] group">
-           
-           {/* MAP LAYERS TRANSFORMER */}
            <div 
              className="absolute inset-0 transition-all duration-1000 ease-in-out"
              style={{ 
@@ -181,23 +446,15 @@ export const CeoDashboard: React.FC = () => {
                  transformOrigin: 'center center'
              }}
            >
-               {/* 1. Map Grid (Dark Mode Streets) */}
                <div className="absolute inset-[-50%] w-[200%] h-[200%] opacity-20 pointer-events-none" style={{ 
-                  backgroundImage: `
-                      linear-gradient(#334155 1px, transparent 1px), 
-                      linear-gradient(90deg, #334155 1px, transparent 1px)
-                  `, 
+                  backgroundImage: `linear-gradient(#334155 1px, transparent 1px), linear-gradient(90deg, #334155 1px, transparent 1px)`, 
                   backgroundSize: '40px 40px' 
                }}></div>
-
-               {/* 2. City Zones (Text Labels on Map) */}
                {zones.map((z, i) => (
                    <div key={i} className="absolute text-slate-600 font-bold text-[8px] tracking-[0.2em] pointer-events-none" style={{ left: `${z.x}%`, top: `${z.y}%` }}>
                        {z.name}
                    </div>
                ))}
-
-               {/* 3. Assets (Blips) */}
                {blips.map(b => (
                    <div 
                       key={b.id}
@@ -205,18 +462,9 @@ export const CeoDashboard: React.FC = () => {
                       className="absolute cursor-pointer transition-all duration-1000 ease-linear hover:z-50"
                       style={{ left: `${b.x}%`, top: `${b.y}%` }}
                    >
-                      {/* Pulse Ring */}
-                      {b.status === 'moving' && (
-                          <div className="absolute -inset-4 border border-brand-500/30 rounded-full animate-ping"></div>
-                      )}
-                      
-                      {/* Icon */}
+                      {b.status === 'moving' && (<div className="absolute -inset-4 border border-brand-500/30 rounded-full animate-ping"></div>)}
                       <div className={`relative w-3 h-3 -ml-1.5 -mt-1.5 transform transition-transform hover:scale-150 ${b.id === selectedBlip ? 'scale-150' : ''}`}>
-                          <div className={`w-full h-full rounded-full shadow-[0_0_10px] ${
-                              b.id === selectedBlip ? 'bg-red-500 shadow-red-500' : 'bg-emerald-400 shadow-emerald-400'
-                          }`}></div>
-                          
-                          {/* Label Tooltip */}
+                          <div className={`w-full h-full rounded-full shadow-[0_0_10px] ${b.id === selectedBlip ? 'bg-red-500 shadow-red-500' : 'bg-emerald-400 shadow-emerald-400'}`}></div>
                           <div className={`absolute top-4 left-1/2 -translate-x-1/2 bg-slate-900/90 border border-slate-700 text-white text-[6px] px-1.5 py-0.5 rounded whitespace-nowrap backdrop-blur-sm pointer-events-none ${b.id === selectedBlip ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
                               {b.label}
                           </div>
@@ -224,8 +472,6 @@ export const CeoDashboard: React.FC = () => {
                    </div>
                ))}
            </div>
-
-           {/* 4. Target Lock Overlay (Fixed on Screen) */}
            {selectedBlip !== null && (
                <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
                    <div className="w-24 h-24 border-2 border-red-500/50 rounded-full animate-pulse relative">
@@ -233,32 +479,17 @@ export const CeoDashboard: React.FC = () => {
                        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 -mb-1 w-2 h-2 bg-red-500"></div>
                        <div className="absolute left-0 top-1/2 -translate-y-1/2 -ml-1 w-2 h-2 bg-red-500"></div>
                        <div className="absolute right-0 top-1/2 -translate-y-1/2 -mr-1 w-2 h-2 bg-red-500"></div>
-                       <div className="absolute -bottom-8 w-full text-center text-red-500 font-mono text-xs font-bold tracking-widest bg-black/50 rounded">
-                           TARGET_LOCKED
-                       </div>
+                       <div className="absolute -bottom-8 w-full text-center text-red-500 font-mono text-xs font-bold tracking-widest bg-black/50 rounded">TARGET_LOCKED</div>
                    </div>
                </div>
            )}
-
-           {/* 5. HUD Overlay (UI Controls) */}
            <div className="absolute top-4 left-4 p-2 bg-slate-900/80 backdrop-blur border border-slate-700 rounded-lg">
-              <div className="flex items-center gap-2 text-emerald-400 text-xs font-mono font-bold tracking-widest mb-1">
-                 <Navigation className="w-3 h-3" /> LIVE_OPS
-              </div>
-              <div className="text-[9px] text-slate-400 font-mono leading-tight">
-                 LAT: 52.3676° N<br/>
-                 LON: 4.9041° E<br/>
-                 TRACKING: {blips.length} UNITS
-              </div>
+              <div className="flex items-center gap-2 text-emerald-400 text-xs font-mono font-bold tracking-widest mb-1"><Navigation className="w-3 h-3" /> LIVE_OPS</div>
+              <div className="text-[9px] text-slate-400 font-mono leading-tight">LAT: 52.3676° N<br/>LON: 4.9041° E<br/>TRACKING: {blips.length} UNITS</div>
            </div>
-
            <div className="absolute bottom-4 right-4 flex flex-col gap-2">
-               <button className="p-2 bg-slate-800 text-slate-300 rounded hover:bg-slate-700 border border-slate-700" onClick={() => setZoom(z => Math.min(z + 0.5, 4))}>
-                   <ZoomIn className="w-4 h-4" />
-               </button>
-               <button className="p-2 bg-slate-800 text-slate-300 rounded hover:bg-slate-700 border border-slate-700" onClick={() => { setZoom(1); setSelectedBlip(null); }}>
-                   <ZoomOut className="w-4 h-4" />
-               </button>
+               <button className="p-2 bg-slate-800 text-slate-300 rounded hover:bg-slate-700 border border-slate-700" onClick={() => setZoom(z => Math.min(z + 0.5, 4))}><ZoomIn className="w-4 h-4" /></button>
+               <button className="p-2 bg-slate-800 text-slate-300 rounded hover:bg-slate-700 border border-slate-700" onClick={() => { setZoom(1); setSelectedBlip(null); }}><ZoomOut className="w-4 h-4" /></button>
            </div>
         </div>
      );
@@ -267,48 +498,26 @@ export const CeoDashboard: React.FC = () => {
   const AgentNeuralNet = () => {
       const orchestrator = agents.find(a => a.code === 'ORCHESTRATOR');
       const specialists = agents.filter(a => a.code !== 'ORCHESTRATOR');
-
       return (
           <div className="h-full bg-slate-900 border border-slate-800 rounded-xl p-4 relative overflow-hidden flex flex-col shadow-[inset_0_0_30px_rgba(0,0,0,0.5)]">
               <div className="text-xs font-bold text-slate-400 mb-4 flex justify-between items-center z-10">
                   <span className="flex items-center gap-2"><Network className="w-3 h-3 text-brand-400" /> CORTEX ACTIVITY</span>
-                  <span className="text-[9px] font-mono text-emerald-500 flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> ONLINE
-                  </span>
+                  <span className="text-[9px] font-mono text-emerald-500 flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> ONLINE</span>
               </div>
-
               <div className="flex-1 relative z-10 flex flex-col justify-center items-center gap-6">
-                  {/* Central Node */}
                   <div className="relative group cursor-pointer">
                       <div className="absolute -inset-8 bg-brand-500/10 rounded-full animate-pulse blur-xl"></div>
-                      <div className={`w-16 h-16 rounded-full border-2 flex items-center justify-center bg-slate-950 shadow-[0_0_20px_rgba(14,165,233,0.4)] transition-all duration-500 ${orchestrator?.status === 'ENABLED' ? 'border-brand-500 text-brand-400' : 'border-slate-700 text-slate-600'}`}>
-                          <Activity className="w-8 h-8" />
-                      </div>
-                      <div className="absolute -right-20 top-4 text-left">
-                          <div className="text-[10px] font-bold text-white uppercase tracking-wider bg-slate-900/80 px-2 py-1 rounded border border-slate-800">Orchestrator</div>
-                      </div>
+                      <div className={`w-16 h-16 rounded-full border-2 flex items-center justify-center bg-slate-950 shadow-[0_0_20px_rgba(14,165,233,0.4)] transition-all duration-500 ${orchestrator?.status === 'ENABLED' ? 'border-brand-500 text-brand-400' : 'border-slate-700 text-slate-600'}`}><Activity className="w-8 h-8" /></div>
+                      <div className="absolute -right-20 top-4 text-left"><div className="text-[10px] font-bold text-white uppercase tracking-wider bg-slate-900/80 px-2 py-1 rounded border border-slate-800">Orchestrator</div></div>
                   </div>
-
-                  {/* Satellite Nodes (Grid) */}
                   <div className="grid grid-cols-4 gap-4 w-full px-2">
                       {specialists.map((agent, i) => (
                           <div key={agent.id} className="flex flex-col items-center gap-2 group relative">
-                              {/* Connection Line (CSS generated) */}
                               <div className={`absolute bottom-full left-1/2 w-px h-6 bg-gradient-to-t from-slate-700 to-transparent transition-all duration-500 ${agent.status === 'ENABLED' ? 'h-8 bg-brand-500/30' : ''}`}></div>
-                              
-                              <div className={`w-8 h-8 rounded-lg border flex items-center justify-center transition-all duration-500 z-10 ${
-                                  agent.status === 'ENABLED' 
-                                  ? 'bg-slate-900 border-emerald-500/50 text-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.2)]' 
-                                  : 'bg-slate-900 border-slate-800 text-slate-600 opacity-50'
-                              }`}>
-                                  {agent.code.includes('STOCK') ? <Box className="w-4 h-4" /> : 
-                                   agent.code.includes('INSTALL') ? <Truck className="w-4 h-4" /> :
-                                   agent.code.includes('COMMS') ? <Radio className="w-4 h-4" /> :
-                                   <Zap className="w-4 h-4" />}
+                              <div className={`w-8 h-8 rounded-lg border flex items-center justify-center transition-all duration-500 z-10 ${agent.status === 'ENABLED' ? 'bg-slate-900 border-emerald-500/50 text-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.2)]' : 'bg-slate-900 border-slate-800 text-slate-600 opacity-50'}`}>
+                                  {agent.code.includes('STOCK') ? <Box className="w-4 h-4" /> : agent.code.includes('INSTALL') ? <Truck className="w-4 h-4" /> : agent.code.includes('COMMS') ? <Radio className="w-4 h-4" /> : <Zap className="w-4 h-4" />}
                               </div>
-                              <div className="text-[8px] text-slate-500 font-mono opacity-0 group-hover:opacity-100 transition-opacity absolute top-full mt-1 bg-black px-1 rounded">
-                                  {agent.code.split('_')[0]}
-                              </div>
+                              <div className="text-[8px] text-slate-500 font-mono opacity-0 group-hover:opacity-100 transition-opacity absolute top-full mt-1 bg-black px-1 rounded">{agent.code.split('_')[0]}</div>
                           </div>
                       ))}
                   </div>
@@ -324,9 +533,7 @@ export const CeoDashboard: React.FC = () => {
                  id: l.id,
                  time: l.finished_at,
                  source: agents.find(a => a.id === l.agent_id)?.name || 'Unknown Agent',
-                 message: l.applied_actions.length > 0 
-                    ? `Executed ${l.applied_actions.length} actions (${l.autonomy})`
-                    : `Scan complete. System nominal.`,
+                 message: l.applied_actions.length > 0 ? `Executed ${l.applied_actions.length} actions (${l.autonomy})` : `Scan complete. System nominal.`,
                  type: 'AGENT',
                  risk: l.plan.actions.some(a => a.risk === 'HIGH') ? 'HIGH' : 'LOW'
              })),
@@ -345,21 +552,12 @@ export const CeoDashboard: React.FC = () => {
      return (
         <div className="h-64 bg-[#0a0a0a] font-mono text-[10px] p-3 rounded-xl border border-slate-800 overflow-y-auto custom-scrollbar shadow-inner flex flex-col gap-1">
            {combinedLogs.length === 0 && <div className="text-slate-600 italic text-center mt-10">Initializing data stream...</div>}
-           
            {combinedLogs.map((l) => (
               <div key={l.id} className="flex gap-3 hover:bg-slate-900/50 p-1 rounded transition-colors group">
-                 <div className="text-slate-500 w-12 flex-shrink-0 opacity-70 group-hover:opacity-100">
-                    {new Date(l.time).toLocaleTimeString([], {hour12: false, hour:'2-digit', minute:'2-digit', second:'2-digit'})}
-                 </div>
+                 <div className="text-slate-500 w-12 flex-shrink-0 opacity-70 group-hover:opacity-100">{new Date(l.time).toLocaleTimeString([], {hour12: false, hour:'2-digit', minute:'2-digit', second:'2-digit'})}</div>
                  <div className="flex-1 min-w-0">
-                    <span className={`font-bold mr-2 ${
-                        l.type === 'AGENT' ? 'text-brand-400' : 'text-amber-400'
-                    }`}>
-                        [{l.source.toUpperCase().replace(' ', '_')}]
-                    </span>
-                    <span className={`text-slate-300 ${l.risk === 'HIGH' ? 'text-red-400' : ''}`}>
-                        {l.message}
-                    </span>
+                    <span className={`font-bold mr-2 ${l.type === 'AGENT' ? 'text-brand-400' : 'text-amber-400'}`}>[{l.source.toUpperCase().replace(' ', '_')}]</span>
+                    <span className={`text-slate-300 ${l.risk === 'HIGH' ? 'text-red-400' : ''}`}>{l.message}</span>
                  </div>
               </div>
            ))}
@@ -567,46 +765,21 @@ export const CeoDashboard: React.FC = () => {
               <Maximize2 className="w-4 h-4 mr-2" /> Launch Command
            </Button>
            <div className="h-8 w-px bg-slate-300 mx-1"></div>
-           <Button variant="outline">Download Board Report</Button>
-           <Button variant="outline">Presentation Mode</Button>
+           <Button variant="outline" onClick={() => setShowReportModal(true)}>
+              <Download className="w-4 h-4 mr-2" /> Download Board Report
+           </Button>
         </div>
       </div>
 
       {/* TOP METRICS */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-         <KPICard 
-            label="Total Asset Value" 
-            value="€1.2M" 
-            sub={`${totalAssets} units in rotation`} 
-            trend={weeklyGrowth} 
-            positive 
-         />
-         <KPICard 
-            label="Utilization Rate" 
-            value={`${utilizationRate.toFixed(1)}%`} 
-            sub={`${activeAssets} active subscriptions`} 
-            trend="1.2" 
-            positive 
-         />
-         <KPICard 
-            label="Asset Accountability" 
-            value={`${accountabilityScore}%`} 
-            sub="Chain of Custody Verification" 
-            trend="0.1" 
-            positive 
-         />
-         <KPICard 
-            label="Operational Risk" 
-            value={criticalIssues} 
-            sub="Active Critical Incidents" 
-            trend={criticalIssues > 0 ? "50" : "0"} 
-            positive={criticalIssues === 0} 
-         />
+         <KPICard label="Total Asset Value" value="€1.2M" sub={`${totalAssets} units in rotation`} trend={weeklyGrowth} positive />
+         <KPICard label="Utilization Rate" value={`${utilizationRate.toFixed(1)}%`} sub={`${activeAssets} active subscriptions`} trend="1.2" positive />
+         <KPICard label="Asset Accountability" value={`${accountabilityScore}%`} sub="Chain of Custody Verification" trend="0.1" positive />
+         <KPICard label="Operational Risk" value={criticalIssues} sub="Active Critical Incidents" trend={criticalIssues > 0 ? "50" : "0"} positive={criticalIssues === 0} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-         
-         {/* LEFT: STRATEGIC HEALTH */}
          <div className="lg:col-span-2 space-y-8">
             <Card title="Growth & Active Service (Last 6 Months)">
                <div className="h-64 flex items-end justify-between px-4 gap-4">
@@ -614,135 +787,72 @@ export const CeoDashboard: React.FC = () => {
                      <div key={i} className="w-full flex flex-col justify-end group cursor-pointer">
                         <div className="text-center text-xs font-bold text-slate-600 opacity-0 group-hover:opacity-100 mb-2 transition-opacity">{h} Active</div>
                         <div style={{ height: `${h}%` }} className="bg-brand-600 rounded-t-lg opacity-80 group-hover:opacity-100 transition-all shadow-lg shadow-brand-200" />
-                        <div className="text-center text-xs text-slate-400 mt-2 border-t border-slate-200 pt-1">
-                           {['Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][i]}
-                        </div>
+                        <div className="text-center text-xs text-slate-400 mt-2 border-t border-slate-200 pt-1">{['Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][i]}</div>
                      </div>
                   ))}
                </div>
             </Card>
-
             <div className="grid grid-cols-2 gap-6">
                <Card title="Inventory Health">
                   <div className="space-y-4">
-                     <div className="flex justify-between items-center">
-                        <span className="text-sm text-slate-600">Deployed (Revenue Generating)</span>
-                        <span className="font-bold text-slate-900">{activeAssets}</span>
-                     </div>
-                     <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                        <div style={{ width: `${utilizationRate}%` }} className="bg-green-500 h-full" />
-                     </div>
-                     
-                     <div className="flex justify-between items-center">
-                        <span className="text-sm text-slate-600">Warehouse (Ready)</span>
-                        <span className="font-bold text-slate-900">{devices.filter(d => d.status === 'IN_STOCK').length}</span>
-                     </div>
-                     <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                        <div style={{ width: '15%' }} className="bg-blue-500 h-full" />
-                     </div>
-
-                     <div className="flex justify-between items-center">
-                        <span className="text-sm text-slate-600">Logistics / Maintenance</span>
-                        <span className="font-bold text-slate-900">{devices.filter(d => ['IN_TRANSIT', 'REFURBISHING'].includes(d.status)).length}</span>
-                     </div>
-                     <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                        <div style={{ width: '10%' }} className="bg-amber-400 h-full" />
-                     </div>
+                     <div className="flex justify-between items-center"><span className="text-sm text-slate-600">Deployed (Revenue Generating)</span><span className="font-bold text-slate-900">{activeAssets}</span></div>
+                     <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden"><div style={{ width: `${utilizationRate}%` }} className="bg-green-500 h-full" /></div>
+                     <div className="flex justify-between items-center"><span className="text-sm text-slate-600">Warehouse (Ready)</span><span className="font-bold text-slate-900">{devices.filter(d => d.status === 'IN_STOCK').length}</span></div>
+                     <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden"><div style={{ width: '15%' }} className="bg-blue-500 h-full" /></div>
+                     <div className="flex justify-between items-center"><span className="text-sm text-slate-600">Logistics / Maintenance</span><span className="font-bold text-slate-900">{devices.filter(d => ['IN_TRANSIT', 'REFURBISHING'].includes(d.status)).length}</span></div>
+                     <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden"><div style={{ width: '10%' }} className="bg-amber-400 h-full" /></div>
                   </div>
                </Card>
-
                <Card title="Care Partner Adoption">
                   <div className="space-y-4">
                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center text-purple-600">
-                           <Users className="w-5 h-5" />
-                        </div>
-                        <div>
-                           <div className="text-2xl font-bold text-slate-900">{totalClients}</div>
-                           <div className="text-xs text-slate-500">Total Clients Managed</div>
-                        </div>
+                        <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center text-purple-600"><Users className="w-5 h-5" /></div>
+                        <div><div className="text-2xl font-bold text-slate-900">{totalClients}</div><div className="text-xs text-slate-500">Total Clients Managed</div></div>
                      </div>
                      <div className="border-t border-slate-100 pt-4 space-y-2">
-                        <div className="flex justify-between text-sm">
-                           <span className="text-slate-600">Thuiszorg West</span>
-                           <span className="font-bold text-slate-900">42%</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                           <span className="text-slate-600">Zorg & Co</span>
-                           <span className="font-bold text-slate-900">38%</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                           <span className="text-slate-600">Direct Private</span>
-                           <span className="font-bold text-slate-900">20%</span>
-                        </div>
+                        <div className="flex justify-between text-sm"><span className="text-slate-600">Thuiszorg West</span><span className="font-bold text-slate-900">42%</span></div>
+                        <div className="flex justify-between text-sm"><span className="text-slate-600">Zorg & Co</span><span className="font-bold text-slate-900">38%</span></div>
+                        <div className="flex justify-between text-sm"><span className="text-slate-600">Direct Private</span><span className="font-bold text-slate-900">20%</span></div>
                      </div>
                   </div>
                </Card>
             </div>
          </div>
-
-         {/* RIGHT: AI & SYSTEMS */}
          <div className="space-y-8">
             <Card title="AI Agency Performance" className="bg-slate-900 text-white border-slate-800">
                <div className="space-y-6">
                   <div className="flex items-center gap-4">
-                     <div className="p-3 bg-brand-500/20 rounded-full border border-brand-500/50">
-                        <Activity className="w-6 h-6 text-brand-400" />
-                     </div>
-                     <div>
-                        <div className="text-sm font-bold text-brand-100">Agency Uptime</div>
-                        <div className="text-2xl font-bold text-white">100%</div>
-                     </div>
+                     <div className="p-3 bg-brand-500/20 rounded-full border border-brand-500/50"><Activity className="w-6 h-6 text-brand-400" /></div>
+                     <div><div className="text-sm font-bold text-brand-100">Agency Uptime</div><div className="text-2xl font-bold text-white">100%</div></div>
                   </div>
-                  
                   <div className="space-y-3">
-                     <div className="flex justify-between text-sm border-b border-slate-700 pb-2">
-                        <span className="text-slate-400">Items Scanned (24h)</span>
-                        <span className="font-mono text-brand-300">12,402</span>
-                     </div>
-                     <div className="flex justify-between text-sm border-b border-slate-700 pb-2">
-                        <span className="text-slate-400">Anomalies Flagged</span>
-                        <span className="font-mono text-amber-300">3</span>
-                     </div>
-                     <div className="flex justify-between text-sm border-b border-slate-700 pb-2">
-                        <span className="text-slate-400">Auto-Remediation</span>
-                        <span className="font-mono text-green-300">45</span>
-                     </div>
+                     <div className="flex justify-between text-sm border-b border-slate-700 pb-2"><span className="text-slate-400">Items Scanned (24h)</span><span className="font-mono text-brand-300">12,402</span></div>
+                     <div className="flex justify-between text-sm border-b border-slate-700 pb-2"><span className="text-slate-400">Anomalies Flagged</span><span className="font-mono text-amber-300">3</span></div>
+                     <div className="flex justify-between text-sm border-b border-slate-700 pb-2"><span className="text-slate-400">Auto-Remediation</span><span className="font-mono text-green-300">45</span></div>
                   </div>
-
-                  <div className="p-3 bg-slate-800 rounded text-xs text-slate-300 italic leading-relaxed">
-                     "System operating within normal parameters. Stock Controller agent is optimizing warehouse allocation for Q1 efficiency."
-                  </div>
+                  <div className="p-3 bg-slate-800 rounded text-xs text-slate-300 italic leading-relaxed">"System operating within normal parameters. Stock Controller agent is optimizing warehouse allocation for Q1 efficiency."</div>
                </div>
             </Card>
-
             <Card title="Operational Alerts">
                {criticalIssues === 0 ? (
-                  <div className="py-8 text-center text-slate-500">
-                     <ShieldCheck className="w-12 h-12 text-green-500 mx-auto mb-3" />
-                     <p>Zero critical incidents.</p>
-                     <p className="text-xs mt-1">Operations team has full control.</p>
-                  </div>
+                  <div className="py-8 text-center text-slate-500"><ShieldCheck className="w-12 h-12 text-green-500 mx-auto mb-3" /><p>Zero critical incidents.</p><p className="text-xs mt-1">Operations team has full control.</p></div>
                ) : (
                   <div className="space-y-3">
                      {exceptions.filter(e => e.severity !== 'WARNING').slice(0, 3).map(e => (
                         <div key={e.id} className="p-3 bg-red-50 border border-red-100 rounded-lg flex gap-3">
                            <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0" />
-                           <div>
-                              <div className="text-sm font-bold text-red-800">{e.title}</div>
-                              <div className="text-xs text-red-600 mt-1">{e.human_owner_role} Assigned</div>
-                           </div>
+                           <div><div className="text-sm font-bold text-red-800">{e.title}</div><div className="text-xs text-red-600 mt-1">{e.human_owner_role} Assigned</div></div>
                         </div>
                      ))}
                   </div>
                )}
             </Card>
          </div>
-
       </div>
 
-      {/* RENDER MODAL */}
+      {/* RENDER MODALS */}
       {showLiveView && <LiveCommandModal />}
+      <ReportModal isOpen={showReportModal} onClose={() => setShowReportModal(false)} metrics={reportMetrics} />
     </div>
   );
 };
