@@ -85,7 +85,7 @@ const SystemArchitectureModal: React.FC<{ onClose: () => void }> = ({ onClose })
                      </div>
                      <h4 className="font-bold text-slate-900 text-sm mb-1">3. Decision Fork</h4>
                      <p className="text-xs text-slate-500 leading-relaxed">
-                        <strong>Low Risk:</strong> Auto-Execute fix. <strong>High Risk:</strong> Halt & Draft a proposal for human review (Human-in-the-Loop).
+                        <strong>Low Risk:</strong> Auto-Execute fix. <strong>High Risk:</strong> Halt &amp; Draft a proposal for human review (Human-in-the-Loop).
                      </p>
                   </div>
 
@@ -289,7 +289,7 @@ const ProcessFlowModal: React.FC<{ onClose: () => void }> = ({ onClose }) => (
                    <div className="md:w-1/2 md:pr-16 text-right order-2 md:order-1">
                       <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm group-hover:border-blue-400 transition-all relative overflow-hidden">
                          <div className="absolute top-0 right-0 w-16 h-16 bg-blue-50 rounded-bl-full -mr-8 -mt-8"></div>
-                         <h4 className="text-lg font-bold text-slate-900 mb-2">1. Intake & Assessment</h4>
+                         <h4 className="text-lg font-bold text-slate-900 mb-2">1. Intake &amp; Assessment</h4>
                          <p className="text-sm text-slate-600 leading-relaxed mb-4">
                             Care organization nurse evaluates the patient at home, identifying risks like falls or isolation.
                          </p>
@@ -333,7 +333,7 @@ const ProcessFlowModal: React.FC<{ onClose: () => void }> = ({ onClose }) => (
                    <div className="md:w-1/2 md:pl-16 order-3">
                       <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm group-hover:border-slate-400 transition-all relative overflow-hidden">
                          <div className="absolute top-0 left-0 w-16 h-16 bg-slate-50 rounded-br-full -ml-8 -mt-8"></div>
-                         <h4 className="text-lg font-bold text-slate-900 mb-2">2. Fulfillment & Allocation</h4>
+                         <h4 className="text-lg font-bold text-slate-900 mb-2">2. Fulfillment &amp; Allocation</h4>
                          <p className="text-sm text-slate-600 leading-relaxed mb-4">
                             Operations approves the request and system locks specific serial numbers to the patient.
                          </p>
