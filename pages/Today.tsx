@@ -1,63 +1,53 @@
 
 import React from 'react';
-import { useStore, store } from '../services/store';
+import { useStore } from '../services/store';
+import { Role } from '../types';
+import { CeoDashboard } from './CeoDashboard';
 import { Card, Badge, Button, Stat } from '../components/ui';
 import { 
   AlertCircle, CheckCircle, Clock, Zap, Wrench, ShieldAlert, PlayCircle, Send, 
   ArrowRight, Activity, Box, AlertTriangle, User 
 } from 'lucide-react';
-import { Role, AgentStatus } from '../types';
+import { AgentStatus } from '../types';
 import { useNavigate } from 'react-router-dom';
 
+/**
+ * REFACTORED: Today.tsx now acts as a router for the "Dashboard" sidebar item.
+ * If user is CEO, they get the Unified Executive Dashboard.
+ * If user is Ops/Admin, they get the Operational Task List.
+ */
 export const Today: React.FC = () => {
-  const { exceptions, devices, jobs, agents, killSwitch, currentUser } = useStore();
+  const { currentUser } = useStore();
+
+  if (currentUser.role === Role.CEO) {
+    return <CeoDashboard />;
+  }
+
+  return <OpsDashboardView />;
+};
+
+const OpsDashboardView: React.FC = () => {
+  const { exceptions, devices, jobs, agents, killSwitch } = useStore();
   const navigate = useNavigate();
 
-  const isCEO = currentUser.role === Role.CEO;
-
-  // --- DATA PROCESSING ---
   const activeAgents = agents.filter(a => a.status === AgentStatus.ENABLED).length;
   const lastRunAgent = agents.reduce((prev, current) => (prev.last_run > current.last_run) ? prev : current, agents[0]);
 
-  // Priorities
   const openPriorities = exceptions.filter(e => 
     e.status !== 'RESOLVED' && 
     (e.severity === 'BLOCKER' || e.severity === 'INCIDENT')
   );
 
-  // Stock Shortages
-  const stockShortages = exceptions.filter(e => e.status !== 'RESOLVED' && e.title.includes('Stock shortage'));
-
-  // Overdue
   const overdueDevices = devices.filter(d => d.sla_breach);
   const todayDate = new Date().toISOString().split('T')[0];
   const missedJobs = jobs.filter(j => j.scheduled_for && j.scheduled_for < todayDate && j.status !== 'COMPLETED');
-
-  // Schedule
   const jobsToday = jobs.filter(j => j.scheduled_for && j.scheduled_for.startsWith(todayDate));
 
-  // Quick Actions
-  const handleBatchAcknowledge = () => {
-    if (confirm("Acknowledge all open WARNINGs?")) {
-      store.batchAcknowledgeWarnings();
-    }
-  };
-
-  const handleSendReminders = () => {
-    store.sendReminders();
-    alert("Reminders queued for sending.");
-  };
-
-  // --- EMPTY STATE ---
-  const isAllClear = openPriorities.length === 0 && overdueDevices.length === 0 && missedJobs.length === 0 && jobsToday.length === 0 && stockShortages.length === 0;
+  const isAllClear = openPriorities.length === 0 && overdueDevices.length === 0 && missedJobs.length === 0 && jobsToday.length === 0;
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-12">
-      
-      {/* 1. TOP ROW: SYSTEM & METRICS */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-        
-        {/* System Status (Span 4) */}
         <div className={`md:col-span-4 rounded-xl p-5 text-white flex flex-col justify-between shadow-sm relative overflow-hidden ${killSwitch ? 'bg-red-700' : 'bg-slate-900'}`}>
            <div className="relative z-10">
               <div className="flex items-center gap-3 mb-4">
@@ -82,24 +72,14 @@ export const Today: React.FC = () => {
                  </div>
               </div>
            </div>
-           {/* Background Decoration */}
            <Activity className="absolute -right-4 -bottom-4 w-32 h-32 text-white/5" />
         </div>
 
-        {/* Metrics (Span 8) */}
         <div className="md:col-span-8 grid grid-cols-2 md:grid-cols-4 gap-4">
-           <Card className="flex items-center">
-              <Stat label="Items Scanned" value="1,240" trend="+12% today" icon={<Box className="w-4 h-4" />} />
-           </Card>
-           <Card className="flex items-center">
-              <Stat label="Drafts Pending" value="12" color="text-blue-600" icon={<Clock className="w-4 h-4" />} />
-           </Card>
-           <Card className="flex items-center">
-              <Stat label="Auto-Fixed" value="45" color="text-green-600" icon={<CheckCircle className="w-4 h-4" />} />
-           </Card>
-           <Card className="flex items-center">
-              <Stat label="Escalations" value={openPriorities.length} color="text-amber-600" icon={<AlertTriangle className="w-4 h-4" />} />
-           </Card>
+           <Card className="flex items-center"><Stat label="Items Scanned" value="1,240" trend="+12% today" icon={<Box className="w-4 h-4" />} /></Card>
+           <Card className="flex items-center"><Stat label="Drafts Pending" value="12" color="text-blue-600" icon={<Clock className="w-4 h-4" />} /></Card>
+           <Card className="flex items-center"><Stat label="Auto-Fixed" value="45" color="text-green-600" icon={<CheckCircle className="w-4 h-4" />} /></Card>
+           <Card className="flex items-center"><Stat label="Escalations" value={openPriorities.length} color="text-amber-600" icon={<AlertTriangle className="w-4 h-4" />} /></Card>
         </div>
       </div>
 
@@ -111,17 +91,12 @@ export const Today: React.FC = () => {
          </Card>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          
-          {/* 2. LEFT COLUMN: ACTION ITEMS (2/3 Width) */}
           <div className="lg:col-span-2 space-y-6">
-            
-            {/* Priorities Table */}
             {openPriorities.length > 0 && (
               <Card title={`Priorities (${openPriorities.length})`} noPadding className="border-l-4 border-l-red-500 overflow-hidden">
                 <table className="w-full text-left text-sm">
                   <thead className="bg-slate-50 text-slate-500 font-medium border-b border-slate-100">
                     <tr>
-                      <th className="px-5 py-3 text-xs uppercase tracking-wide w-24">Severity</th>
                       <th className="px-5 py-3 text-xs uppercase tracking-wide">Issue</th>
                       <th className="px-5 py-3 text-xs uppercase tracking-wide">Owner</th>
                       <th className="px-5 py-3 text-xs uppercase tracking-wide text-right">Action</th>
@@ -131,155 +106,40 @@ export const Today: React.FC = () => {
                     {openPriorities.map(ex => (
                       <tr key={ex.id} className="hover:bg-slate-50 transition-colors group">
                         <td className="px-5 py-3">
-                           <Badge color={ex.severity === 'BLOCKER' ? 'red' : 'yellow'}>{ex.severity}</Badge>
-                        </td>
-                        <td className="px-5 py-3">
                            <div className="font-medium text-slate-900">{ex.title}</div>
-                           <div className="text-xs text-slate-500 flex items-center gap-1">
-                              {ex.related_entity_type} #{ex.related_entity_id}
-                           </div>
+                           <div className="text-xs text-slate-500">{ex.related_entity_type} #{ex.related_entity_id}</div>
                         </td>
-                        <td className="px-5 py-3 text-xs text-slate-600 font-mono uppercase">
-                           {ex.human_owner_role}
-                        </td>
-                        <td className="px-5 py-3 text-right">
-                           <Button size="sm" variant="outline" onClick={() => navigate('/exceptions')}>Review</Button>
-                        </td>
+                        <td className="px-5 py-3 text-xs font-mono uppercase">{ex.human_owner_role}</td>
+                        <td className="px-5 py-3 text-right"><Button size="sm" variant="outline" onClick={() => navigate('/exceptions')}>Review</Button></td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </Card>
             )}
-
-            {/* Overdue Items Table */}
-            {(overdueDevices.length > 0 || missedJobs.length > 0) && (
-               <Card title="Overdue & Watchlist" noPadding className="overflow-hidden">
-                 <table className="w-full text-left text-sm">
-                   <thead className="bg-slate-50 text-slate-500 font-medium border-b border-slate-100">
-                     <tr>
-                       <th className="px-5 py-3 text-xs uppercase tracking-wide">Item</th>
-                       <th className="px-5 py-3 text-xs uppercase tracking-wide">Reason</th>
-                       <th className="px-5 py-3 text-xs uppercase tracking-wide">Custodian/Client</th>
-                       <th className="px-5 py-3 text-xs uppercase tracking-wide text-right">Action</th>
-                     </tr>
-                   </thead>
-                   <tbody className="divide-y divide-slate-50">
-                     {overdueDevices.map(d => (
-                       <tr key={d.id} className="hover:bg-slate-50 transition-colors">
-                         <td className="px-5 py-3 font-medium text-slate-900">{store.getProductName(d.product_id)} <span className="text-slate-400 font-normal ml-1">{d.serial_number}</span></td>
-                         <td className="px-5 py-3"><Badge color="red">SLA Breach</Badge></td>
-                         <td className="px-5 py-3 text-xs text-slate-600">{d.current_custodian}</td>
-                         <td className="px-5 py-3 text-right">
-                            <Button size="sm" variant="outline" className="h-7 text-xs">Investigate</Button>
-                         </td>
-                       </tr>
-                     ))}
-                     {missedJobs.map(j => (
-                       <tr key={j.id} className="hover:bg-slate-50 transition-colors">
-                         <td className="px-5 py-3 font-medium text-slate-900">{j.type} Job</td>
-                         <td className="px-5 py-3"><Badge color="yellow">Missed Appt</Badge></td>
-                         <td className="px-5 py-3 text-xs text-slate-600">{j.client_name}</td>
-                         <td className="px-5 py-3 text-right">
-                            <Button size="sm" variant="outline" className="h-7 text-xs">Reschedule</Button>
-                         </td>
-                       </tr>
-                     ))}
-                   </tbody>
-                 </table>
-               </Card>
-            )}
           </div>
 
-          {/* 3. RIGHT COLUMN: SCHEDULE & TOOLS (1/3 Width) */}
           <div className="space-y-6">
-            
-            {/* STOCK SHORTAGE WIDGET */}
-            {stockShortages.length > 0 && (
-                <div className="bg-red-50 border border-red-200 rounded-xl overflow-hidden shadow-sm">
-                    <div className="p-4 border-b border-red-100 flex justify-between items-center bg-red-100/50">
-                        <h4 className="font-bold text-red-900 flex items-center gap-2">
-                            <AlertTriangle className="w-4 h-4" /> Stock Shortages
-                        </h4>
-                        <Badge color="red">{stockShortages.length}</Badge>
-                    </div>
-                    <div className="divide-y divide-red-100">
-                        {stockShortages.slice(0, 5).map(s => (
-                            <div key={s.id} className="p-3 text-sm hover:bg-red-100/30 transition-colors">
-                                <div className="font-medium text-red-800">{s.title.replace('Stock shortage: ', '')}</div>
-                                <div className="text-xs text-red-600 mt-1 flex justify-between">
-                                    <span>Case #{s.related_entity_id}</span>
-                                    <span>{s.created_at}</span>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                    <div className="p-2 bg-red-50 text-center border-t border-red-100">
-                        <button onClick={() => navigate('/exceptions')} className="text-xs font-bold text-red-700 hover:text-red-900">
-                            Manage All Shortages
-                        </button>
-                    </div>
-                </div>
-            )}
-
-            {/* Today's Schedule */}
             <Card title="Today's Schedule" noPadding>
                <div className="divide-y divide-slate-50">
                   {jobsToday.length > 0 ? jobsToday.map(j => (
                      <div key={j.id} className="p-4 flex gap-4 hover:bg-slate-50 transition-colors">
-                        <div className="flex flex-col items-center justify-center w-12 h-12 bg-slate-100 rounded-lg text-slate-600">
-                           <span className="text-xs font-bold uppercase">{j.scheduled_for?.split(' ')[1]}</span>
-                        </div>
                         <div className="flex-1 min-w-0">
                            <div className="flex justify-between items-start">
                               <h4 className="font-bold text-slate-900 text-sm truncate">{j.type}</h4>
                               <div className={`w-2 h-2 rounded-full mt-1.5 ${j.status === 'CONFIRMED' ? 'bg-green-500' : 'bg-amber-500'}`} />
                            </div>
                            <p className="text-xs text-slate-500 truncate">{j.client_name}</p>
-                           <div className="flex items-center gap-1 mt-1 text-[10px] text-slate-400">
-                              <User className="w-3 h-3" /> {j.installer_name}
-                           </div>
                         </div>
                      </div>
                   )) : (
-                     <div className="p-8 text-center text-slate-400 italic text-sm">
-                        No jobs scheduled.
-                     </div>
+                     <div className="p-8 text-center text-slate-400 italic text-sm">No jobs scheduled.</div>
                   )}
                </div>
                <div className="p-3 border-t border-slate-100 bg-slate-50 text-center">
-                  <button className="text-xs font-bold text-brand-600 hover:text-brand-700 flex items-center justify-center gap-1 w-full" onClick={() => navigate('/jobs')}>
-                     View Full Calendar <ArrowRight className="w-3 h-3" />
-                  </button>
+                  <button className="text-xs font-bold text-brand-600 hover:text-brand-700 flex items-center justify-center gap-1 w-full uppercase tracking-wider" onClick={() => navigate('/jobs')}>Full Calendar <ArrowRight className="w-3 h-3" /></button>
                </div>
             </Card>
-
-            {/* Quick Actions Panel */}
-            {!isCEO && (
-              <Card title="Quick Actions">
-                 <div className="space-y-3">
-                    <Button variant="outline" onClick={handleSendReminders} className="w-full justify-start text-xs h-9">
-                       <Send className="w-3 h-3 mr-2 text-slate-400" /> Send Daily Reminders
-                    </Button>
-                    <Button variant="outline" onClick={handleBatchAcknowledge} className="w-full justify-start text-xs h-9">
-                       <CheckCircle className="w-3 h-3 mr-2 text-slate-400" /> Acknowledge Warnings
-                    </Button>
-                    <Button variant="outline" disabled className="w-full justify-start text-xs h-9 opacity-50 cursor-not-allowed">
-                       <PlayCircle className="w-3 h-3 mr-2 text-slate-400" /> Auto-Process Returns
-                    </Button>
-                 </div>
-              </Card>
-            )}
-
-            <div className="bg-brand-50 border border-brand-100 rounded-lg p-4">
-               <h4 className="text-brand-800 font-bold text-xs uppercase mb-1 flex items-center gap-2">
-                  <Zap className="w-3 h-3" /> Pro Tip
-               </h4>
-               <p className="text-xs text-brand-700 leading-relaxed">
-                  Focus on <strong>Blockers</strong> first. AI will handle low-risk reminders automatically at 09:00.
-               </p>
-            </div>
-
           </div>
         </div>
       )}
