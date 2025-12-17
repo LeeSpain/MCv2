@@ -392,7 +392,7 @@ const ProcessFlowModal: React.FC<{ onClose: () => void }> = ({ onClose }) => (
                    <div className="absolute left-8 md:left-1/2 -ml-4 w-8 h-8 rounded-full border-4 border-white bg-amber-500 shadow-md flex items-center justify-center text-white z-10 order-1 md:order-2 text-[10px] font-bold">04</div>
                    <div className="md:w-1/2 md:pl-16 order-3">
                       <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm group-hover:border-amber-400 transition-all relative overflow-hidden">
-                         <div className="absolute top-0 left-0 w-16 h-16 bg-amber-50 rounded-br-full -ml-8 -mt-8"></div>
+                         <div className="absolute top-0 right-0 w-16 h-16 bg-amber-50 rounded-br-full -ml-8 -mt-8"></div>
                          <h4 className="text-lg font-bold text-slate-900 mb-2">4. Active Service</h4>
                          <p className="text-sm text-slate-600 leading-relaxed mb-4">
                             Patient lives safely with 24/7 monitoring while system maintains uptime.
