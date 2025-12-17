@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useStore, store } from '../services/store';
 import { Card, Button, Badge } from '../components/ui';
@@ -9,7 +8,10 @@ import {
   ShieldCheck, Terminal,
   Database, FileText, ChevronRight, Box, Radio, Zap,
   Users, AlertOctagon, CheckCircle, Clock, Map,
-  Target, Globe, Shield, User, ClipboardList
+  Target, Globe, Shield, User, ClipboardList,
+  Cpu, HardDrive, Network, Lock, Eye, 
+  ArrowRight, RefreshCw, BarChart3, Fingerprint,
+  Waves
 } from 'lucide-react';
 import { DeviceStatus, AgentStatus } from '../types';
 
@@ -192,7 +194,6 @@ export const CeoDashboard: React.FC = () => {
                                  <p className="text-sm text-slate-500 line-clamp-1">{ex.description}</p>
                                  <div className="flex gap-4 mt-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                                     <span className="flex items-center gap-1.5"><Box className="w-3 h-3" /> Ref: {ex.related_entity_id}</span>
-                                    {/* Fix: use User icon instead of missing User name */}
                                     <span className="flex items-center gap-1.5"><User className="w-3 h-3" /> Owner: {ex.human_owner_role}</span>
                                  </div>
                               </div>
@@ -260,7 +261,6 @@ export const CeoDashboard: React.FC = () => {
                     { label: 'Directory', icon: Users, path: '/clients' },
                     { label: 'Asset Log', icon: Database, path: '/assets' },
                     { label: 'Schedule', icon: Map, path: '/jobs' },
-                    /* Fix: use ClipboardList icon */
                     { label: 'Orders', icon: ClipboardList, path: '/cases' }
                   ].map(link => (
                     <button 
@@ -293,6 +293,7 @@ export const CeoDashboard: React.FC = () => {
             criticalIssues={criticalExceptions.length} 
             activeAssets={activeAssets} 
             agentRunLogs={agentRunLogs} 
+            agents={agents}
             onClose={() => setShowLiveView(false)} 
          />
       )}
@@ -303,50 +304,206 @@ export const CeoDashboard: React.FC = () => {
 
 // --- MODAL SUB-COMPONENTS ---
 
-const LiveCommandModal = ({ criticalIssues, activeAssets, agentRunLogs, onClose }: any) => {
+/**
+ * UPGRADED LIVE COMMAND MONITOR
+ * High-fidelity Dutch Operational Dashboard
+ */
+const LiveCommandModal = ({ criticalIssues, activeAssets, agentRunLogs, agents, onClose }: any) => {
+    const [scannedItems, setScannedItems] = useState(12402);
+    const [systemLoad, setSystemLoad] = useState(12);
+    const [networkLat, setNetworkLat] = useState(14);
+    
+    // Simulate live data jitter
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setScannedItems(prev => prev + Math.floor(Math.random() * 3));
+            setSystemLoad(prev => Math.max(8, Math.min(22, prev + (Math.random() > 0.5 ? 1 : -1))));
+            setNetworkLat(prev => Math.max(10, Math.min(18, prev + (Math.random() > 0.5 ? 0.5 : -0.5))));
+        }, 3000);
+        return () => clearInterval(interval);
+    }, []);
+
     return (
-        <div className="fixed inset-0 z-50 bg-slate-950 text-slate-200 font-sans flex flex-col animate-in fade-in duration-300">
-            <header className="flex-none h-16 border-b border-white/5 bg-slate-900/40 backdrop-blur-md flex justify-between items-center px-8">
-                <div className="flex items-center gap-3">
-                    <div className="w-3 h-3 bg-brand-500 rounded-full animate-ping" />
-                    <h1 className="text-xs font-black tracking-[0.4em] text-white uppercase italic">System_Intelligence // Live_Stream</h1>
-                </div>
-                <button onClick={onClose} className="p-2 hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-colors border border-white/5 rounded-lg"><X className="w-5 h-5" /></button>
-            </header>
-            <div className="flex-1 p-8 grid grid-cols-12 gap-8 overflow-hidden">
-                <div className="col-span-3 space-y-8">
-                    <div className="bg-slate-900/50 border border-white/5 rounded-3xl p-6">
-                        <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-6">System Telemetry</h3>
-                        <div className="space-y-6">
-                            <div><div className="flex justify-between text-[10px] mb-2 font-bold"><span>Logic Cluster Load</span><span>12%</span></div><div className="h-1 bg-slate-800 rounded-full overflow-hidden"><div className="h-full bg-emerald-500 w-[12%] animate-pulse" /></div></div>
-                            <div><div className="flex justify-between text-[10px] mb-2 font-bold"><span>Unified Ledger Sync</span><span>Live</span></div><div className="h-1 bg-slate-800 rounded-full overflow-hidden"><div className="h-full bg-blue-500 w-[100%]" /></div></div>
+        <div className="fixed inset-0 z-[100] bg-[#05070a] text-slate-300 font-sans flex flex-col animate-in fade-in duration-500 overflow-hidden">
+            {/* HUD HEADER */}
+            <header className="flex-none h-20 border-b border-brand-500/20 bg-slate-900/60 backdrop-blur-xl flex justify-between items-center px-10 relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-brand-500 to-transparent opacity-50"></div>
+                <div className="flex items-center gap-6">
+                    <div className="flex items-center gap-3">
+                        <div className="relative">
+                            <div className="w-10 h-10 bg-brand-500/10 rounded-xl border border-brand-500/30 flex items-center justify-center">
+                                <Activity className="w-6 h-6 text-brand-500 animate-pulse" />
+                            </div>
+                            <div className="absolute -top-1 -right-1 w-3 h-3 bg-brand-500 rounded-full animate-ping"></div>
+                        </div>
+                        <div>
+                           <h1 className="text-lg font-black tracking-[0.25em] text-white uppercase italic">Ops_Command // Live_Monitor</h1>
+                           <div className="flex items-center gap-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                               <span className="flex items-center gap-1.5 text-green-500"><div className="w-1.5 h-1.5 rounded-full bg-green-500" /> System: Stable</span>
+                               <span className="flex items-center gap-1.5"><Clock className="w-3 h-3" /> {new Date().toLocaleTimeString()}</span>
+                           </div>
                         </div>
                     </div>
                 </div>
-                <div className="col-span-6 bg-[#050505] rounded-3xl border border-white/5 overflow-hidden flex flex-col shadow-inner">
-                    <div className="p-4 border-b border-white/5 bg-white/5 flex justify-between items-center">
-                       <span className="text-[10px] font-mono text-brand-400 font-black">LOGS_0x4291</span>
-                       <span className="text-[10px] font-bold text-slate-500">Auto-Scrolling</span>
+
+                <div className="flex items-center gap-8">
+                    <div className="hidden lg:flex items-center gap-12 border-x border-white/5 px-12">
+                        <div className="text-center">
+                           <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Load</div>
+                           <div className="text-xl font-mono font-bold text-white leading-none">{systemLoad}%</div>
+                        </div>
+                        <div className="text-center">
+                           <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Latency</div>
+                           <div className="text-xl font-mono font-bold text-brand-400 leading-none">{networkLat.toFixed(1)}ms</div>
+                        </div>
+                        <div className="text-center">
+                           <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Scans</div>
+                           <div className="text-xl font-mono font-bold text-emerald-400 leading-none">{scannedItems.toLocaleString()}</div>
+                        </div>
                     </div>
-                    <div className="flex-1 overflow-y-auto p-6 font-mono text-[10px] text-slate-400 custom-scrollbar leading-relaxed">
-                        {agentRunLogs.slice(0, 50).map((l: any) => (
-                            <div key={l.id} className="mb-2 hover:text-white transition-colors cursor-default border-l-2 border-white/5 pl-4 ml-2">
-                                <span className="text-slate-600">[{new Date(l.finished_at).toLocaleTimeString()}]</span> <span className="text-brand-500 font-bold">AGENT_RUN:</span> <span className="text-slate-300">{l.agent_id}</span> <span className="opacity-40">... OK</span>
+                    <button onClick={onClose} className="p-3 bg-white/5 hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-all border border-white/10 rounded-2xl group">
+                        <X className="w-6 h-6 group-hover:rotate-90 transition-transform" />
+                    </button>
+                </div>
+            </header>
+
+            {/* MAIN OPERATIONAL GRID */}
+            <main className="flex-1 p-8 grid grid-cols-12 grid-rows-6 gap-6">
+                
+                {/* 1. GEOSPATIAL TOPOLOGY (Dutch Centers) */}
+                <div className="col-span-12 lg:col-span-5 row-span-4 bg-slate-900/40 rounded-3xl border border-white/5 p-8 relative group">
+                    <div className="absolute top-6 left-8 z-10">
+                        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2 mb-4">
+                            <Globe className="w-3 h-3 text-brand-500" /> Regional_Network_State
+                        </h3>
+                    </div>
+                    {/* Simulated Map Visual */}
+                    <div className="w-full h-full flex items-center justify-center opacity-60 group-hover:opacity-80 transition-opacity">
+                         <svg viewBox="0 0 400 400" className="w-full h-full max-h-[350px]">
+                            {/* Simple stylized NL outline */}
+                            <path d="M150,50 L250,30 L320,80 L350,150 L320,320 L150,350 L80,320 L50,150 L100,80 Z" fill="none" stroke="currentColor" strokeWidth="1" className="text-brand-500/20" />
+                            {/* Scanning line animation */}
+                            <rect width="400" height="2" fill="url(#grad-scan)" className="animate-scan" />
+                            <defs>
+                                <linearGradient id="grad-scan" x1="0" x2="0" y1="0" y2="1">
+                                    <stop offset="0%" stopColor="transparent" />
+                                    <stop offset="50%" stopColor="#0ea5e9" stopOpacity="0.5" />
+                                    <stop offset="100%" stopColor="transparent" />
+                                </linearGradient>
+                            </defs>
+                            {/* Nodes */}
+                            <circle cx="200" cy="180" r="4" className="fill-brand-500 animate-pulse" /> {/* Amsterdam */}
+                            <circle cx="180" cy="220" r="3" className="fill-brand-500/40" /> {/* Rotterdam */}
+                            <circle cx="230" cy="240" r="3" className="fill-brand-500/40" /> {/* Utrecht */}
+                            <circle cx="270" cy="300" r="3" className="fill-brand-500/40" /> {/* Eindhoven */}
+                            <text x="210" y="185" className="text-[8px] fill-slate-400 font-mono">HQ_AMS</text>
+                         </svg>
+                    </div>
+                    <div className="absolute bottom-6 right-8 text-right font-mono text-[9px] text-slate-500">
+                        <div className="mb-1">NODES: 1,402 ACTIVE</div>
+                        <div>SIGNAL: 100% NOMINAL</div>
+                    </div>
+                </div>
+
+                {/* 2. LOG STREAM (Real-time events) */}
+                <div className="col-span-12 lg:col-span-7 row-span-4 bg-black rounded-3xl border border-white/5 flex flex-col shadow-2xl overflow-hidden">
+                    <div className="flex-none h-12 bg-white/5 border-b border-white/5 px-6 flex justify-between items-center">
+                        <div className="flex items-center gap-3">
+                           <Terminal className="w-4 h-4 text-emerald-400" />
+                           <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400 italic">Central_Orchestration_Ledger</span>
+                        </div>
+                        <div className="flex items-center gap-4">
+                           <div className="flex items-center gap-1.5"><div className="w-1 h-1 bg-green-500 rounded-full" /><span className="text-[9px] font-bold text-slate-500">AUTO_COMMIT</span></div>
+                           <div className="flex items-center gap-1.5"><div className="w-1 h-1 bg-amber-500 rounded-full animate-pulse" /><span className="text-[9px] font-bold text-slate-500">HUMAN_REVIEW</span></div>
+                        </div>
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-6 font-mono text-[10px] custom-scrollbar space-y-2 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] bg-repeat">
+                        {agentRunLogs.map((log: any, idx: number) => (
+                            <div key={log.id} className={`flex gap-4 p-2.5 rounded-lg border border-transparent hover:bg-white/5 transition-all group animate-in slide-in-from-left duration-300 delay-${idx * 50}`}>
+                                <span className="text-slate-600 shrink-0">[{new Date(log.finished_at).toLocaleTimeString()}]</span>
+                                <span className="text-brand-500 font-black shrink-0 tracking-tighter">AGNT_{log.agent_id.split('-').pop()?.toUpperCase()}</span>
+                                <span className="text-slate-400 flex-1">{log.plan.actions[0]?.summary || 'Cycle scanning global state...'}</span>
+                                <span className={`px-1.5 py-0.5 rounded-[4px] text-[8px] font-black uppercase tracking-tighter ${
+                                    log.applied_actions[0]?.status === 'APPLIED' ? 'bg-green-500/20 text-green-400' : 'bg-slate-500/20 text-slate-400'
+                                }`}>
+                                    {log.applied_actions[0]?.status || 'IDLE'}
+                                </span>
                             </div>
                         ))}
                     </div>
                 </div>
-                <div className="col-span-3 space-y-8">
-                    <div className="p-8 bg-slate-900/50 border border-white/5 rounded-3xl text-center">
-                        <div className="text-5xl font-black text-white tracking-tighter mb-2 italic">{activeAssets}</div>
-                        <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Revenue Fleet</div>
+
+                {/* 3. AGENT STATUS GRID */}
+                <div className="col-span-12 lg:col-span-9 row-span-2 bg-slate-900/20 rounded-3xl border border-white/5 p-6 flex gap-6 overflow-x-auto no-scrollbar items-center">
+                    {agents.map((agent: any) => (
+                        <div key={agent.id} className="flex-none w-56 p-4 rounded-2xl bg-white/5 border border-white/5 hover:border-brand-500/40 transition-all cursor-default group">
+                            <div className="flex justify-between items-center mb-3">
+                                <div className={`p-2 rounded-lg ${agent.status === 'ENABLED' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-500/10 text-slate-500'}`}>
+                                    <Zap className="w-4 h-4" />
+                                </div>
+                                <div className="text-right">
+                                    <div className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Autonomy</div>
+                                    <div className={`text-[10px] font-bold ${agent.autonomy === 'AUTO_EXECUTE' ? 'text-red-400' : 'text-blue-400'}`}>{agent.autonomy.split('_')[0]}</div>
+                                </div>
+                            </div>
+                            <div className="text-xs font-black text-white mb-1 group-hover:text-brand-400 transition-colors truncate uppercase">{agent.name}</div>
+                            <div className="flex justify-between items-center text-[9px] font-bold">
+                                <span className="text-slate-500">Uptime: 99.9%</span>
+                                <span className="text-slate-500">Risk: {agent.risk_level}</span>
+                            </div>
+                            <div className="mt-3 h-1 w-full bg-slate-800 rounded-full overflow-hidden">
+                                <div className={`h-full animate-pulse ${agent.status === 'ENABLED' ? 'bg-emerald-500 w-full' : 'bg-slate-700 w-0'}`} />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                {/* 4. PERFORMANCE CARDS */}
+                <div className="col-span-12 lg:col-span-3 row-span-2 space-y-4">
+                    <div className="bg-brand-500 p-6 rounded-3xl flex flex-col justify-between h-[calc(50%-0.5rem)] shadow-lg shadow-brand-500/20 group relative overflow-hidden">
+                        <Waves className="absolute -bottom-4 -right-4 w-24 h-24 text-white/10 group-hover:scale-125 transition-transform duration-700" />
+                        <span className="text-[10px] font-black text-brand-900 uppercase tracking-widest opacity-60">Revenue_Fleet</span>
+                        <div className="flex items-end gap-2">
+                           <span className="text-4xl font-black text-white tracking-tighter italic">{activeAssets}</span>
+                           <span className="text-xs font-bold text-brand-900 mb-1 opacity-60">Units</span>
+                        </div>
                     </div>
-                    <div className="p-8 bg-slate-900/50 border border-white/5 rounded-3xl text-center">
-                        <div className={`text-5xl font-black tracking-tighter mb-2 italic ${criticalIssues > 0 ? 'text-red-500 animate-pulse' : 'text-slate-700'}`}>{criticalIssues}</div>
-                        <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Friction Nodes</div>
+                    <div className={`p-6 rounded-3xl flex flex-col justify-between h-[calc(50%-0.5rem)] shadow-lg transition-all duration-500 ${
+                        criticalIssues > 0 ? 'bg-red-600 shadow-red-500/20' : 'bg-white/5 border border-white/10'
+                    }`}>
+                        <span className={`text-[10px] font-black uppercase tracking-widest opacity-60 ${
+                            criticalIssues > 0 ? 'text-red-900' : 'text-slate-500'
+                        }`}>System_Friction</span>
+                        <div className="flex items-end gap-2">
+                           <span className={`text-4xl font-black tracking-tighter italic ${
+                               criticalIssues > 0 ? 'text-white animate-pulse' : 'text-slate-700'
+                           }`}>{criticalIssues}</span>
+                           <span className={`text-xs font-bold mb-1 opacity-60 ${
+                               criticalIssues > 0 ? 'text-red-900' : 'text-slate-500'
+                           }`}>Issues</span>
+                        </div>
                     </div>
                 </div>
+
+            </main>
+            
+            {/* HUD SCAN LINE */}
+            <div className="absolute inset-0 pointer-events-none opacity-20 select-none">
+                <div className="h-1/2 w-full bg-gradient-to-b from-brand-500/20 to-transparent animate-scan"></div>
             </div>
+
+            <style>{`
+                @keyframes scan {
+                    0% { transform: translateY(-100%); }
+                    100% { transform: translateY(200%); }
+                }
+                .animate-scan {
+                    animation: scan 4s linear infinite;
+                }
+                .no-scrollbar::-webkit-scrollbar {
+                    display: none;
+                }
+            `}</style>
         </div>
     );
 }
@@ -362,7 +519,7 @@ const ReportModal: React.FC<{ isOpen: boolean; onClose: () => void; metrics: any
   
   if (!isOpen) return null;
   return (
-    <div className="fixed inset-0 z-[60] bg-slate-950/90 backdrop-blur-xl flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[110] bg-slate-950/90 backdrop-blur-xl flex items-center justify-center p-4">
        <div className="bg-white rounded-3xl shadow-2xl w-full max-w-5xl h-[92vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-300">
           <div className="bg-slate-900 p-5 flex justify-between items-center text-white shrink-0">
              <span className="font-black text-xs uppercase tracking-widest italic">Board_Report_Preview_v2</span>

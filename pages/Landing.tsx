@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore, store } from '../services/store';
@@ -301,7 +300,7 @@ const ProcessFlowModal: React.FC<{ onClose: () => void }> = ({ onClose }) => (
                    </div>
                    <div className="absolute left-8 md:left-1/2 -ml-4 w-8 h-8 rounded-full border-4 border-white bg-blue-600 shadow-md flex items-center justify-center text-white z-10 order-1 md:order-2 text-[10px] font-bold">01</div>
                    <div className="md:w-1/2 md:pl-16 order-3">
-                      <div className="bg-slate-900 p-5 rounded-xl border border-slate-800 shadow-xl group-hover:border-purple-500/30 transition-all">
+                      <div className="bg-slate-900 p-5 rounded-xl border border-slate-800 shadow-xl group-hover:border-purple-50/30 transition-all">
                          <div className="flex items-start gap-4">
                             <Bot className="w-5 h-5 text-purple-400 mt-1 shrink-0" />
                             <div>
