@@ -83,7 +83,7 @@ const SLIDE_DATA = [
     type: 'strategy', 
     title: 'Control the Business Before It Controls Us', 
     subtitle: "MobileCare's strategic response to scaling challenges.", 
-    bullet: ['Build a single operational control platform instead of adding more staff or disconnected tools.', 'Centralize visibility across the entire device lifecycle.', 'Introduce intelligence to support daily decision-making.'], 
+    bullet: ['Single operational control platform instead of adding more staff.', 'Centralize visibility across the entire device lifecycle.', 'Introduce intelligence to support daily decision-making.'], 
     moves: [{ title: 'Defensive Move', desc: 'Reduce operational risk and prevent chaos.' }, { title: 'Offensive Move', desc: 'Enable sustainable, scalable growth.' }],
     bg: 'https://images.unsplash.com/photo-1444703686981-a3abbc4d4fe3?auto=format&fit=crop&q=80&w=2000'
   },
@@ -115,8 +115,13 @@ const SLIDE_DATA = [
     id: 12, 
     type: 'trust', 
     title: 'Built for Trust and Oversight', 
-    items: [{ title: 'Human Approval Central', desc: 'Critical decisions always require human sign-off.' }, { title: 'Clear Audit Trails', desc: 'Every action is logged for full transparency and compliance.' }, { title: 'Adjustable AI Autonomy', desc: 'Fine-tune the level of AI assistance as needed.' }, { title: 'Global AI Kill Switch', desc: 'An immediate pause button for all AI-driven actions.' }], 
-    footer: 'Designed for healthcare standards, operational accountability, and regulatory confidence.',
+    items: [
+      { title: 'Human Approval Central', desc: 'Critical decisions always require human sign-off.' }, 
+      { title: 'Clear Audit Trails', desc: 'Every action is logged for full transparency.' }, 
+      { title: 'Adjustable AI Autonomy', desc: 'Fine-tune the level of AI assistance as needed.' }, 
+      { title: 'Global AI Kill Switch', desc: 'An immediate pause button for all AI actions.' }
+    ], 
+    footer: 'Healthcare standards, accountability, and regulatory confidence.',
     bg: 'https://images.unsplash.com/photo-1531297484001-80022131f5a1?auto=format&fit=crop&q=80&w=2000'
   },
   { 
@@ -275,7 +280,7 @@ const PresentationModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       </div>
 
       {/* Main Content Stage with scroll safety for small screens */}
-      <div className="w-full h-full relative flex items-center justify-center pointer-events-none p-16">
+      <div className="w-full h-full relative flex items-center justify-center pointer-events-none px-12 py-16">
         
         <div className="max-w-6xl w-full max-h-full overflow-y-auto no-scrollbar relative z-10 animate-in fade-in slide-in-from-right-12 duration-700 pointer-events-auto flex flex-col justify-center">
           
@@ -462,23 +467,23 @@ const PresentationModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             </div>
           )}
 
-          {/* FALLBACK FOR GENERIC CONTENT SLIDES (Trust, AI Assistant, etc.) */}
+          {/* FALLBACK FOR GENERIC CONTENT SLIDES (Trust, AI Assistant, Strategy etc.) */}
           {!['title', 'contents', 'section', 'hero-text', 'business-model', 'complexity', 'platform-orb', 'thank-you'].includes(slide.type) && (
-            <div className="space-y-12">
-               <div className="flex flex-col md:flex-row md:justify-between md:items-end border-b-8 border-cyan-300 pb-10 gap-6">
-                  <h2 className="text-6xl md:text-8xl font-black text-white italic tracking-tighter uppercase leading-none drop-shadow-2xl">{slide.title}</h2>
-                  {slide.subtitle && <p className="text-xl md:text-3xl text-cyan-300 font-black uppercase tracking-widest italic">{slide.subtitle}</p>}
+            <div className="space-y-6 md:space-y-10">
+               <div className="flex flex-col md:flex-row md:justify-between md:items-end border-b-4 md:border-b-8 border-cyan-300 pb-4 md:pb-8 gap-4">
+                  <h2 className="text-4xl md:text-6xl font-black text-white italic tracking-tighter uppercase leading-none drop-shadow-2xl">{slide.title}</h2>
+                  {slide.subtitle && <p className="text-lg md:text-2xl text-cyan-300 font-black uppercase tracking-widest italic">{slide.subtitle}</p>}
                </div>
 
-               <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
-                  <div className="space-y-10">
-                    {slide.body && <p className="text-3xl md:text-4xl text-slate-100 leading-tight font-black italic border-l-8 border-cyan-300 pl-10 drop-shadow-lg">{slide.body}</p>}
+               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-16 items-start">
+                  <div className="space-y-6 md:space-y-8">
+                    {slide.body && <p className="text-2xl md:text-4xl text-slate-100 leading-tight font-black italic border-l-8 border-cyan-300 pl-10 drop-shadow-lg">{slide.body}</p>}
                     
                     {slide.bullet && (
-                      <ul className="space-y-8">
+                      <ul className="space-y-4 md:space-y-6">
                         {slide.bullet.map((b, i) => (
-                           <li key={i} className="flex gap-8 text-2xl md:text-3xl text-slate-200 font-bold leading-tight">
-                              <div className="w-3 h-3 bg-cyan-300 rounded-full mt-4 shrink-0 shadow-[0_0_20px_rgba(34,211,238,1)]" /> 
+                           <li key={i} className="flex gap-4 md:gap-6 text-lg md:text-2xl text-slate-200 font-bold leading-tight">
+                              <div className="w-2.5 h-2.5 bg-cyan-300 rounded-full mt-3 shrink-0 shadow-[0_0_15px_rgba(34,211,238,1)]" /> 
                               {b}
                            </li>
                         ))}
@@ -486,63 +491,63 @@ const PresentationModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                     )}
 
                     {slide.does && (
-                       <div className="bg-emerald-300/5 backdrop-blur-2xl p-10 rounded-[4rem] border-2 border-emerald-300/30 shadow-2xl relative overflow-hidden">
-                          <h4 className="text-emerald-300 font-black uppercase tracking-[0.5em] mb-8 flex items-center gap-4 text-sm">
-                             <CheckCircle className="w-6 h-6" /> Node Logic System
+                       <div className="bg-emerald-300/5 backdrop-blur-2xl p-6 md:p-8 rounded-[3rem] border-2 border-emerald-300/30 shadow-2xl relative overflow-hidden">
+                          <h4 className="text-emerald-300 font-black uppercase tracking-[0.5em] mb-4 md:mb-6 flex items-center gap-4 text-xs">
+                             <CheckCircle className="w-5 h-5" /> Active Systems
                           </h4>
-                          <ul className="space-y-5">
-                             {slide.does.map((b, i) => <li key={i} className="flex gap-6 text-slate-100 text-xl md:text-2xl font-black italic tracking-tighter uppercase leading-none"><span className="text-emerald-300">#</span> {b}</li>)}
+                          <ul className="space-y-3 md:space-y-4">
+                             {slide.does.map((b, i) => <li key={i} className="flex gap-4 text-slate-100 text-base md:text-xl font-black italic tracking-tighter uppercase leading-none"><span className="text-emerald-300">#</span> {b}</li>)}
                           </ul>
                        </div>
                     )}
                   </div>
 
-                  <div className="space-y-10">
+                  <div className="space-y-6 md:space-y-8">
                      {slide.moves && (
-                        <div className="grid grid-cols-1 gap-8">
+                        <div className="grid grid-cols-1 gap-4 md:gap-6">
                            {slide.moves.map((m, i) => (
-                             <div key={i} className="p-10 bg-white/5 border-2 border-white/10 rounded-[3rem] hover:bg-white/10 transition-all cursor-default shadow-xl">
-                                <h5 className="text-3xl md:text-4xl font-black text-cyan-300 mb-4 italic uppercase tracking-tighter drop-shadow-md">{m.title}</h5>
-                                <p className="text-slate-300 text-xl md:text-2xl font-bold leading-snug drop-shadow-sm">{m.desc}</p>
+                             <div key={i} className="p-6 md:p-8 bg-white/5 border-2 border-white/10 rounded-[2.5rem] hover:bg-white/10 transition-all cursor-default shadow-xl">
+                                <h5 className="text-xl md:text-3xl font-black text-cyan-300 mb-2 italic uppercase tracking-tighter drop-shadow-md">{m.title}</h5>
+                                <p className="text-slate-300 text-sm md:text-lg font-bold leading-snug drop-shadow-sm">{m.desc}</p>
                              </div>
                            ))}
                         </div>
                      )}
 
                      {slide.items && (
-                        <div className="grid grid-cols-1 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-4">
                            {slide.items.map((m, i) => (
-                             <div key={i} className="p-6 bg-slate-900/80 border border-white/10 rounded-2xl shadow-lg">
-                                <h5 className="text-lg font-black text-slate-100 mb-2 uppercase tracking-tighter italic text-cyan-300">{m.title}</h5>
-                                <p className="text-slate-400 text-sm font-bold leading-relaxed">{m.desc}</p>
+                             <div key={i} className="p-4 md:p-5 bg-slate-900/80 border border-white/10 rounded-2xl shadow-lg group hover:border-cyan-300/40 transition-colors">
+                                <h5 className="text-sm font-black text-slate-100 mb-1 uppercase tracking-tighter italic text-cyan-300">{m.title}</h5>
+                                <p className="text-slate-400 text-[11px] md:text-xs font-bold leading-relaxed">{m.desc}</p>
                              </div>
                            ))}
                         </div>
                      )}
 
                      {slide.doesNot && (
-                       <div className="bg-red-400/5 backdrop-blur-2xl p-10 rounded-[4rem] border-2 border-red-400/30 shadow-2xl relative overflow-hidden">
-                          <h4 className="text-red-400 font-black uppercase tracking-[0.5em] mb-8 flex items-center gap-4 text-sm">
-                             <AlertOctagon className="w-6 h-6" /> Logical Guardrails
+                       <div className="bg-red-400/5 backdrop-blur-2xl p-6 md:p-8 rounded-[3rem] border-2 border-red-400/30 shadow-2xl relative overflow-hidden">
+                          <h4 className="text-red-400 font-black uppercase tracking-[0.5em] mb-4 md:mb-6 flex items-center gap-4 text-xs">
+                             <AlertOctagon className="w-5 h-5" /> Hard Guardrails
                           </h4>
-                          <ul className="space-y-5">
-                             {slide.doesNot.map((b, i) => <li key={i} className="flex gap-6 text-slate-100 text-xl md:text-2xl font-black italic tracking-tighter uppercase leading-none"><span className="text-red-400">×</span> {b}</li>)}
+                          <ul className="space-y-3 md:space-y-4">
+                             {slide.doesNot.map((b, i) => <li key={i} className="flex gap-4 text-slate-100 text-base md:text-xl font-black italic tracking-tighter uppercase leading-none"><span className="text-red-400">×</span> {b}</li>)}
                           </ul>
                        </div>
                     )}
 
                     {slide.operational && (
-                       <div className="space-y-6">
-                          <div className="bg-cyan-300/10 p-8 rounded-[3rem] border border-cyan-300/30 shadow-lg">
-                             <h4 className="text-cyan-300 font-black uppercase tracking-widest mb-4 text-xs italic">Layer 0: Active Ops</h4>
-                             <ul className="space-y-3">
-                                {slide.operational.map((b, i) => <li key={i} className="flex gap-3 text-slate-100 text-sm font-bold"><CheckCircle className="w-4 h-4 text-cyan-300 shrink-0 mt-0.5" /> {b}</li>)}
+                       <div className="space-y-4 md:space-y-6">
+                          <div className="bg-cyan-300/10 p-6 rounded-[2.5rem] border border-cyan-300/30 shadow-lg">
+                             <h4 className="text-cyan-300 font-black uppercase tracking-widest mb-3 text-[10px] italic">Layer 0: Active Ops</h4>
+                             <ul className="space-y-2 md:space-y-3">
+                                {slide.operational.map((b, i) => <li key={i} className="flex gap-3 text-slate-100 text-xs md:text-sm font-bold"><CheckCircle className="w-4 h-4 text-cyan-300 shrink-0 mt-0.5" /> {b}</li>)}
                              </ul>
                           </div>
-                          <div className="bg-slate-300/10 p-8 rounded-[3rem] border border-slate-300/30 shadow-lg">
-                             <h4 className="text-slate-300 font-black uppercase tracking-widest mb-4 text-xs italic">Layer 1: Fleet Management</h4>
-                             <ul className="space-y-3">
-                                {slide.management.map((b, i) => <li key={i} className="flex gap-3 text-slate-300 text-sm font-bold"><CheckCircle className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" /> {b}</li>)}
+                          <div className="bg-slate-300/10 p-6 rounded-[2.5rem] border border-slate-300/30 shadow-lg">
+                             <h4 className="text-slate-300 font-black uppercase tracking-widest mb-3 text-[10px] italic">Layer 1: Fleet Management</h4>
+                             <ul className="space-y-2 md:space-y-3">
+                                {slide.management.map((b, i) => <li key={i} className="flex gap-3 text-slate-300 text-xs md:text-sm font-bold"><CheckCircle className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" /> {b}</li>)}
                              </ul>
                           </div>
                        </div>
@@ -551,8 +556,8 @@ const PresentationModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                </div>
                
                {slide.footer && (
-                  <div className="pt-16 text-center text-3xl md:text-5xl font-black text-white italic opacity-100 drop-shadow-2xl max-w-5xl mx-auto leading-none">
-                     <span className="text-cyan-300 block text-[10px] not-italic uppercase tracking-[1em] mb-10 font-black">Strategic Synthesis Milestone</span>
+                  <div className="pt-8 md:pt-12 text-center text-2xl md:text-4xl font-black text-white italic opacity-100 drop-shadow-2xl max-w-5xl mx-auto leading-none">
+                     <span className="text-cyan-300 block text-[9px] md:text-[10px] not-italic uppercase tracking-[1em] mb-6 md:mb-8 font-black">Strategic Conclusion</span>
                      "{slide.footer}"
                   </div>
                )}
