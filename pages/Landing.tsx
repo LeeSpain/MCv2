@@ -382,7 +382,7 @@ const ProcessFlowModal: React.FC<{ onClose: () => void }> = ({ onClose }) => (
                             <div className="text-right">
                                <h5 className="text-sm font-bold text-white mb-2">Watchdog &amp; SLA Monitor</h5>
                                <p className="text-xs text-slate-400 leading-relaxed">
-                                  Scans for signal drop-offs. Auto-creates support tickets if device is offline &gt; 24h.
+                                  Continuously checks heartbeat. If device goes offline &gt; 24h or battery low, auto-creates support ticket for Care Team.
                                </p>
                             </div>
                             <Bot className="w-5 h-5 text-purple-400 mt-1 shrink-0" />
