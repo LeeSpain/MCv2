@@ -210,7 +210,7 @@ export const CeoDashboard: React.FC = () => {
                )}
             </Card>
 
-            <Card title="Utilization & Scale Trend (2024)">
+            <Card title="Utilization &amp; Scale Trend (2024)">
                <div className="h-72 flex items-end justify-between px-6 gap-6">
                   {[45, 52, 58, 62, 75, 82].map((h, i) => (
                      <div key={i} className="w-full flex flex-col justify-end group cursor-pointer">
@@ -569,7 +569,7 @@ const LiveCommandModal = ({ criticalIssues, activeAssets, agentRunLogs, agents, 
                                     <div className="flex items-center gap-4">
                                         <span className={`px-3 py-1 rounded-[8px] text-[9px] font-black uppercase tracking-tighter border ${
                                             log.applied_actions?.[0]?.status === 'APPLIED' 
-                                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
+                                            ? 'bg-emerald-50/10 text-emerald-400 border-emerald-500/20' 
                                             : 'bg-slate-800 text-slate-500 border-slate-700'
                                         }`}>
                                             {log.applied_actions?.[0]?.status || 'IDLE'}
