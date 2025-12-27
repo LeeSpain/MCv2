@@ -243,7 +243,8 @@ export const InstallerDashboard: React.FC = () => {
                         <p className="text-sm text-slate-500">{nextJob.type} Job</p>
                       </div>
                     </div>
-                    <Badge color={nextJob.type === 'INSTALL' ? 'blue' : 'amber'}>
+                    {/* Fixed Error: Changed color 'amber' to valid value 'yellow' */}
+                    <Badge color={nextJob.type === 'INSTALL' ? 'blue' : 'yellow'}>
                       {nextJob.type}
                     </Badge>
                   </div>
