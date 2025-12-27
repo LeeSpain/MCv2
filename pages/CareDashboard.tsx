@@ -1,12 +1,12 @@
-
 import React, { useState } from 'react';
 import { useStore, store } from '../services/store';
 import { Card, Button, Badge } from '../components/ui';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { 
   Users, ClipboardList, CheckCircle, Clock, Heart, Plus, Activity, 
   AlertCircle, FileText, ArrowRight, Phone, MapPin, ChevronRight,
-  Shield, Calendar, Signal, Wifi, Battery, Home, UserCircle, Bell, ArrowLeft, Mail
+  Shield, Calendar, Signal, Wifi, Battery, Home, UserCircle, Bell, ArrowLeft, Mail,
+  HeartPulse, Stethoscope, UserPlus
 } from 'lucide-react';
 import { Role } from '../types';
 
@@ -14,547 +14,257 @@ export const CareDashboard: React.FC = () => {
   const { clients, cases, devices, jobs, currentUser, assessments } = useStore();
   const navigate = useNavigate();
 
-  // Scope: Company Data
   const companyClients = clients.filter(c => c.care_company_id === currentUser.care_company_id);
   
-  // Nurse specific: Mobile View
   if (currentUser.role === Role.CARE_COMPANY_NURSE) {
     return <MobileNurseView clients={companyClients} currentUser={currentUser} devices={devices} jobs={jobs} />;
   }
 
-  // Lead Nurse specific: Desktop View
   return <DesktopLeadView clients={companyClients} cases={cases} devices={devices} jobs={jobs} assessments={assessments} currentUser={currentUser} />;
 };
 
-// ============================================================================
-// MOBILE NURSE VIEW (End Worker on Phone)
-// ============================================================================
-const MobileNurseView: React.FC<{ clients: any[], currentUser: any, devices: any[], jobs: any[] }> = ({ clients, currentUser, devices, jobs }) => {
-  const [currentView, setCurrentView] = useState<'HOME' | 'PATIENTS' | 'ALERTS'>('HOME');
+const MobileNurseView: React.FC<any> = ({ clients, currentUser, devices, jobs }) => {
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
-  
-  // Identify high risk or attention needed
-  const highRiskClients = clients.filter(c => c.risk_level === 'HIGH');
+  const highRiskClients = clients.filter((c: any) => c.risk_level === 'HIGH');
 
-  // --- SUB-COMPONENTS ---
-
-  const MobileClientDetail = ({ clientId }: { clientId: string }) => {
-      const client = clients.find(c => c.id === clientId);
-      if (!client) return <div className="p-4 text-center">Client not found</div>;
-      
-      const clientDevices = devices.filter(d => d.assigned_client_id === clientId);
-
-      return (
-          <div className="bg-slate-50 min-h-full pb-24 font-sans">
-              <div className="bg-slate-900 text-white p-4 pt-12 pb-6 flex items-start gap-4 shadow-lg relative z-10">
-                  <button onClick={() => setSelectedClientId(null)} className="p-2 -ml-2 rounded-full active:bg-white/10">
-                      <ArrowLeft className="w-6 h-6" />
-                  </button>
-                  <div className="flex-1">
-                      <h2 className="text-xl font-bold">{client.full_name}</h2>
-                      <div className="flex items-center gap-2 text-slate-400 text-xs mt-1">
-                          <span className="bg-slate-800 px-2 py-0.5 rounded">{client.status}</span>
-                          <span>•</span>
-                          <span>{client.care_company_name}</span>
-                      </div>
-                  </div>
-                  {client.risk_level === 'HIGH' && (
-                      <div className="bg-red-500 p-2 rounded-full animate-pulse">
-                          <Activity className="w-5 h-5 text-white" />
-                      </div>
-                  )}
-              </div>
-
-              <div className="p-4 space-y-4">
-                  {/* Contact Card */}
-                  <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
-                      <h3 className="text-xs font-bold text-slate-400 uppercase mb-3">Contact Info</h3>
-                      <div className="space-y-3">
-                          <div className="flex items-start gap-3">
-                              <MapPin className="w-5 h-5 text-slate-400 mt-0.5" />
-                              <span className="text-sm text-slate-800 font-medium">{client.address}</span>
-                          </div>
-                          <div className="flex items-center gap-3">
-                              <Phone className="w-5 h-5 text-slate-400" />
-                              <a href={`tel:${client.phone}`} className="text-sm text-blue-600 font-bold underline">{client.phone}</a>
-                          </div>
-                      </div>
-                      <div className="mt-4 grid grid-cols-2 gap-2">
-                          <button className="flex items-center justify-center py-2.5 bg-slate-900 text-white rounded-xl text-sm font-bold shadow-md active:scale-95 transition-transform">
-                              <Phone className="w-4 h-4 mr-2" /> Call Now
-                          </button>
-                          <button className="flex items-center justify-center py-2.5 bg-white border border-slate-300 text-slate-700 rounded-xl text-sm font-bold shadow-sm active:bg-slate-50">
-                              <MapPin className="w-4 h-4 mr-2" /> Navigate
-                          </button>
-                      </div>
-                  </div>
-
-                  {/* Devices Card */}
-                  <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
-                      <h3 className="text-xs font-bold text-slate-400 uppercase mb-3 flex justify-between">
-                          <span>Active Devices</span>
-                          <span className="text-slate-300">{clientDevices.length}</span>
-                      </h3>
-                      <div className="space-y-2">
-                          {clientDevices.length > 0 ? clientDevices.map(d => (
-                              <div key={d.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
-                                  <div className="flex items-center gap-3">
-                                      <div className={`w-2 h-2 rounded-full ${d.status === 'INSTALLED_ACTIVE' ? 'bg-green-500' : 'bg-amber-500'}`}></div>
-                                      <span className="text-sm font-bold text-slate-700">{store.getProductName(d.product_id)}</span>
-                                  </div>
-                                  <span className="text-[10px] font-mono text-slate-400">{d.serial_number.slice(-4)}</span>
-                              </div>
-                          )) : (
-                              <div className="text-center py-4 text-slate-400 italic text-sm">No devices installed</div>
-                          )}
-                      </div>
-                  </div>
-
-                  {/* Risk Card */}
-                  {client.risk_level === 'HIGH' && (
-                      <div className="bg-red-50 p-4 rounded-2xl border border-red-100">
-                          <h3 className="text-xs font-bold text-red-800 uppercase mb-2 flex items-center gap-2">
-                              <AlertCircle className="w-4 h-4" /> High Risk Alert
-                          </h3>
-                          <p className="text-sm text-red-700 leading-snug">
-                              Client flagged for frequent falls. Ensure SOS pendant is worn at all times during visit.
-                          </p>
-                      </div>
-                  )}
-              </div>
+  const MobilePatientCard = ({ client }: any) => (
+    <div 
+      onClick={() => setSelectedClientId(client.id)}
+      className="bg-white/70 backdrop-blur-md p-5 rounded-[2.5rem] border border-white shadow-sm active:scale-95 transition-all flex items-center justify-between group"
+    >
+      <div className="flex items-center gap-5">
+        <div className={`w-15 h-15 rounded-3xl flex items-center justify-center text-xl font-black border-2 italic transition-transform group-hover:scale-110 duration-500 ${client.risk_level === 'HIGH' ? 'bg-rose-50 text-rose-600 border-rose-100 shadow-rose-100' : 'bg-blue-50 text-blue-600 border-blue-100 shadow-blue-100'} shadow-lg`}>
+          {client.full_name.charAt(0)}
+        </div>
+        <div>
+          <h4 className="font-black text-slate-900 text-lg uppercase tracking-tighter italic leading-none mb-1">{client.full_name}</h4>
+          <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest italic">
+             <MapPin className="w-3 h-3" /> {client.address.split(',')[0]}
           </div>
-      )
-  };
-
-  const HomeTab = () => (
-    <div className="space-y-6 pb-24">
-       {/* Header Card */}
-       <div className="bg-slate-900 text-white pt-12 pb-10 px-6 rounded-b-[2.5rem] shadow-xl relative overflow-hidden -mt-8">
-          <div className="absolute top-0 right-0 p-12 bg-blue-500 rounded-full blur-3xl opacity-20 -mr-10 -mt-10 pointer-events-none"></div>
-          
-          <div className="relative z-10">
-             <div className="flex justify-between items-start mb-4">
-                <div>
-                   <h1 className="text-2xl font-bold tracking-tight">Hello, {currentUser.name.split(' ')[0]}</h1>
-                   <p className="text-slate-300 text-sm mt-1">Care Nurse • Thuiszorg West</p>
-                </div>
-                <div className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center font-bold text-xl shadow-inner border border-white/20">
-                   {currentUser.name.charAt(0)}
-                </div>
-             </div>
-             
-             {/* Stats Row */}
-             <div className="flex gap-3 mt-4">
-                <div className="flex-1 bg-white/10 backdrop-blur-md p-3 rounded-2xl border border-white/10 text-center">
-                   <span className="block text-2xl font-bold">{clients.length}</span>
-                   <span className="text-[9px] uppercase tracking-wider text-slate-300 font-bold">Patients</span>
-                </div>
-                <div className="flex-1 bg-white/10 backdrop-blur-md p-3 rounded-2xl border border-white/10 text-center">
-                   <span className={`block text-2xl font-bold ${highRiskClients.length > 0 ? 'text-red-400' : 'text-white'}`}>{highRiskClients.length}</span>
-                   <span className="text-[9px] uppercase tracking-wider text-slate-300 font-bold">Alerts</span>
-                </div>
-             </div>
-          </div>
-       </div>
-
-       <div className="px-4 space-y-6">
-          
-          {/* Priority Alerts */}
-          {highRiskClients.length > 0 && (
-             <div className="space-y-3">
-                <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider px-1">Attention Required</h3>
-                {highRiskClients.slice(0, 2).map(c => (
-                   <div key={c.id} onClick={() => setSelectedClientId(c.id)} className="bg-red-50 border border-red-100 p-4 rounded-2xl flex items-center gap-4 active:scale-[0.98] transition-transform">
-                      <div className="w-10 h-10 rounded-full bg-red-100 text-red-600 flex items-center justify-center shrink-0">
-                         <Activity className="w-5 h-5" />
-                      </div>
-                      <div className="flex-1">
-                         <h4 className="font-bold text-red-900">{c.full_name}</h4>
-                         <p className="text-xs text-red-700">High Risk Profile • Check-in Needed</p>
-                      </div>
-                      <ChevronRight className="w-5 h-5 text-red-300" />
-                   </div>
-                ))}
-                {highRiskClients.length > 2 && (
-                   <button onClick={() => setCurrentView('ALERTS')} className="text-xs text-slate-500 font-bold w-full text-center">View {highRiskClients.length - 2} more alerts</button>
-                )}
-             </div>
-          )}
-
-          {/* Quick Actions Grid */}
-          <div>
-             <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider px-1 mb-3">Quick Actions</h3>
-             <div className="grid grid-cols-2 gap-3">
-                <button className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center gap-2 active:bg-slate-50">
-                   <div className="p-2 bg-blue-50 text-blue-600 rounded-full"><Plus className="w-6 h-6" /></div>
-                   <span className="text-xs font-bold text-slate-700">New Request</span>
-                </button>
-                <button className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center gap-2 active:bg-slate-50">
-                   <div className="p-2 bg-amber-50 text-amber-600 rounded-full"><AlertCircle className="w-6 h-6" /></div>
-                   <span className="text-xs font-bold text-slate-700">Report Issue</span>
-                </button>
-             </div>
-          </div>
-
-          {/* Patient Directory List */}
-          <div>
-             <div className="flex justify-between items-center px-1 mb-3">
-                <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">My Patients</h3>
-                <button onClick={() => setCurrentView('PATIENTS')} className="text-xs font-bold text-brand-600">See All</button>
-             </div>
-             
-             <div className="space-y-3">
-                {clients.slice(0, 3).map(c => (
-                   <div key={c.id} className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-3">
-                      <div className="flex items-start justify-between">
-                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold">
-                               {c.full_name.charAt(0)}
-                            </div>
-                            <div>
-                               <h4 className="font-bold text-slate-900">{c.full_name}</h4>
-                               <p className="text-xs text-slate-500 flex items-center gap-1">
-                                  <MapPin className="w-3 h-3" /> {c.address.split(',')[0]}
-                               </p>
-                            </div>
-                         </div>
-                         <Badge color={c.status === 'ACTIVE' ? 'green' : 'gray'}>{c.status}</Badge>
-                      </div>
-                      
-                      <div className="grid grid-cols-2 gap-2 mt-1">
-                         <a href={`tel:${c.phone}`} className="flex items-center justify-center py-2 bg-slate-50 rounded-lg text-xs font-bold text-slate-600 border border-slate-100 active:bg-slate-200">
-                            <Phone className="w-3.5 h-3.5 mr-2" /> Call
-                         </a>
-                         <button onClick={() => setSelectedClientId(c.id)} className="flex items-center justify-center py-2 bg-slate-900 rounded-lg text-xs font-bold text-white shadow active:scale-[0.97]">
-                            View Profile
-                         </button>
-                      </div>
-                   </div>
-                ))}
-             </div>
-          </div>
-       </div>
+        </div>
+      </div>
+      <div className="p-3 rounded-full bg-slate-50 text-slate-300 group-hover:bg-slate-900 group-hover:text-white transition-all">
+        <ChevronRight className="w-5 h-5" />
+      </div>
     </div>
   );
 
-  const PatientsTab = () => (
-      <div className="bg-slate-50 min-h-full pb-24 pt-8 px-4">
-          <div className="mb-6">
-              <h1 className="text-2xl font-bold text-slate-900">Patients</h1>
-              <p className="text-sm text-slate-500">Directory ({clients.length})</p>
-          </div>
-          <div className="space-y-3">
-              {clients.map(c => (
-                  <div key={c.id} onClick={() => setSelectedClientId(c.id)} className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between active:scale-[0.98] transition-transform">
-                      <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold">
-                              {c.full_name.charAt(0)}
-                          </div>
-                          <div>
-                              <h4 className="font-bold text-slate-900">{c.full_name}</h4>
-                              <p className="text-xs text-slate-500">{c.address.split(',')[0]}</p>
-                          </div>
-                      </div>
-                      <ChevronRight className="w-5 h-5 text-slate-300" />
-                  </div>
-              ))}
-          </div>
-      </div>
-  );
-
-  const AlertsTab = () => (
-      <div className="bg-slate-50 min-h-full pb-24 pt-8 px-4">
-          <div className="mb-6">
-              <h1 className="text-2xl font-bold text-slate-900">Alerts</h1>
-              <p className="text-sm text-slate-500">High Priority Items ({highRiskClients.length})</p>
-          </div>
-          {highRiskClients.length === 0 ? (
-              <div className="text-center text-slate-400 py-12">
-                  <CheckCircle className="w-12 h-12 mx-auto mb-2 opacity-20" />
-                  <p>No high risk alerts.</p>
-              </div>
-          ) : (
-              <div className="space-y-3">
-                  {highRiskClients.map(c => (
-                      <div key={c.id} onClick={() => setSelectedClientId(c.id)} className="bg-red-50 border border-red-100 p-4 rounded-2xl flex items-center gap-4 active:scale-[0.98] transition-transform">
-                          <div className="w-10 h-10 rounded-full bg-red-100 text-red-600 flex items-center justify-center shrink-0">
-                              <Activity className="w-5 h-5" />
-                          </div>
-                          <div className="flex-1">
-                              <h4 className="font-bold text-red-900">{c.full_name}</h4>
-                              <p className="text-xs text-red-700">Risk: HIGH • Review Needed</p>
-                          </div>
-                          <ChevronRight className="w-5 h-5 text-red-300" />
-                      </div>
-                  ))}
-              </div>
-          )}
-      </div>
-  );
-
-  return (
-    <div className="w-full flex justify-center py-6">
-        <div className="relative w-full max-w-[375px] h-[812px] bg-slate-50 rounded-[3rem] border-[14px] border-slate-900 shadow-2xl overflow-hidden ring-1 ring-slate-900/5 flex flex-col">
+  if (selectedClientId) {
+    const client = clients.find((c: any) => c.id === selectedClientId);
+    return (
+      <div className="fixed inset-0 z-50 bg-[#f1f5f9] flex flex-col font-sans animate-in slide-in-from-right-12 duration-500">
+         {/* Patient Context HUD */}
+         <div className="bg-[#0f172a] text-white p-6 pt-14 pb-12 rounded-b-[4rem] shadow-2xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-24 bg-rose-500 rounded-full blur-[110px] opacity-10 -mr-10 -mt-10"></div>
+            <div className="flex justify-between items-center relative z-10">
+               <button onClick={() => setSelectedClientId(null)} className="p-3 bg-white/10 hover:bg-white/20 rounded-2xl transition-all border border-white/10 backdrop-blur-md">
+                  <ArrowLeft className="w-6 h-6 text-white" />
+               </button>
+               <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center border border-white/10">
+                  <HeartPulse className="w-7 h-7 text-rose-400" />
+               </div>
+            </div>
             
-            {/* Notch */}
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-7 bg-slate-900 rounded-b-2xl z-50"></div>
-            
-            {/* Status Bar Mock (Hidden on detail view for immersive header) */}
-            {!selectedClientId && (
-                <div className="h-8 bg-white w-full flex items-center justify-between px-6 pt-3 text-[10px] font-bold z-40 select-none absolute top-0 left-0 right-0">
-                   <span className="text-slate-900 ml-2">9:41</span>
-                   <div className="flex gap-1.5 items-center mr-2 text-slate-900">
-                      <Signal className="w-3 h-3" />
-                      <Wifi className="w-3 h-3" />
-                      <Battery className="w-4 h-4" />
-                   </div>
-                </div>
-            )}
+            <div className="text-center mt-8 relative z-10">
+               <div className="w-24 h-24 bg-white/10 rounded-[2.5rem] mx-auto mb-6 flex items-center justify-center text-4xl font-black border-2 border-white/20 shadow-inner italic">
+                  {client.full_name.charAt(0)}
+               </div>
+               <h2 className="text-3xl font-black tracking-tighter uppercase italic leading-none mb-3">{client.full_name}</h2>
+               <div className="flex justify-center gap-3">
+                  <Badge color={client.status === 'ACTIVE' ? 'cyan' : 'gray'}>{client.status}</Badge>
+                  {client.risk_level === 'HIGH' && <Badge color="red">CRITICAL PATHWAY</Badge>}
+               </div>
+            </div>
+         </div>
 
-            {/* Scrollable Screen Area */}
-            <div className="flex-1 overflow-y-auto overflow-x-hidden relative bg-slate-50 no-scrollbar">
-                {selectedClientId ? (
-                    <MobileClientDetail clientId={selectedClientId} />
-                ) : (
-                    <div className="pt-8">
-                        {currentView === 'HOME' && <HomeTab />}
-                        {currentView === 'PATIENTS' && <PatientsTab />}
-                        {currentView === 'ALERTS' && <AlertsTab />}
-                    </div>
-                )}
+         {/* Interaction Content */}
+         <div className="flex-1 overflow-y-auto p-6 space-y-6 -mt-6">
+            <div className="bg-white/80 backdrop-blur-xl p-2 rounded-[2.5rem] border border-white shadow-xl">
+               <div className="grid grid-cols-2 divide-x divide-slate-100">
+                  <button className="py-8 flex flex-col items-center gap-3 hover:bg-slate-50 transition-colors active:scale-95 rounded-l-[2rem]">
+                     <div className="p-4 bg-emerald-100 text-emerald-600 rounded-3xl shadow-emerald-50 shadow-lg"><Phone className="w-7 h-7" /></div>
+                     <span className="text-[10px] font-black uppercase tracking-widest text-slate-800 italic">Call Patient</span>
+                  </button>
+                  <button className="py-8 flex flex-col items-center gap-3 hover:bg-slate-50 transition-colors active:scale-95 rounded-r-[2rem]">
+                     <div className="p-4 bg-blue-100 text-blue-600 rounded-3xl shadow-blue-50 shadow-lg"><Mail className="w-7 h-7" /></div>
+                     <span className="text-[10px] font-black uppercase tracking-widest text-slate-800 italic">Send Alert</span>
+                  </button>
+               </div>
             </div>
 
-            {/* Simulated Bottom Navigation (Hide on Detail View) */}
-            {!selectedClientId && (
-                <div className="absolute bottom-0 w-full bg-white border-t border-slate-200 h-20 pb-6 z-50 grid grid-cols-3">
-                   <button 
-                      onClick={() => setCurrentView('HOME')}
-                      className={`flex flex-col items-center justify-center transition-colors ${currentView === 'HOME' ? 'text-blue-600' : 'text-slate-400'}`}
-                   >
-                      <Home className={`w-6 h-6 mb-1 ${currentView === 'HOME' ? 'fill-blue-100' : ''}`} strokeWidth={currentView === 'HOME' ? 2.5 : 2} />
-                      <span className="text-[10px] font-bold">Home</span>
-                   </button>
-                   <button 
-                      onClick={() => setCurrentView('PATIENTS')}
-                      className={`flex flex-col items-center justify-center transition-colors ${currentView === 'PATIENTS' ? 'text-blue-600' : 'text-slate-400'}`}
-                   >
-                      <Users className={`w-6 h-6 mb-1 ${currentView === 'PATIENTS' ? 'fill-blue-100' : ''}`} strokeWidth={currentView === 'PATIENTS' ? 2.5 : 2} />
-                      <span className="text-[10px] font-bold">Patients</span>
-                   </button>
-                   <button 
-                      onClick={() => setCurrentView('ALERTS')}
-                      className={`flex flex-col items-center justify-center transition-colors ${currentView === 'ALERTS' ? 'text-blue-600' : 'text-slate-400'}`}
-                   >
-                      <div className="relative">
-                          <Bell className={`w-6 h-6 mb-1 ${currentView === 'ALERTS' ? 'fill-blue-100' : ''}`} strokeWidth={currentView === 'ALERTS' ? 2.5 : 2} />
-                          {highRiskClients.length > 0 && <div className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></div>}
-                      </div>
-                      <span className="text-[10px] font-bold">Alerts</span>
-                   </button>
-                </div>
-            )}
+            <Card title="Clinical Summary" subtitle="Last Observation" className="rounded-[2.5rem] border-white shadow-lg overflow-hidden">
+               <div className="p-4 bg-slate-50/50 rounded-3xl border border-slate-100 text-base text-slate-700 leading-relaxed font-bold italic">
+                  "Patient reports consistent mobility improvements. Verification of glucose hub link required during this sequence."
+               </div>
+               <div className="mt-6 flex items-center gap-3 p-4 bg-blue-50/50 rounded-2xl border border-blue-100">
+                  <MapPin className="w-5 h-5 text-blue-500" />
+                  <p className="text-xs font-bold text-blue-800 italic">{client.address}</p>
+               </div>
+            </Card>
+         </div>
 
-            {/* Home Indicator */}
-            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1 bg-slate-300 rounded-full z-[60] pointer-events-none"></div>
-        </div>
+         {/* Sequence Footer */}
+         <div className="p-6 bg-white border-t border-slate-200 pb-10">
+            <Button onClick={() => setSelectedClientId(null)} className="w-full h-18 py-5 bg-[#0f172a] text-white font-black tracking-tighter uppercase text-xl shadow-2xl rounded-3xl italic active:scale-95 transition-transform">
+               Finalize Sequence
+            </Button>
+         </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-10 bg-[#f1f5f9] min-h-screen">
+       {/* CARE HUD HEADER */}
+       <div className="bg-[#0f172a] text-white p-8 pt-16 pb-14 rounded-b-[4rem] shadow-2xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-32 bg-blue-500 rounded-full blur-[120px] opacity-10 -mr-16 -mt-16"></div>
+          <div className="relative z-10">
+             <div className="flex justify-between items-start mb-12">
+                <div>
+                   <h1 className="text-3xl font-black tracking-tighter leading-none uppercase italic">Care Hub</h1>
+                   <div className="flex items-center gap-2 mt-4 text-slate-400">
+                      <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></div>
+                      <p className="text-[11px] font-black uppercase tracking-[0.3em] italic">Sequence Active</p>
+                   </div>
+                </div>
+                <button className="w-14 h-14 bg-white/5 backdrop-blur-md rounded-[1.5rem] flex items-center justify-center border border-white/10 shadow-inner relative">
+                   <Bell className="w-7 h-7 text-slate-300" />
+                   {highRiskClients.length > 0 && <div className="absolute top-3 right-3 w-3 h-3 bg-rose-500 rounded-full border-2 border-[#0f172a]" />}
+                </button>
+             </div>
+             
+             <div className="grid grid-cols-2 gap-4">
+                <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-6 rounded-[2.5rem] shadow-inner">
+                   <span className="block text-4xl font-black tracking-tighter italic">{clients.length}</span>
+                   <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 italic">Total Load</span>
+                </div>
+                <div className={`backdrop-blur-xl border p-6 rounded-[2.5rem] shadow-inner transition-colors duration-700 ${highRiskClients.length > 0 ? 'bg-rose-500/20 border-rose-500/30' : 'bg-white/5 border-white/10'}`}>
+                   <span className={`block text-4xl font-black tracking-tighter italic ${highRiskClients.length > 0 ? 'text-rose-400' : 'text-white'}`}>{highRiskClients.length}</span>
+                   <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 italic">Intervention</span>
+                </div>
+             </div>
+          </div>
+       </div>
+
+       {/* WORKFLOW SECTIONS */}
+       <div className="px-6 space-y-10 pb-20">
+          {highRiskClients.length > 0 && (
+            <div className="space-y-5">
+               <div className="flex items-center justify-between px-2">
+                  <h3 className="text-[10px] font-black text-rose-500 uppercase tracking-[0.5em] flex items-center gap-2 italic">
+                     <AlertCircle className="w-4 h-4" /> Immediate Sequence
+                  </h3>
+                  <span className="text-[9px] font-black bg-rose-100 text-rose-600 px-2 py-0.5 rounded-full uppercase italic">Action Reqd</span>
+               </div>
+               {highRiskClients.map((c: any) => <MobilePatientCard key={c.id} client={c} />)}
+            </div>
+          )}
+
+          <div className="space-y-5">
+             <div className="flex items-center justify-between px-2">
+                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.5em] flex items-center gap-2 italic">
+                   <Stethoscope className="w-4 h-4" /> Client Registry
+                </h3>
+                <button className="p-1 text-slate-400 hover:text-slate-900 transition-colors">
+                   <UserPlus className="w-5 h-5" />
+                </button>
+             </div>
+             <div className="space-y-4">
+                {clients.filter((c:any) => c.risk_level !== 'HIGH').map((c: any) => <MobilePatientCard key={c.id} client={c} />)}
+             </div>
+          </div>
+       </div>
     </div>
   );
 };
 
-// ============================================================================
-// DESKTOP LEAD NURSE VIEW (Supervisor on Laptop)
-// ============================================================================
-const DesktopLeadView: React.FC<any> = ({ clients, cases, devices, jobs, assessments, currentUser }) => {
+const DesktopLeadView: React.FC<any> = ({ clients, cases, devices, assessments, currentUser }) => {
   const navigate = useNavigate();
   const myClients = clients; 
   const myCases = cases.filter((c: any) => c.care_company_id === currentUser.care_company_id);
-  
-  // High Risk Clients
-  const highRiskClients = myClients.filter((c: any) => c.risk_level === 'HIGH');
-
-  // Pending Actions
-  const pendingConfirmations = [
-    ...devices.filter((d: any) => d.confirmation_needed && d.assigned_client_id && myClients.map((c:any) => c.id).includes(d.assigned_client_id)),
-    ...jobs.filter((j: any) => j.confirmation_needed && j.client_id && myClients.map((c:any) => c.id).includes(j.client_id))
-  ];
-
-  // Assessments Pending Review (Lead Only)
-  const pendingAssessments = assessments.filter((a: any) => a.status === 'DRAFT' && myClients.map((c:any) => c.id).includes(a.client_id));
-
-  const KPICard = ({ label, value, sub, icon: Icon, color = "blue", onClick }: any) => (
-    <div 
-      onClick={onClick}
-      className={`bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between h-32 hover:border-${color}-300 hover:shadow-md transition-all cursor-pointer group`}
-    >
-       <div className="flex justify-between items-start">
-          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{label}</span>
-          <div className={`p-2 rounded-lg bg-${color}-50 text-${color}-600 group-hover:bg-${color}-100 transition-colors`}>
-             <Icon className="w-5 h-5" />
-          </div>
-       </div>
-       <div>
-          <span className="text-3xl font-bold text-slate-900">{value}</span>
-          <span className="text-xs text-slate-500 block mt-1">{sub}</span>
-       </div>
-    </div>
-  );
+  const pendingConfirmations = devices.filter((d: any) => d.confirmation_needed && d.assigned_client_id && myClients.map((c:any) => c.id).includes(d.assigned_client_id));
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8 pb-12">
-      {/* HEADER SECTION */}
-      <div className="flex flex-col md:flex-row justify-between items-end border-b border-slate-200 pb-6 gap-4">
+    <div className="space-y-10">
+      <div className="flex flex-col lg:flex-row justify-between items-end border-b border-slate-200 pb-8 gap-6">
         <div>
-           <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
-              <div className="p-2 bg-blue-600 rounded-lg shadow-sm">
-                 <Heart className="w-6 h-6 text-white" />
-              </div>
-              Care Center
+           <div className="flex items-center gap-2 text-[10px] font-bold text-blue-600 uppercase tracking-widest mb-2 bg-blue-50 px-2 py-0.5 rounded-full w-fit">
+             <Heart className="w-3 h-3" /> Care Lead Console
+           </div>
+           <h1 className="text-4xl font-black text-slate-900 tracking-tighter flex items-center gap-3 uppercase italic">
+              Operational Control
            </h1>
-           <p className="text-slate-500 mt-2">
-              Lead Nurse Dashboard • Thuiszorg West
-           </p>
+           <p className="text-slate-500 mt-1 font-medium">Overseeing {myClients.length} active clinical pathways.</p>
         </div>
-        <div className="flex gap-3">
-           <Button variant="outline" onClick={() => navigate('/clients')}>
-              <Users className="w-4 h-4 mr-2" /> Directory
-           </Button>
-           <Button className="bg-brand-600 hover:bg-brand-700 text-white shadow-lg" onClick={() => navigate('/clients')}>
-              <Plus className="w-4 h-4 mr-2" /> New Request
-           </Button>
+        <div className="flex gap-4 w-full lg:w-auto">
+           <Button variant="outline" onClick={() => navigate('/clients')} className="flex-1 lg:flex-none h-12 uppercase tracking-widest text-[10px] font-black italic">Client Directory</Button>
+           <Button onClick={() => navigate('/clients')} className="flex-1 lg:flex-none bg-brand-600 hover:bg-brand-700 text-white shadow-xl h-12 uppercase tracking-widest text-[10px] font-black italic border-0">Initiate Request</Button>
         </div>
       </div>
 
-      {/* METRICS ROW */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-         <KPICard 
-            label="My Caseload" 
-            value={myClients.length} 
-            sub="Active Clients" 
-            icon={Users} 
-            color="blue"
-            onClick={() => navigate('/clients')}
-         />
-         <KPICard 
-            label="Open Orders" 
-            value={myCases.filter((c: any) => c.status !== 'CLOSED').length} 
-            sub="In Progress" 
-            icon={ClipboardList} 
-            color="purple"
-            onClick={() => navigate('/orders')}
-         />
-         <KPICard 
-            label="Pending Action" 
-            value={pendingConfirmations.length} 
-            sub="Confirmations Required" 
-            icon={CheckCircle} 
-            color="amber"
-            onClick={() => navigate('/confirmations')}
-         />
-         <KPICard 
-            label="High Risk" 
-            value={highRiskClients.length} 
-            sub="Watchlist" 
-            icon={Activity} 
-            color="red"
-            onClick={() => navigate('/clients')}
-         />
+         <KPICard label="Active Caseload" value={myClients.length} sub="Verified Citizens" icon={Users} color="blue" />
+         <KPICard label="Fleet Expansion" value={myCases.filter((c: any) => c.status !== 'CLOSED').length} sub="Pending Orders" icon={ClipboardList} color="purple" />
+         <KPICard label="Audit Actions" value={pendingConfirmations.length} sub="Checks Needed" icon={CheckCircle} color="amber" />
+         <KPICard label="System Risk" value={myClients.filter((c:any) => c.risk_level === 'HIGH').length} sub="High Priority" icon={Activity} color="red" />
       </div>
 
-      {/* ACTION ALERTS */}
-      {(pendingConfirmations.length > 0 || pendingAssessments.length > 0) && (
-         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {pendingConfirmations.length > 0 && (
-               <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 flex items-center justify-between shadow-sm">
-                  <div className="flex items-center gap-4">
-                     <div className="p-3 bg-amber-100 rounded-full text-amber-600">
-                        <AlertCircle className="w-6 h-6" />
-                     </div>
-                     <div>
-                        <h4 className="font-bold text-amber-900 text-lg">Action Required</h4>
-                        <p className="text-sm text-amber-800">{pendingConfirmations.length} items need operational confirmation.</p>
-                     </div>
-                  </div>
-                  <Button className="bg-amber-600 hover:bg-amber-700 border-transparent text-white shadow-md" onClick={() => navigate('/confirmations')}>
-                     Review Items
-                  </Button>
-               </div>
-            )}
-            {pendingAssessments.length > 0 && (
-               <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 flex items-center justify-between shadow-sm">
-                  <div className="flex items-center gap-4">
-                     <div className="p-3 bg-blue-100 rounded-full text-blue-600">
-                        <FileText className="w-6 h-6" />
-                     </div>
-                     <div>
-                        <h4 className="font-bold text-blue-900 text-lg">Assessment Reviews</h4>
-                        <p className="text-sm text-blue-800">{pendingAssessments.length} draft assessments awaiting approval.</p>
-                     </div>
-                  </div>
-                  <Button className="bg-blue-600 hover:bg-blue-700 border-transparent text-white shadow-md" onClick={() => navigate(`/clients/${pendingAssessments[0].client_id}/assessment/${pendingAssessments[0].id}/review`)}>
-                     Review Drafts
-                  </Button>
-               </div>
-            )}
-         </div>
-      )}
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-         {/* LEFT: RECENT ACTIVITY */}
-         <div className="lg:col-span-2 space-y-6">
-            <div className="flex justify-between items-center">
-               <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
-                 <Clock className="w-5 h-5 text-slate-400" /> Recent Activity
-               </h3>
-               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Last 24 Hours</span>
-            </div>
-            <Card noPadding>
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+         <div className="xl:col-span-2 space-y-8">
+            <Card title="Active Workflow Stream" noPadding className="shadow-lg overflow-hidden border-slate-200">
                <div className="divide-y divide-slate-100">
-                  {myCases.slice(0, 5).map((c: any) => (
-                    <div key={c.id} className="p-5 flex gap-4 hover:bg-slate-50 transition-colors cursor-pointer group" onClick={() => navigate('/orders')}>
-                       <div className={`mt-1.5 w-2.5 h-2.5 rounded-full flex-shrink-0 ${c.status === 'NEW' ? 'bg-blue-500' : c.status === 'APPROVED' ? 'bg-green-500' : 'bg-slate-300'}`} />
-                       <div className="flex-1">
-                          <p className="text-sm font-bold text-slate-900 group-hover:text-brand-600 transition-colors">
-                             Order #{c.id} for {c.client_name}
-                          </p>
-                          <p className="text-xs text-slate-500 mt-1">
-                             Status updated to <span className="font-medium text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded">{c.status.replace(/_/g, ' ')}</span>
-                          </p>
+                  {myCases.slice(0, 6).map((c: any) => (
+                    <div key={c.id} className="p-6 flex items-center justify-between hover:bg-slate-50 transition-colors group cursor-pointer" onClick={() => navigate('/orders')}>
+                       <div className="flex items-center gap-6">
+                          <div className={`w-3 h-3 rounded-full ${c.status === 'NEW' ? 'bg-blue-500 animate-pulse' : c.status === 'APPROVED' ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+                          <div>
+                             <h4 className="font-black text-slate-900 uppercase tracking-tighter text-base group-hover:text-brand-600 transition-colors italic">Order #{c.id}</h4>
+                             <p className="text-xs text-slate-500 mt-0.5 font-bold uppercase tracking-widest italic">{c.client_name} • {c.status.replace(/_/g, ' ')}</p>
+                          </div>
                        </div>
-                       <div className="text-xs text-slate-400 font-medium">2h ago</div>
+                       <div className="p-2 bg-slate-50 rounded-full text-slate-300 group-hover:text-brand-600 transition-all">
+                          <ChevronRight className="w-5 h-5" />
+                       </div>
                     </div>
                   ))}
-                  {myCases.length === 0 && <div className="p-8 text-center text-slate-400 italic">No recent activity recorded.</div>}
-               </div>
-               <div className="p-3 bg-slate-50 border-t border-slate-100 text-center">
-                  <button onClick={() => navigate('/orders')} className="text-xs font-bold text-slate-600 hover:text-brand-600 flex items-center justify-center gap-1 w-full uppercase tracking-wide">
-                     View All Activity <ArrowRight className="w-3 h-3" />
-                  </button>
                </div>
             </Card>
          </div>
 
-         {/* RIGHT: HIGH RISK LIST */}
          <div className="space-y-6">
-            <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
-               <Activity className="w-5 h-5 text-red-500" /> High Risk Watchlist
+            <h3 className="font-black text-lg text-slate-900 tracking-tight flex items-center gap-3 uppercase italic">
+               <Activity className="w-5 h-5 text-red-500" /> Strategic Risks
             </h3>
-            <Card noPadding className="border-red-100 overflow-hidden">
-               <div className="divide-y divide-slate-100">
-                  {highRiskClients.length > 0 ? highRiskClients.slice(0, 5).map((c: any) => (
-                     <div key={c.id} className="p-4 hover:bg-red-50/30 transition-colors flex justify-between items-center group">
+            <div className="space-y-4">
+               {myClients.filter((c:any) => c.risk_level === 'HIGH').slice(0, 4).map((c: any) => (
+                  <Card key={c.id} noPadding className="border-red-100 group cursor-pointer hover:shadow-md transition-all overflow-hidden" onClick={() => navigate(`/clients/${c.id}`)}>
+                     <div className="p-5 flex justify-between items-center bg-red-50/10">
                         <div>
-                           <div className="font-bold text-slate-900 text-sm group-hover:text-red-700 transition-colors">{c.full_name}</div>
-                           <div className="text-xs text-slate-500">{c.address}</div>
+                           <h4 className="font-black text-slate-900 text-sm uppercase tracking-tighter group-hover:text-red-700 transition-colors italic">{c.full_name}</h4>
+                           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1 italic">High Accountability Zone</p>
                         </div>
-                        <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => navigate(`/clients/${c.id}`)}>View</Button>
+                        <Badge color="red">PRIORITY</Badge>
                      </div>
-                  )) : (
-                     <div className="p-8 text-center text-slate-400 italic">No high risk clients.</div>
-                  )}
-               </div>
-            </Card>
+                  </Card>
+               ))}
+            </div>
          </div>
       </div>
     </div>
   );
 };
+
+const KPICard = ({ label, value, sub, icon: Icon, color = "blue" }: any) => (
+  <Card className="h-36 flex flex-col justify-between hover:border-slate-300 transition-all group shadow-sm">
+     <div className="flex justify-between items-start">
+        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">{label}</span>
+        <div className={`p-2.5 rounded-xl bg-slate-50 text-slate-400 group-hover:bg-${color}-50 group-hover:text-${color}-600 transition-colors shadow-inner`}>
+           <Icon className="w-5 h-5" />
+        </div>
+     </div>
+     <div>
+        <span className="text-4xl font-black tracking-tighter text-slate-900 leading-none italic">{value}</span>
+        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mt-2 italic">{sub}</span>
+     </div>
+  </Card>
+);

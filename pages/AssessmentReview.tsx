@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useStore, store } from '../services/store';
@@ -64,7 +63,7 @@ export const AssessmentReview: React.FC = () => {
                   </div>
                   <div className="flex-[2]">
                      <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Notes</h4>
-                     <p className="text-sm text-slate-600 italic bg-white p-3 rounded-lg border border-slate-200">{assessment.notes}</p>
+                     <p className="text-sm text-slate-600 bg-white p-3 rounded-lg border border-slate-200">{assessment.notes}</p>
                   </div>
                </div>
             </Card>

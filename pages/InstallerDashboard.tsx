@@ -4,327 +4,224 @@ import { Button, Badge } from '../components/ui';
 import { 
   MapPin, Calendar, CheckCircle, Navigation, Phone, 
   ChevronRight, Camera, X, Package, Battery, Wifi, Signal, 
-  MessageSquare, UserCircle 
+  MessageSquare, UserCircle, ArrowLeft, MoreHorizontal, Activity,
+  UploadCloud, ClipboardCheck, History, Info
 } from 'lucide-react';
 import { Role } from '../types';
-// Import sub-views
-import { MobileMessagesInterface } from './Messages';
-
-// --- INTERNAL TYPES & SUB-VIEWS ---
-type ViewState = 'HOME' | 'MESSAGES' | 'SETTINGS';
 
 export const InstallerDashboard: React.FC = () => {
-  const { jobs, currentUser, cases, messages } = useStore();
+  const { jobs, currentUser } = useStore();
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
   const [photoUploaded, setPhotoUploaded] = useState(false);
-  const [currentView, setCurrentView] = useState<ViewState>('HOME');
 
-  // Filter for "My Jobs"
   const myJobs = jobs.filter(j => j.installer_name === currentUser.name || j.installer_name === 'Bob Builder');
-  const displayUser = currentUser.role === Role.INSTALLER ? currentUser : { name: 'Bob Builder (View)', role: Role.INSTALLER };
-  
   const today = new Date().toISOString().split('T')[0];
-  const todaysJobs = myJobs.filter(j => j.scheduled_for && j.scheduled_for.startsWith(today)).sort((a,b) => (a.scheduled_for || '').localeCompare(b.scheduled_for || ''));
-  const futureJobs = myJobs.filter(j => !j.scheduled_for || j.scheduled_for > today);
-
-  const startCompletionFlow = (id: string) => {
-    setActiveJobId(id);
-    setPhotoUploaded(false);
-  };
-
-  const handleUploadPhoto = () => {
-    setTimeout(() => {
-        setPhotoUploaded(true);
-    }, 800);
-  };
+  const todaysJobs = myJobs
+    .filter(j => j.scheduled_for && j.scheduled_for.startsWith(today))
+    .sort((a,b) => (a.scheduled_for || '').localeCompare(b.scheduled_for || ''));
 
   const submitCompletion = () => {
     if (activeJobId) {
         store.completeJob(activeJobId);
         setActiveJobId(null);
-        alert("Job synced successfully! Assets updated.");
+        setPhotoUploaded(false);
     }
   };
 
-  const handleCall = () => window.location.href = "tel:+31612345678";
-  const handleMap = () => window.open("https://maps.google.com/?q=Amsterdam", "_blank");
-
-  // --- SUB-COMPONENT: HOME VIEW ---
-  const HomeView = () => (
-    <div className="bg-slate-50 min-h-full pb-24">
-       {/* HEADER - Mobile App Style */}
-       <div className="bg-slate-900 text-white pt-12 pb-10 px-6 rounded-b-[2.5rem] shadow-xl mb-6 relative overflow-hidden flex-shrink-0">
-          <div className="absolute top-0 right-0 p-12 bg-brand-500 rounded-full blur-3xl opacity-20 -mr-10 -mt-10 pointer-events-none"></div>
-          
-          <div className="relative z-10">
-             <div className="flex justify-between items-start mb-6">
-                <div>
-                   <h1 className="text-2xl font-bold tracking-tight">Good Morning,<br/>{displayUser.name.split(' ')[0]}</h1>
-                   <p className="text-slate-300 text-xs mt-2 font-medium">You have {todaysJobs.length} stops today.</p>
-                </div>
-                <div className="w-10 h-10 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center font-bold text-lg shadow-inner border border-white/20">
-                   {displayUser.name.charAt(0)}
-                </div>
-             </div>
-             <div className="flex gap-3">
-                <div className="flex-1 bg-white/10 backdrop-blur-md p-3 rounded-2xl border border-white/10">
-                   <span className="block text-xl font-bold">{todaysJobs.filter(j => j.status === 'COMPLETED').length}/{todaysJobs.length}</span>
-                   <span className="text-[9px] uppercase tracking-wider text-slate-300 font-bold">Completed</span>
-                </div>
-                <div className="flex-1 bg-white/10 backdrop-blur-md p-3 rounded-2xl border border-white/10">
-                   <span className="block text-xl font-bold text-green-400">100%</span>
-                   <span className="text-[9px] uppercase tracking-wider text-slate-300 font-bold">On Time</span>
-                </div>
-             </div>
-          </div>
-       </div>
-
-       <div className="px-4 space-y-6">
-          {/* TODAY'S ROUTE */}
-          <div>
-             <h3 className="font-bold text-slate-900 px-1 flex items-center gap-2 mb-3 text-sm">
-                <Calendar className="w-4 h-4 text-brand-600" /> Today's Schedule
-             </h3>
-             
-             <div className="space-y-4">
-                {todaysJobs.length === 0 ? (
-                   <div className="p-8 text-center text-slate-400 italic bg-white rounded-2xl shadow-sm border border-slate-200 text-xs">
-                      No jobs scheduled for today. Enjoy the break!
+  if (activeJobId) {
+    const job = jobs.find(j => j.id === activeJobId);
+    return (
+        <div className="fixed inset-0 z-[100] bg-[#f8fafc] flex flex-col font-sans animate-in slide-in-from-bottom-12 duration-500">
+            {/* Manifest Header */}
+            <div className="bg-[#0f172a] text-white p-6 pt-12 pb-8 rounded-b-[2.5rem] shadow-2xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-24 bg-emerald-500 rounded-full blur-[100px] opacity-10 -mr-16 -mt-16"></div>
+                <div className="flex justify-between items-center relative z-10">
+                   <div>
+                      <span className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.3em] mb-1 block">Active Protocol</span>
+                      <h2 className="text-3xl font-black tracking-tighter uppercase leading-none italic">Execution</h2>
                    </div>
-                ) : (
-                   todaysJobs.map((job, index) => {
-                      const isNext = index === 0 && job.status !== 'COMPLETED';
-                      const isCompleted = job.status === 'COMPLETED';
-                      const isCompleting = activeJobId === job.id;
-                      
-                      const jobCase = cases.find(c => c.id === job.case_id);
-                      const productNames = jobCase ? store.getProductIdsToNames(jobCase.product_ids) : [];
+                   <button onClick={() => setActiveJobId(null)} className="p-3 bg-white/10 hover:bg-white/20 rounded-2xl transition-all border border-white/10 backdrop-blur-md">
+                      <X className="w-6 h-6 text-white" />
+                   </button>
+                </div>
+            </div>
 
-                      if (isCompleting) {
-                          return (
-                              <div key={job.id} className="bg-white rounded-2xl border border-brand-200 shadow-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                                  <div className="bg-brand-50 p-4 border-b border-brand-100 flex justify-between items-center">
-                                      <h4 className="font-bold text-brand-900 text-sm">Complete Job #{job.id}</h4>
-                                      <button onClick={() => setActiveJobId(null)} className="p-1 rounded-full hover:bg-brand-100 text-brand-700">
-                                          <X className="w-5 h-5" />
-                                      </button>
-                                  </div>
-                                  <div className="p-6 space-y-6">
-                                      <div className="text-center space-y-4">
-                                          <div 
-                                              onClick={handleUploadPhoto}
-                                              className={`h-32 rounded-xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all ${
-                                                  photoUploaded 
-                                                  ? 'border-green-500 bg-green-50 text-green-700' 
-                                                  : 'border-slate-300 bg-slate-50 text-slate-500 active:bg-slate-100'
-                                              }`}
-                                          >
-                                              {photoUploaded ? (
-                                                  <>
-                                                      <CheckCircle className="w-8 h-8 mb-2" />
-                                                      <span className="text-sm font-bold">Photo Attached</span>
-                                                  </>
-                                              ) : (
-                                                  <>
-                                                      <Camera className="w-8 h-8 mb-2" />
-                                                      <span className="text-sm font-bold">Tap to Take Photo</span>
-                                                      <span className="text-xs">Proof of Installation</span>
-                                                  </>
-                                              )}
-                                          </div>
-                                      </div>
-                                      <div className="space-y-3">
-                                          <Button 
-                                              className={`w-full h-12 text-sm shadow-xl ${photoUploaded ? 'bg-green-600 hover:bg-green-700' : 'bg-slate-300 cursor-not-allowed'}`} 
-                                              disabled={!photoUploaded}
-                                              onClick={submitCompletion}
-                                          >
-                                              {photoUploaded ? 'Submit & Finish' : 'Upload Proof First'}
-                                          </Button>
-                                      </div>
-                                  </div>
-                              </div>
-                          )
-                      }
+            <div className="flex-1 overflow-y-auto p-6 space-y-8">
+                {/* Step 1: Capture */}
+                <div className="space-y-4">
+                   <div className="flex items-center gap-3">
+                      <div className="w-6 h-6 rounded-full bg-slate-900 text-white flex items-center justify-center text-[10px] font-black">01</div>
+                      <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest italic">Digital Evidence Capture</h3>
+                   </div>
+                   <div 
+                      onClick={() => setPhotoUploaded(true)}
+                      className={`h-64 rounded-[2rem] border-4 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all relative overflow-hidden ${
+                          photoUploaded 
+                          ? 'border-emerald-500 bg-emerald-50 text-emerald-700' 
+                          : 'border-slate-200 bg-white text-slate-400 active:scale-[0.98]'
+                      }`}
+                   >
+                      {photoUploaded ? (
+                          <>
+                              <div className="absolute inset-0 bg-emerald-500/5 animate-pulse" />
+                              <CheckCircle className="w-16 h-16 mb-4 relative z-10" />
+                              <span className="text-xl font-black uppercase tracking-tighter italic relative z-10">Capture Verified</span>
+                          </>
+                      ) : (
+                          <>
+                              <Camera className="w-16 h-16 mb-4 opacity-20" />
+                              <span className="text-xl font-black uppercase tracking-tighter italic">Upload Photo Proof</span>
+                              <span className="text-[10px] font-bold uppercase tracking-widest mt-2 opacity-50 italic">Tap to open field camera</span>
+                          </>
+                      )}
+                   </div>
+                </div>
 
-                      return (
-                         <div key={job.id} className={`relative rounded-2xl overflow-hidden border shadow-sm transition-all ${isNext ? 'border-brand-500 ring-2 ring-brand-100/50 bg-white z-10' : 'border-slate-200 bg-white'}`}>
-                            {isNext && <div className="bg-brand-600 text-white text-[10px] font-bold px-4 py-1.5 uppercase tracking-wide flex justify-between items-center">
-                               <span>Next Stop</span>
-                               <span className="text-brand-100 flex items-center gap-1"><Navigation className="w-3 h-3" /> ~15 min</span>
-                            </div>}
-                            
-                            <div className="p-4">
-                               <div className="flex justify-between items-start mb-3">
-                                  <div className="flex items-center gap-2">
-                                     <Badge color={job.type === 'INSTALL' ? 'blue' : 'yellow'}>{job.type}</Badge>
-                                     <span className="font-mono text-[10px] text-slate-400">#{job.id}</span>
-                                  </div>
-                                  <div className="text-right">
-                                     <span className="block font-bold text-slate-900 text-lg">{job.scheduled_for?.split(' ')[1]}</span>
-                                  </div>
-                               </div>
+                {/* Step 2: Confirmation */}
+                <div className="space-y-4 pt-6 border-t border-slate-200">
+                    <div className="flex items-center gap-3">
+                       <div className="w-6 h-6 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-[10px] font-black">02</div>
+                       <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest italic">Client Authorization</h3>
+                    </div>
+                    <div className="bg-white p-6 rounded-2xl border border-slate-200 flex items-center justify-between shadow-sm">
+                       <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400">
+                             <ClipboardCheck className="w-6 h-6" />
+                          </div>
+                          <span className="text-sm font-bold text-slate-700 italic">Signature Requirement</span>
+                       </div>
+                       <Badge color="yellow">Pending</Badge>
+                    </div>
+                </div>
+            </div>
 
-                               <h4 className="font-bold text-base text-slate-900 mb-1">{job.client_name}</h4>
-                               <div className="flex items-start gap-2 text-xs text-slate-600 mb-4">
-                                  <MapPin className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 text-slate-400" />
-                                  <span>123 Dorpsstraat, Amsterdam<br/><span className="text-[10px] text-slate-400">(Floor 2, Elevator code 1234)</span></span>
-                               </div>
+            <div className="p-6 bg-white border-t border-slate-200 shadow-[0_-10px_40px_rgba(0,0,0,0.03)]">
+                <Button 
+                    onClick={submitCompletion}
+                    disabled={!photoUploaded}
+                    className="w-full h-18 py-5 bg-slate-900 text-white font-black tracking-tighter uppercase text-xl shadow-2xl rounded-2xl italic active:scale-[0.97]"
+                >
+                    <UploadCloud className="w-6 h-6 mr-2" /> Sync To Ledger
+                </Button>
+            </div>
+        </div>
+    );
+  }
 
-                               {productNames.length > 0 && (
-                                  <div className="bg-slate-50 border border-slate-100 rounded-lg p-2.5 mb-4">
-                                     <h5 className="text-[9px] font-bold text-slate-400 uppercase mb-2 flex items-center gap-1">
-                                        <Package className="w-3 h-3" /> Equipment
-                                     </h5>
-                                     <ul className="space-y-1">
-                                        {productNames.map((name, i) => (
-                                           <li key={i} className="text-xs font-medium text-slate-700 flex items-center gap-2">
-                                              <div className="w-1.5 h-1.5 rounded-full bg-slate-300" /> {name}
-                                           </li>
-                                        ))}
-                                     </ul>
-                                  </div>
-                               )}
-
-                               {isCompleted ? (
-                                  <div className="bg-green-50 text-green-700 p-3 rounded-xl flex items-center justify-center gap-2 font-bold text-xs border border-green-100">
-                                     <CheckCircle className="w-4 h-4" /> Job Completed
-                                  </div>
-                               ) : (
-                                  <div className="grid grid-cols-2 gap-2">
-                                     <button onClick={handleCall} className="flex items-center justify-center h-10 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 font-bold text-xs active:bg-slate-100 transition-colors">
-                                        <Phone className="w-3.5 h-3.5 mr-2" /> Call
-                                     </button>
-                                     <button onClick={handleMap} className="flex items-center justify-center h-10 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 font-bold text-xs active:bg-slate-100 transition-colors">
-                                        <Navigation className="w-3.5 h-3.5 mr-2" /> Map
-                                     </button>
-                                     <button className="col-span-2 h-12 bg-slate-900 text-white rounded-xl text-sm font-bold shadow-lg active:scale-[0.98] transition-transform flex items-center justify-center" onClick={() => startCompletionFlow(job.id)}>
-                                        Mark Complete
-                                     </button>
-                                  </div>
-                               )}
-                            </div>
-                         </div>
-                      );
-                   })
-                )}
+  return (
+    <div className="space-y-8 bg-[#f8fafc] min-h-screen">
+       {/* INDUSTRIAL HUD HEADER */}
+       <div className="bg-[#0f172a] text-white p-6 pt-12 pb-10 rounded-b-[3.5rem] shadow-2xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-32 bg-brand-500 rounded-full blur-[130px] opacity-10 -mr-20 -mt-20"></div>
+          <div className="relative z-10">
+             <div className="flex justify-between items-start mb-10">
+                <div>
+                   <h1 className="text-3xl font-black tracking-tighter leading-none uppercase italic">Route HUD</h1>
+                   <div className="flex items-center gap-2 mt-3">
+                      <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+                      <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] italic">System Node Live</p>
+                   </div>
+                </div>
+                <div className="w-14 h-14 bg-white/5 backdrop-blur-md rounded-3xl flex items-center justify-center border border-white/10 shadow-inner">
+                   <UserCircle className="w-8 h-8 text-slate-400" />
+                </div>
              </div>
-          </div>
-
-          {/* UPCOMING */}
-          <div className="pt-2 pb-8">
-             <h3 className="font-bold text-slate-900 px-1 mb-3 text-xs uppercase tracking-wide opacity-60">Upcoming</h3>
-             <div className="space-y-3">
-                {futureJobs.map(job => {
-                   const jobCase = cases.find(c => c.id === job.case_id);
-                   const items = jobCase ? store.getProductIdsToNames(jobCase.product_ids).length : 0;
-                   return (
-                      <div key={job.id} className="bg-white/60 p-4 rounded-xl border border-slate-200/60 flex justify-between items-center backdrop-blur-sm">
-                         <div>
-                            <div className="font-bold text-slate-900 text-sm">{job.client_name}</div>
-                            <div className="text-[10px] text-slate-500">{job.scheduled_for || 'Unscheduled'} • {job.type} • {items} Items</div>
-                         </div>
-                         <ChevronRight className="w-4 h-4 text-slate-300" />
-                      </div>
-                   )
-                })}
-                {futureJobs.length === 0 && <div className="text-center text-xs text-slate-400 py-4">No future jobs scheduled.</div>}
+             
+             <div className="grid grid-cols-2 gap-4">
+                <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-5 rounded-3xl">
+                   <span className="block text-3xl font-black tracking-tighter italic">{todaysJobs.length}</span>
+                   <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 italic">Remaining</span>
+                </div>
+                <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-5 rounded-3xl">
+                   <span className="block text-3xl font-black tracking-tighter text-emerald-400 italic">0</span>
+                   <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 italic">Completed</span>
+                </div>
              </div>
           </div>
        </div>
-    </div>
-  );
 
-  // --- SUB-COMPONENT: SETTINGS VIEW ---
-  const SettingsView = () => (
-      <div className="bg-slate-50 min-h-full pb-24 font-sans">
-          <div className="bg-slate-900 text-white pt-12 pb-6 px-6 mb-6">
-              <h1 className="text-2xl font-bold">Settings</h1>
-              <p className="text-slate-400 text-xs">App Version 2.4.0</p>
+       {/* JOB LISTING */}
+       <div className="px-6 space-y-6 pb-12">
+          <div className="flex justify-between items-center">
+             <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] flex items-center gap-2 italic">
+                <Calendar className="w-3 h-3" /> Sequential Jobs
+             </h3>
+             <button className="text-[10px] font-bold text-brand-600 uppercase tracking-widest italic flex items-center gap-1">
+                <History className="w-3 h-3" /> History
+             </button>
           </div>
-          <div className="px-4 space-y-4">
-              <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
-                  <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center text-2xl font-bold text-slate-400">
-                      {displayUser.name.charAt(0)}
-                  </div>
-                  <div>
-                      <h3 className="font-bold text-slate-900">{displayUser.name}</h3>
-                      <p className="text-xs text-slate-500">{displayUser.role}</p>
-                  </div>
-              </div>
-              
-              <div className="space-y-1">
-                  <h4 className="text-xs font-bold text-slate-400 uppercase ml-1 mb-2">Preferences</h4>
-                  {['Notifications', 'Offline Mode', 'Language'].map(item => (
-                      <div key={item} className="bg-white p-4 rounded-xl border border-slate-200 flex justify-between items-center">
-                          <span className="text-sm font-medium text-slate-700">{item}</span>
-                          <ChevronRight className="w-4 h-4 text-slate-300" />
+
+          <div className="space-y-4">
+             {todaysJobs.map((job, idx) => {
+                const isActive = idx === 0 && job.status !== 'COMPLETED';
+                const isDone = job.status === 'COMPLETED';
+                
+                return (
+                   <div 
+                      key={job.id} 
+                      className={`p-6 rounded-[2.5rem] border shadow-sm transition-all relative overflow-hidden ${
+                         isActive 
+                         ? 'bg-white border-brand-500 ring-4 ring-brand-500/10' 
+                         : isDone 
+                            ? 'bg-slate-100/50 border-slate-200' 
+                            : 'bg-white border-slate-200'
+                      }`}
+                   >
+                      <div className="flex justify-between items-start mb-6">
+                         <div className="flex items-center gap-3">
+                            <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs italic ${isActive ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-400'}`}>
+                               {idx + 1}
+                            </div>
+                            <Badge color={job.type === 'INSTALL' ? 'cyan' : 'yellow'}>{job.type}</Badge>
+                         </div>
+                         <div className="text-right">
+                            <span className="text-2xl font-black tracking-tighter text-slate-900 italic block leading-none">{job.scheduled_for?.split(' ')[1]}</span>
+                            <span className="text-[9px] font-bold text-slate-400 uppercase italic tracking-tighter">Planned Slot</span>
+                         </div>
                       </div>
-                  ))}
-              </div>
 
-              <div className="pt-4">
-                  <button className="w-full py-3 bg-red-50 text-red-600 font-bold rounded-xl border border-red-100 text-sm">
-                      Log Out
-                  </button>
-              </div>
+                      <h4 className="text-2xl font-black text-slate-900 uppercase tracking-tighter leading-none mb-3 italic">{job.client_name}</h4>
+                      
+                      <div className="flex items-start gap-3 text-sm font-bold text-slate-500 mb-8 italic">
+                         <div className="mt-1 p-1 bg-slate-50 rounded-md"><MapPin className="w-3.5 h-3.5 text-brand-500" /></div>
+                         <span className="leading-tight">
+                            123 Dorpsstraat, Amsterdam<br/>
+                            <span className="text-[10px] text-slate-400 font-medium">Entrance: Rear code 1402</span>
+                         </span>
+                      </div>
+
+                      {isDone ? (
+                         <div className="flex items-center justify-center p-4 bg-emerald-50 rounded-2xl border border-emerald-100 text-emerald-600 font-black uppercase tracking-widest text-xs gap-3 italic">
+                            <CheckCircle className="w-5 h-5" /> Node Verified & Synced
+                         </div>
+                      ) : (
+                         <div className="grid grid-cols-2 gap-3">
+                            <button className="h-14 rounded-2xl bg-slate-50 border border-slate-200 text-slate-800 font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 active:bg-slate-200 transition-colors italic">
+                               <Phone className="w-4 h-4" /> Comms
+                            </button>
+                            <button className="h-14 rounded-2xl bg-slate-50 border border-slate-200 text-slate-800 font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 active:bg-slate-200 transition-colors italic">
+                               <Navigation className="w-4 h-4" /> Route
+                            </button>
+                            <button 
+                               onClick={() => setActiveJobId(job.id)}
+                               className={`col-span-2 h-18 rounded-[1.5rem] text-sm font-black uppercase tracking-[0.2em] shadow-xl active:scale-95 transition-all italic ${isActive ? 'bg-slate-900 text-white' : 'bg-slate-200 text-slate-400'}`}
+                            >
+                               Execute Deployment
+                            </button>
+                         </div>
+                      )}
+                   </div>
+                )
+             })}
+
+             {todaysJobs.length === 0 && (
+                <div className="text-center py-20 bg-white rounded-[2.5rem] border border-dashed border-slate-200">
+                   <ClipboardCheck className="w-16 h-16 text-slate-200 mx-auto mb-4" />
+                   <p className="text-slate-400 font-bold italic uppercase tracking-widest text-xs">No active route detected</p>
+                </div>
+             )}
           </div>
-      </div>
-  );
-
-  // --- RENDER IN PHONE FRAME ---
-  return (
-    <div className="w-full flex justify-center py-6">
-        <div className="relative w-full max-w-[375px] h-[812px] bg-slate-50 rounded-[3rem] border-[14px] border-slate-900 shadow-2xl overflow-hidden ring-1 ring-slate-900/5 flex flex-col">
-            
-            {/* Notch */}
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-7 bg-slate-900 rounded-b-2xl z-50"></div>
-            
-            {/* Status Bar Mock */}
-            <div className="h-8 bg-white w-full flex items-center justify-between px-6 pt-3 text-[10px] font-bold z-40 select-none absolute top-0 left-0 right-0">
-               <span className="text-slate-900 ml-2">9:41</span>
-               <div className="flex gap-1.5 items-center mr-2 text-slate-900">
-                  <Signal className="w-3 h-3" />
-                  <Wifi className="w-3 h-3" />
-                  <Battery className="w-4 h-4" />
-               </div>
-            </div>
-
-            {/* Scrollable Screen Area */}
-            <div className="flex-1 overflow-y-auto overflow-x-hidden relative bg-slate-50 no-scrollbar pt-8">
-                {currentView === 'HOME' && <HomeView />}
-                {currentView === 'MESSAGES' && <MobileMessagesInterface messages={messages} currentUser={currentUser} />}
-                {currentView === 'SETTINGS' && <SettingsView />}
-            </div>
-
-            {/* Simulated Bottom Navigation */}
-            <div className="absolute bottom-0 w-full bg-white border-t border-slate-200 h-20 pb-6 z-50 grid grid-cols-3">
-               <button 
-                  onClick={() => setCurrentView('HOME')}
-                  className={`flex flex-col items-center justify-center transition-colors ${currentView === 'HOME' ? 'text-brand-600' : 'text-slate-400'}`}
-               >
-                  <MapPin className={`w-6 h-6 mb-1 ${currentView === 'HOME' ? 'fill-brand-100' : ''}`} strokeWidth={currentView === 'HOME' ? 2.5 : 2} />
-                  <span className="text-[10px] font-bold">Route</span>
-               </button>
-               <button 
-                  onClick={() => setCurrentView('MESSAGES')}
-                  className={`flex flex-col items-center justify-center transition-colors ${currentView === 'MESSAGES' ? 'text-brand-600' : 'text-slate-400'}`}
-               >
-                  <MessageSquare className={`w-6 h-6 mb-1 ${currentView === 'MESSAGES' ? 'fill-brand-100' : ''}`} strokeWidth={currentView === 'MESSAGES' ? 2.5 : 2} />
-                  <span className="text-[10px] font-bold">Inbox</span>
-               </button>
-               <button 
-                  onClick={() => setCurrentView('SETTINGS')}
-                  className={`flex flex-col items-center justify-center transition-colors ${currentView === 'SETTINGS' ? 'text-brand-600' : 'text-slate-400'}`}
-               >
-                  <UserCircle className={`w-6 h-6 mb-1 ${currentView === 'SETTINGS' ? 'fill-brand-100' : ''}`} strokeWidth={currentView === 'SETTINGS' ? 2.5 : 2} />
-                  <span className="text-[10px] font-bold">Profile</span>
-               </button>
-            </div>
-
-            {/* Home Indicator */}
-            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1 bg-slate-300 rounded-full z-[60] pointer-events-none"></div>
-        </div>
+       </div>
     </div>
   );
 };
