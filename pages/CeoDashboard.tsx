@@ -162,9 +162,9 @@ export const CeoDashboard: React.FC = () => {
             <div className="bg-slate-900 p-6 rounded-[2rem] text-white shadow-2xl relative overflow-hidden italic">
                <div className="absolute top-0 right-0 p-10 bg-brand-500 rounded-full blur-[80px] opacity-10 -mr-8 -mt-8"></div>
                <div className="relative z-10">
-                  <h4 className="text-[10px] font-black text-brand-400 uppercase tracking-[0.4em] mb-4 italic">Governance Ledger 4.1</h4>
-                  <p className="text-[10px] text-slate-400 leading-relaxed font-bold italic">
-                     AI Agent actions are logged immutably. High-autonomy cycles are disabled for financial transactions &gt; €500.
+                  <h4 className="text-xs font-black uppercase tracking-widest text-white italic">Governance Policy 4.1</h4>
+                  <p className="text-[10px] text-slate-400 mt-1 leading-relaxed font-bold italic">
+                     AI Agent actions are logged immutably. High-autonomy cycles are disabled for financial transactions {" > "} €500.
                   </p>
                   <button onClick={() => navigate('/settings/agents')} className="mt-4 text-[10px] font-black uppercase tracking-widest text-white border-b border-brand-500 pb-1 hover:text-brand-400 transition-colors italic">Audit Logic Nodes</button>
                </div>
