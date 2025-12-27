@@ -1,6 +1,6 @@
 
 import React, { useEffect } from 'react';
-import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { Landing } from './pages/Landing';
 import { Today } from './pages/Today';
@@ -30,6 +30,27 @@ import { CarePlanReview } from './pages/CarePlanReview';
 
 import { store } from './services/store';
 
+/**
+ * Global behavior to reset scroll position on every navigation.
+ * Targets both the window and internal scrollable containers.
+ */
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+  
+  useEffect(() => {
+    // Reset window scroll (for landing page)
+    window.scrollTo(0, 0);
+    
+    // Reset internal scroll containers (for Layout shells)
+    const scrollables = document.querySelectorAll('.overflow-y-auto');
+    scrollables.forEach(el => {
+      el.scrollTo(0, 0);
+    });
+  }, [pathname]);
+
+  return null;
+};
+
 const App: React.FC = () => {
   useEffect(() => {
     store.startAgentLoop();
@@ -37,6 +58,7 @@ const App: React.FC = () => {
 
   return (
     <Router>
+      <ScrollToTop />
       <Layout>
         <Routes>
           {/* Landing is now the Root Entry Point */}

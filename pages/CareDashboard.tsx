@@ -5,8 +5,8 @@ import { useNavigate } from 'react-router-dom';
 import { 
   Users, ClipboardList, CheckCircle, Clock, Heart, Plus, Activity, 
   AlertCircle, FileText, ArrowRight, Phone, MapPin, ChevronRight,
-  Shield, Calendar, Signal, Wifi, Battery, Home, UserCircle, Bell, ArrowLeft, Mail,
-  HeartPulse, Stethoscope, UserPlus
+  Shield, Calendar, Home, Bell, ArrowLeft, Mail,
+  HeartPulse, Stethoscope, UserPlus, FileCheck, AlertTriangle
 } from 'lucide-react';
 import { Role } from '../types';
 
@@ -24,154 +24,136 @@ export const CareDashboard: React.FC = () => {
 };
 
 const MobileNurseView: React.FC<any> = ({ clients, currentUser, devices, jobs }) => {
+  const navigate = useNavigate();
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const highRiskClients = clients.filter((c: any) => c.risk_level === 'HIGH');
 
-  const MobilePatientCard = ({ client }: any) => (
-    <div 
-      onClick={() => setSelectedClientId(client.id)}
-      className="bg-white/70 backdrop-blur-md p-5 rounded-[2.5rem] border border-white shadow-sm active:scale-95 transition-all flex items-center justify-between group"
-    >
-      <div className="flex items-center gap-5">
-        <div className={`w-15 h-15 rounded-3xl flex items-center justify-center text-xl font-black border-2 italic transition-transform group-hover:scale-110 duration-500 ${client.risk_level === 'HIGH' ? 'bg-rose-50 text-rose-600 border-rose-100 shadow-rose-100' : 'bg-blue-50 text-blue-600 border-blue-100 shadow-blue-100'} shadow-lg`}>
-          {client.full_name.charAt(0)}
-        </div>
-        <div>
-          <h4 className="font-black text-slate-900 text-lg uppercase tracking-tighter italic leading-none mb-1">{client.full_name}</h4>
-          <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest italic">
-             <MapPin className="w-3 h-3" /> {client.address.split(',')[0]}
-          </div>
-        </div>
-      </div>
-      <div className="p-3 rounded-full bg-slate-50 text-slate-300 group-hover:bg-slate-900 group-hover:text-white transition-all">
-        <ChevronRight className="w-5 h-5" />
-      </div>
-    </div>
-  );
-
-  if (selectedClientId) {
-    const client = clients.find((c: any) => c.id === selectedClientId);
-    return (
-      <div className="fixed inset-0 z-50 bg-[#f1f5f9] flex flex-col font-sans animate-in slide-in-from-right-12 duration-500">
-         {/* Patient Context HUD */}
-         <div className="bg-[#0f172a] text-white p-6 pt-14 pb-12 rounded-b-[4rem] shadow-2xl relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-24 bg-rose-500 rounded-full blur-[110px] opacity-10 -mr-10 -mt-10"></div>
-            <div className="flex justify-between items-center relative z-10">
-               <button onClick={() => setSelectedClientId(null)} className="p-3 bg-white/10 hover:bg-white/20 rounded-2xl transition-all border border-white/10 backdrop-blur-md">
-                  <ArrowLeft className="w-6 h-6 text-white" />
-               </button>
-               <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center border border-white/10">
-                  <HeartPulse className="w-7 h-7 text-rose-400" />
-               </div>
-            </div>
-            
-            <div className="text-center mt-8 relative z-10">
-               <div className="w-24 h-24 bg-white/10 rounded-[2.5rem] mx-auto mb-6 flex items-center justify-center text-4xl font-black border-2 border-white/20 shadow-inner italic">
-                  {client.full_name.charAt(0)}
-               </div>
-               <h2 className="text-3xl font-black tracking-tighter uppercase italic leading-none mb-3">{client.full_name}</h2>
-               <div className="flex justify-center gap-3">
-                  <Badge color={client.status === 'ACTIVE' ? 'cyan' : 'gray'}>{client.status}</Badge>
-                  {client.risk_level === 'HIGH' && <Badge color="red">CRITICAL PATHWAY</Badge>}
-               </div>
-            </div>
-         </div>
-
-         {/* Interaction Content */}
-         <div className="flex-1 overflow-y-auto p-6 space-y-6 -mt-6">
-            <div className="bg-white/80 backdrop-blur-xl p-2 rounded-[2.5rem] border border-white shadow-xl">
-               <div className="grid grid-cols-2 divide-x divide-slate-100">
-                  <button className="py-8 flex flex-col items-center gap-3 hover:bg-slate-50 transition-colors active:scale-95 rounded-l-[2rem]">
-                     <div className="p-4 bg-emerald-100 text-emerald-600 rounded-3xl shadow-emerald-50 shadow-lg"><Phone className="w-7 h-7" /></div>
-                     <span className="text-[10px] font-black uppercase tracking-widest text-slate-800 italic">Call Patient</span>
-                  </button>
-                  <button className="py-8 flex flex-col items-center gap-3 hover:bg-slate-50 transition-colors active:scale-95 rounded-r-[2rem]">
-                     <div className="p-4 bg-blue-100 text-blue-600 rounded-3xl shadow-blue-50 shadow-lg"><Mail className="w-7 h-7" /></div>
-                     <span className="text-[10px] font-black uppercase tracking-widest text-slate-800 italic">Send Alert</span>
-                  </button>
-               </div>
-            </div>
-
-            <Card title="Clinical Summary" subtitle="Last Observation" className="rounded-[2.5rem] border-white shadow-lg overflow-hidden">
-               <div className="p-4 bg-slate-50/50 rounded-3xl border border-slate-100 text-base text-slate-700 leading-relaxed font-bold italic">
-                  "Patient reports consistent mobility improvements. Verification of glucose hub link required during this sequence."
-               </div>
-               <div className="mt-6 flex items-center gap-3 p-4 bg-blue-50/50 rounded-2xl border border-blue-100">
-                  <MapPin className="w-5 h-5 text-blue-500" />
-                  <p className="text-xs font-bold text-blue-800 italic">{client.address}</p>
-               </div>
-            </Card>
-         </div>
-
-         {/* Sequence Footer */}
-         <div className="p-6 bg-white border-t border-slate-200 pb-10">
-            <Button onClick={() => setSelectedClientId(null)} className="w-full h-18 py-5 bg-[#0f172a] text-white font-black tracking-tighter uppercase text-xl shadow-2xl rounded-3xl italic active:scale-95 transition-transform">
-               Finalize Sequence
-            </Button>
-         </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-10 bg-[#f1f5f9] min-h-screen">
-       {/* CARE HUD HEADER */}
-       <div className="bg-[#0f172a] text-white p-8 pt-16 pb-14 rounded-b-[4rem] shadow-2xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-32 bg-blue-500 rounded-full blur-[120px] opacity-10 -mr-16 -mt-16"></div>
-          <div className="relative z-10">
-             <div className="flex justify-between items-start mb-12">
-                <div>
-                   <h1 className="text-3xl font-black tracking-tighter leading-none uppercase italic">Care Hub</h1>
-                   <div className="flex items-center gap-2 mt-4 text-slate-400">
-                      <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></div>
-                      <p className="text-[11px] font-black uppercase tracking-[0.3em] italic">Sequence Active</p>
-                   </div>
-                </div>
-                <button className="w-14 h-14 bg-white/5 backdrop-blur-md rounded-[1.5rem] flex items-center justify-center border border-white/10 shadow-inner relative">
-                   <Bell className="w-7 h-7 text-slate-300" />
-                   {highRiskClients.length > 0 && <div className="absolute top-3 right-3 w-3 h-3 bg-rose-500 rounded-full border-2 border-[#0f172a]" />}
-                </button>
+    <div className="flex flex-col min-h-full bg-[#f8fafc]">
+       {/* 1. CLINICAL HEADER */}
+       <div className="bg-slate-900 text-white px-8 pt-16 pb-12 rounded-b-[3.5rem] shadow-2xl relative overflow-hidden">
+          {/* Background Decor */}
+          <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/10 rounded-full blur-[60px] -mr-8 -mt-8"></div>
+          
+          <div className="relative z-10 flex justify-between items-center mb-10">
+             <div>
+                <h1 className="text-3xl font-black tracking-tighter leading-tight italic">
+                   Hello,<br/>
+                   <span className="text-rose-400">Nurse {currentUser.name.split(' ')[0]}</span>
+                </h1>
+                <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.3em] mt-3 flex items-center gap-2">
+                   <div className="w-1.5 h-1.5 bg-rose-500 rounded-full animate-pulse" />
+                   Home Care • Thuiszorg West
+                </p>
              </div>
-             
-             <div className="grid grid-cols-2 gap-4">
-                <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-6 rounded-[2.5rem] shadow-inner">
-                   <span className="block text-4xl font-black tracking-tighter italic">{clients.length}</span>
-                   <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 italic">Total Load</span>
-                </div>
-                <div className={`backdrop-blur-xl border p-6 rounded-[2.5rem] shadow-inner transition-colors duration-700 ${highRiskClients.length > 0 ? 'bg-rose-500/20 border-rose-500/30' : 'bg-white/5 border-white/10'}`}>
-                   <span className={`block text-4xl font-black tracking-tighter italic ${highRiskClients.length > 0 ? 'text-rose-400' : 'text-white'}`}>{highRiskClients.length}</span>
-                   <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 italic">Intervention</span>
-                </div>
+             <div className="w-14 h-14 bg-white/5 rounded-[1.5rem] border border-white/10 flex items-center justify-center backdrop-blur-md shadow-inner group">
+                <HeartPulse className="w-8 h-8 text-rose-300 group-hover:text-rose-400 transition-colors" />
+             </div>
+          </div>
+          
+          {/* REFINED STATS BAR */}
+          <div className="relative z-10 bg-white/[0.03] backdrop-blur-2xl border border-white/10 rounded-[2rem] p-6 grid grid-cols-2 divide-x divide-white/10 shadow-xl">
+             <div className="flex flex-col items-center">
+                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 italic">Patients</span>
+                <span className="text-3xl font-black italic tracking-tighter leading-none">{clients.length}</span>
+             </div>
+             <div className="flex flex-col items-center">
+                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 italic">Open Alerts</span>
+                <span className={`text-3xl font-black italic tracking-tighter leading-none ${highRiskClients.length > 0 ? 'text-rose-400 animate-pulse' : 'text-slate-400'}`}>
+                   {highRiskClients.length}
+                </span>
              </div>
           </div>
        </div>
 
-       {/* WORKFLOW SECTIONS */}
-       <div className="px-6 space-y-10 pb-20">
-          {highRiskClients.length > 0 && (
-            <div className="space-y-5">
-               <div className="flex items-center justify-between px-2">
-                  <h3 className="text-[10px] font-black text-rose-500 uppercase tracking-[0.5em] flex items-center gap-2 italic">
-                     <AlertCircle className="w-4 h-4" /> Immediate Sequence
-                  </h3>
-                  <span className="text-[9px] font-black bg-rose-100 text-rose-600 px-2 py-0.5 rounded-full uppercase italic">Action Reqd</span>
-               </div>
-               {highRiskClients.map((c: any) => <MobilePatientCard key={c.id} client={c} />)}
-            </div>
+       {/* 2. ATTENTION REQUIRED - TRIAGE VIEW */}
+       <div className="px-6 pt-10 space-y-6">
+          <div className="flex items-center gap-3">
+             <div className="p-2.5 bg-rose-50 rounded-xl text-rose-600 shadow-sm border border-rose-100">
+                <AlertCircle className="w-5 h-5" />
+             </div>
+             <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">Critical Triage</h3>
+          </div>
+          
+          {highRiskClients.length > 0 ? (
+             highRiskClients.map(c => (
+                <div key={c.id} onClick={() => navigate(`/clients/${c.id}`)} className="bg-rose-50 border-2 border-rose-100 p-6 rounded-[2.5rem] flex items-center justify-between group active:scale-[0.98] transition-all shadow-sm">
+                   <div className="flex items-center gap-5">
+                      <div className="relative">
+                         <div className="w-14 h-14 bg-white rounded-2xl border border-rose-100 flex items-center justify-center text-rose-600 shadow-sm group-hover:rotate-6 transition-transform">
+                            <Activity className="w-7 h-7" />
+                         </div>
+                         <div className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 rounded-full border-4 border-white animate-pulse" />
+                      </div>
+                      <div>
+                         <h4 className="font-black text-slate-900 text-lg italic leading-tight">{c.full_name}</h4>
+                         <p className="text-[10px] font-black text-rose-700 uppercase tracking-tighter mt-1 italic">High Risk Profile • Action Required</p>
+                      </div>
+                   </div>
+                   <div className="bg-white/50 p-2 rounded-full text-rose-400 group-hover:bg-rose-100 transition-colors">
+                      <ChevronRight className="w-5 h-5" />
+                   </div>
+                </div>
+             ))
+          ) : (
+             <div className="p-8 text-center bg-white rounded-[2.5rem] border-2 border-dashed border-slate-100 italic text-slate-400 text-xs font-bold tracking-wider">No pending clinical alerts.</div>
           )}
+       </div>
 
+       {/* 3. QUICK UTILITIES */}
+       <div className="px-6 pt-12 space-y-6">
+          <h3 className="text-sm font-black text-slate-400 uppercase tracking-[0.2em] italic ml-1">Command Center</h3>
+          <div className="grid grid-cols-2 gap-5">
+             <button className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.05)] flex flex-col items-center gap-4 active:scale-95 transition-all group hover:border-brand-300">
+                <div className="p-4 bg-brand-50 text-brand-600 rounded-3xl shadow-inner group-hover:bg-brand-600 group-hover:text-white transition-all"><Plus className="w-6 h-6" /></div>
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-700">New Request</span>
+             </button>
+             <button className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.05)] flex flex-col items-center gap-4 active:scale-95 transition-all group hover:border-amber-300">
+                <div className="p-4 bg-amber-50 text-amber-600 rounded-3xl shadow-inner group-hover:bg-amber-600 group-hover:text-white transition-all"><AlertCircle className="w-6 h-6" /></div>
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-700">Report Issue</span>
+             </button>
+          </div>
+       </div>
+
+       {/* 4. REFINED PATIENT DIRECTORY */}
+       <div className="px-6 pt-12 space-y-6">
+          <div className="flex justify-between items-center ml-1">
+             <h3 className="text-sm font-black text-slate-400 uppercase tracking-[0.2em] italic">Caseload</h3>
+             <button onClick={() => navigate('/clients')} className="text-[10px] font-black text-brand-600 uppercase tracking-widest border-b-2 border-brand-100 pb-0.5">Directory</button>
+          </div>
+          
           <div className="space-y-5">
-             <div className="flex items-center justify-between px-2">
-                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.5em] flex items-center gap-2 italic">
-                   <Stethoscope className="w-4 h-4" /> Client Registry
-                </h3>
-                <button className="p-1 text-slate-400 hover:text-slate-900 transition-colors">
-                   <UserPlus className="w-5 h-5" />
-                </button>
-             </div>
-             <div className="space-y-4">
-                {clients.filter((c:any) => c.risk_level !== 'HIGH').map((c: any) => <MobilePatientCard key={c.id} client={c} />)}
-             </div>
+             {clients.filter((c:any) => c.risk_level !== 'HIGH').slice(0,3).map((client: any) => (
+                <div key={client.id} className="bg-white p-6 rounded-[2.5rem] border border-slate-200 shadow-sm group hover:shadow-md transition-all">
+                   <div className="flex justify-between items-start mb-6">
+                      <div className="flex items-center gap-4">
+                         <div className="w-14 h-14 bg-slate-50 border border-slate-100 rounded-3xl flex items-center justify-center font-black text-slate-400 text-xl italic shadow-inner">
+                            {client.full_name.charAt(0)}
+                         </div>
+                         <div>
+                            <h4 className="font-black text-slate-900 text-xl leading-none italic mb-2 group-hover:text-brand-600 transition-colors">{client.full_name}</h4>
+                            <div className="flex items-center gap-2 text-slate-400">
+                               <MapPin className="w-3.5 h-3.5" />
+                               <span className="text-[10px] font-bold uppercase tracking-wider">{client.address.split(',')[0]}</span>
+                            </div>
+                         </div>
+                      </div>
+                      <Badge color="cyan">Active</Badge>
+                   </div>
+                   
+                   <div className="grid grid-cols-2 gap-4">
+                      <button className="flex items-center justify-center gap-2.5 py-4 border-2 border-slate-100 rounded-2xl text-slate-700 font-black text-[10px] uppercase tracking-widest active:bg-slate-50 hover:border-slate-200 transition-all">
+                         <Phone className="w-4 h-4" /> Call
+                      </button>
+                      <button 
+                        onClick={() => navigate(`/clients/${client.id}`)}
+                        className="flex items-center justify-center gap-2.5 py-4 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest active:scale-95 transition-all shadow-lg shadow-slate-200"
+                      >
+                         Profile <ChevronRight className="w-3.5 h-3.5" />
+                      </button>
+                   </div>
+                </div>
+             ))}
           </div>
        </div>
     </div>
