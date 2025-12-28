@@ -104,7 +104,7 @@ export const CeoDashboard: React.FC = () => {
                               <td className="px-6 py-4 font-black text-slate-800 uppercase tracking-tighter italic">{store.getProductName(d.product_id)}</td>
                               <td className="px-6 py-4 text-slate-500 font-bold italic">{d.current_custodian}</td>
                               <td className="px-6 py-4">
-                                 <Badge color="red">BREACH {" > "} 24H</Badge>
+                                 <Badge color="red">BREACH &gt; 24H</Badge>
                               </td>
                            </tr>
                         )) : (
@@ -164,7 +164,7 @@ export const CeoDashboard: React.FC = () => {
                <div className="relative z-10">
                   <h4 className="text-xs font-black uppercase tracking-widest text-white italic">Governance Policy 4.1</h4>
                   <p className="text-[10px] text-slate-400 mt-1 leading-relaxed font-bold italic">
-                     AI Agent actions are logged immutably. High-autonomy cycles are disabled for financial transactions {" > "} €500.
+                     AI Agent actions are logged immutably. High-autonomy cycles are disabled for financial transactions &gt; €500.
                   </p>
                   <button onClick={() => navigate('/settings/agents')} className="mt-4 text-[10px] font-black uppercase tracking-widest text-white border-b border-brand-500 pb-1 hover:text-brand-400 transition-colors italic">Audit Logic Nodes</button>
                </div>
@@ -340,3 +340,5 @@ const LiveCommandModal = ({ criticalIssues, activeAssets, agentRunLogs, agents, 
         </div>
     );
 }
+
+export default CeoDashboard;
