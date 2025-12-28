@@ -9,10 +9,10 @@ import {
   Sparkles, Layers, GitBranch, CheckCircle2, Clock,
   Radio, Scan, Network, Server, Lock, Eye, Zap,
   Stethoscope, Settings, MapPin,
-  Bot, User, Building2, ArrowDown, Package,
+  Bot, User, Building2, Package,
   AlertTriangle, Bell, FileText, MessageSquare, 
-  Power, Gauge, TrendingUp, CheckCircle, Search,
-  ShieldCheck, Cloud, Fingerprint, Award
+  Power, Gauge, TrendingUp, CheckCircle,
+  ShieldCheck, Fingerprint, Award
 } from 'lucide-react';
 
 // --- SLIDE DATA FOR PRESENTATION ---
@@ -56,7 +56,7 @@ const SLIDE_DATA = [
   { id: 9, type: 'closing', title: 'Operational Excellence', subtitle: 'Healthcare logistics, reimagined.', cta: 'Experience the Platform' }
 ];
 
-// --- PROCESS FLOW DATA ---
+// --- PROCESS FLOW DATA (16 STEPS IN 4 PHASES) ---
 const PROCESS_PHASES = [
   {
     id: 'intake',
@@ -67,10 +67,10 @@ const PROCESS_PHASES = [
     icon: Stethoscope,
     description: 'Clinical assessment and care planning',
     steps: [
-      { id: 1, title: 'Patient Referral', desc: 'Care organization receives new patient referral requiring telecare equipment', actor: 'human', role: 'Care Company' },
-      { id: 2, title: 'Clinical Assessment', desc: 'Field nurse visits patient, evaluates mobility, cognitive state, living conditions, and specific care needs', actor: 'human', role: 'Field Nurse' },
-      { id: 3, title: 'AI Needs Analysis', desc: 'System analyzes assessment data, identifies risk factors, and recommends equipment manifest with confidence scores', actor: 'ai', role: 'Intake AI' },
-      { id: 4, title: 'Care Plan Approval', desc: 'Lead nurse reviews AI recommendations, adjusts product selection if needed, and activates the care plan', actor: 'human', role: 'Lead Nurse' },
+      { id: 1, title: 'Patient Referral', desc: 'Care organization receives new patient referral requiring telecare equipment. Referral includes basic patient info, diagnosis, and urgency level.', actor: 'human', role: 'Care Company' },
+      { id: 2, title: 'Clinical Assessment', desc: 'Field nurse visits patient home, evaluates mobility, cognitive state, living conditions, fall risk, and specific care needs. Captures detailed notes.', actor: 'human', role: 'Field Nurse' },
+      { id: 3, title: 'AI Needs Analysis', desc: 'System analyzes assessment data against product catalog, identifies risk factors, and recommends optimal equipment manifest with confidence scores.', actor: 'ai', role: 'Intake AI' },
+      { id: 4, title: 'Care Plan Approval', desc: 'Lead nurse reviews AI recommendations, adjusts product selection based on clinical judgment, sets review dates, and formally activates the care plan.', actor: 'human', role: 'Lead Nurse' },
     ]
   },
   {
@@ -82,10 +82,10 @@ const PROCESS_PHASES = [
     icon: Settings,
     description: 'Order processing and stock allocation',
     steps: [
-      { id: 5, title: 'Order Submission', desc: 'Equipment order is submitted to MobileCare operations with full product manifest and delivery requirements', actor: 'human', role: 'Lead Nurse' },
-      { id: 6, title: 'Order Approval', desc: 'Operations manager reviews order for compliance, validates care company credentials, and approves for fulfillment', actor: 'human', role: 'Ops Manager' },
-      { id: 7, title: 'Stock Allocation', desc: 'Stock Controller AI automatically allocates available inventory from nearest depot, reserving specific serial numbers', actor: 'ai', role: 'Stock Controller AI' },
-      { id: 8, title: 'Exception Handling', desc: 'If stock shortages occur, AI creates exceptions and notifies warehouse team for immediate resolution', actor: 'ai', role: 'Compliance AI' },
+      { id: 5, title: 'Order Submission', desc: 'Equipment order is formally submitted to MobileCare operations with complete product manifest, delivery requirements, and installation preferences.', actor: 'human', role: 'Lead Nurse' },
+      { id: 6, title: 'Order Approval', desc: 'Operations manager reviews order for compliance, validates care company credentials, checks for duplicates, and approves for fulfillment processing.', actor: 'human', role: 'Ops Manager' },
+      { id: 7, title: 'Stock Allocation', desc: 'Stock Controller AI automatically allocates available inventory from nearest depot, reserves specific serial numbers, and updates ledger in real-time.', actor: 'ai', role: 'Stock Controller AI' },
+      { id: 8, title: 'Exception Handling', desc: 'If stock shortages or allocation conflicts occur, Compliance AI creates prioritized exceptions and notifies warehouse team for immediate resolution.', actor: 'ai', role: 'Compliance AI' },
     ]
   },
   {
@@ -97,10 +97,10 @@ const PROCESS_PHASES = [
     icon: Truck,
     description: 'Scheduling, delivery and installation',
     steps: [
-      { id: 9, title: 'Job Scheduling', desc: 'Logistics AI creates installation jobs, optimizes routes, and assigns to field technicians based on location and skills', actor: 'ai', role: 'Logistics AI' },
-      { id: 10, title: 'Schedule Confirmation', desc: 'Care company confirms appointment times with patient/family and validates access instructions', actor: 'human', role: 'Care Company' },
-      { id: 11, title: 'Field Installation', desc: 'Technician arrives on-site, installs and configures equipment, captures photo proof of installation', actor: 'human', role: 'Field Technician' },
-      { id: 12, title: 'Device Activation', desc: 'Equipment is commissioned, connectivity verified, and device status changes to INSTALLED_ACTIVE in the ledger', actor: 'ai', role: 'System' },
+      { id: 9, title: 'Job Scheduling', desc: 'Logistics AI creates installation jobs, optimizes multi-stop routes, assigns to field technicians based on location, skills, and capacity.', actor: 'ai', role: 'Logistics AI' },
+      { id: 10, title: 'Schedule Confirmation', desc: 'Care company contacts patient/family to confirm appointment date and time, validates access instructions, and updates any special requirements.', actor: 'human', role: 'Care Company' },
+      { id: 11, title: 'Field Installation', desc: 'Technician arrives on-site with allocated equipment, completes professional installation, configures devices, and captures photo proof of setup.', actor: 'human', role: 'Field Technician' },
+      { id: 12, title: 'Device Activation', desc: 'Equipment is commissioned and connected. System verifies connectivity, runs diagnostics, and updates device status to INSTALLED_ACTIVE in the ledger.', actor: 'ai', role: 'System' },
     ]
   },
   {
@@ -112,10 +112,10 @@ const PROCESS_PHASES = [
     icon: Radio,
     description: 'Ongoing monitoring and lifecycle management',
     steps: [
-      { id: 13, title: 'Continuous Monitoring', desc: '24/7 AI monitoring of device health, connectivity status, and SLA compliance across entire fleet', actor: 'ai', role: 'Compliance AI' },
-      { id: 14, title: 'Exception Alerts', desc: 'AI detects anomalies (offline devices, SLA breaches, maintenance needs) and creates prioritized exception queue', actor: 'ai', role: 'Compliance AI' },
-      { id: 15, title: 'Service Changes', desc: 'When patient needs change or service ends, system triggers care plan review and equipment adjustments', actor: 'human', role: 'Lead Nurse' },
-      { id: 16, title: 'Returns Recovery', desc: 'Returns Recovery AI identifies dormant devices, schedules collection jobs, and manages refurbishment pipeline', actor: 'ai', role: 'Returns AI' },
+      { id: 13, title: 'Continuous Monitoring', desc: '24/7 AI monitoring of device health, connectivity status, battery levels, and SLA compliance across the entire deployed fleet.', actor: 'ai', role: 'Compliance AI' },
+      { id: 14, title: 'Exception Alerts', desc: 'AI detects anomalies (offline devices, SLA breaches, maintenance needs, unusual patterns) and creates prioritized exception queue for human review.', actor: 'ai', role: 'Compliance AI' },
+      { id: 15, title: 'Service Changes', desc: 'When patient needs change, condition deteriorates, or service ends, care team triggers care plan review and initiates equipment adjustments.', actor: 'human', role: 'Lead Nurse' },
+      { id: 16, title: 'Returns Recovery', desc: 'Returns Recovery AI identifies dormant/ended devices, schedules collection jobs, tracks returns, and manages refurbishment pipeline for redeployment.', actor: 'ai', role: 'Returns AI' },
     ]
   }
 ];
@@ -408,7 +408,6 @@ const ArchitectureModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             </div>
             
             <div className="flex items-center justify-center gap-4 md:gap-8">
-              {/* Care Organizations */}
               <div className="text-center">
                 <div className="w-20 h-20 md:w-24 md:h-24 rounded-2xl bg-rose-50 border-2 border-rose-100 flex items-center justify-center mx-auto mb-3 shadow-sm">
                   <Building2 className="w-10 h-10 md:w-12 md:h-12 text-rose-500" />
@@ -422,7 +421,6 @@ const ArchitectureModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                 <span className="text-[10px] text-slate-400 mt-1">Orders</span>
               </div>
 
-              {/* MobileCare Platform */}
               <div className="text-center">
                 <div className="w-28 h-28 md:w-32 md:h-32 rounded-3xl bg-gradient-to-br from-brand-500 to-blue-600 flex items-center justify-center mx-auto mb-3 shadow-xl shadow-brand-500/30 relative">
                   <Cpu className="w-14 h-14 md:w-16 md:h-16 text-white" />
@@ -439,7 +437,6 @@ const ArchitectureModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                 <span className="text-[10px] text-slate-400 mt-1">Jobs</span>
               </div>
 
-              {/* Field Teams */}
               <div className="text-center">
                 <div className="w-20 h-20 md:w-24 md:h-24 rounded-2xl bg-emerald-50 border-2 border-emerald-100 flex items-center justify-center mx-auto mb-3 shadow-sm">
                   <Truck className="w-10 h-10 md:w-12 md:h-12 text-emerald-500" />
@@ -460,7 +457,7 @@ const ArchitectureModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm text-center">
                 <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center mx-auto mb-3">
-                  <Search className="w-6 h-6 text-blue-600" />
+                  <Eye className="w-6 h-6 text-blue-600" />
                 </div>
                 <div className="text-sm font-bold text-slate-900 mb-1">Complete Visibility</div>
                 <div className="text-xs text-slate-500">Every device tracked 100% of the time</div>
@@ -524,7 +521,6 @@ const ArchitectureModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                     style={{ borderColor: isExpanded ? category.categoryColor : '#e2e8f0' }}
                     onClick={() => setActiveCategory(isExpanded ? null : catIndex)}
                   >
-                    {/* Category Header */}
                     <div className="p-4 flex items-center gap-3">
                       <div 
                         className="w-11 h-11 rounded-xl flex items-center justify-center"
@@ -541,7 +537,6 @@ const ArchitectureModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                       />
                     </div>
 
-                    {/* Expanded Agents */}
                     {isExpanded && (
                       <div className="px-4 pb-4 space-y-2">
                         {category.agents.map((agent) => {
@@ -581,7 +576,6 @@ const ArchitectureModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
-              {/* Kill Switch */}
               <div className="bg-white p-5 rounded-2xl border-2 border-red-200 shadow-sm">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center">
@@ -595,7 +589,6 @@ const ArchitectureModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                 <p className="text-xs text-slate-600">One-click emergency stop. Instantly halts all AI automation if ever needed.</p>
               </div>
 
-              {/* Autonomy Levels */}
               <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-10 h-10 rounded-xl bg-violet-100 flex items-center justify-center">
@@ -609,7 +602,6 @@ const ArchitectureModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                 <p className="text-xs text-slate-600">Set each agent to Observe, Draft, or Auto-Execute based on your comfort level.</p>
               </div>
 
-              {/* Audit Trail */}
               <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
@@ -663,10 +655,10 @@ const ArchitectureModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   );
 };
 
-// --- PROCESS FLOW MODAL ---
+// --- PROCESS FLOW MODAL (16 STEPS / 4 PHASES) ---
 const ProcessFlowModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const [activePhase, setActivePhase] = useState(0);
-  const [activeStep, setActiveStep] = useState<number | null>(null);
+  const [expandedStep, setExpandedStep] = useState<number | null>(null);
 
   const currentPhase = PROCESS_PHASES[activePhase];
   const totalSteps = PROCESS_PHASES.reduce((acc, p) => acc + p.steps.length, 0);
@@ -703,7 +695,7 @@ const ProcessFlowModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                 return (
                   <React.Fragment key={phase.id}>
                     <button
-                      onClick={() => { setActivePhase(i); setActiveStep(null); }}
+                      onClick={() => { setActivePhase(i); setExpandedStep(null); }}
                       className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${
                         isActive 
                           ? 'bg-white shadow-md border-2' 
@@ -736,12 +728,12 @@ const ProcessFlowModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             <div className="flex items-center gap-3">
               <div className="text-right hidden sm:block">
                 <div className="text-xs text-slate-400 uppercase tracking-wider">Progress</div>
-                <div className="text-sm font-bold text-slate-700">{completedSteps + (activeStep !== null ? activeStep + 1 : 0)} / {totalSteps} steps</div>
+                <div className="text-sm font-bold text-slate-700">{completedSteps + currentPhase.steps.length} / {totalSteps} steps</div>
               </div>
               <div className="w-24 h-2 bg-slate-200 rounded-full overflow-hidden">
                 <div 
                   className="h-full bg-gradient-to-r from-brand-500 to-blue-500 rounded-full transition-all duration-500"
-                  style={{ width: `${((completedSteps + (activeStep !== null ? activeStep + 1 : currentPhase.steps.length)) / totalSteps) * 100}%` }}
+                  style={{ width: `${((completedSteps + currentPhase.steps.length) / totalSteps) * 100}%` }}
                 />
               </div>
             </div>
@@ -786,17 +778,17 @@ const ProcessFlowModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             {/* Steps Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {currentPhase.steps.map((step, i) => {
-                const isActive = activeStep === i;
+                const isExpanded = expandedStep === i;
                 const isAI = step.actor === 'ai';
                 
                 return (
                   <div
                     key={step.id}
-                    onClick={() => setActiveStep(isActive ? null : i)}
+                    onClick={() => setExpandedStep(isExpanded ? null : i)}
                     className={`relative p-5 rounded-2xl border-2 cursor-pointer transition-all duration-300 ${
-                      isActive ? 'bg-white shadow-lg scale-[1.02]' : 'bg-white hover:shadow-md hover:scale-[1.01]'
+                      isExpanded ? 'bg-white shadow-lg scale-[1.02]' : 'bg-white hover:shadow-md hover:scale-[1.01]'
                     }`}
-                    style={{ borderColor: isActive ? currentPhase.color : '#e2e8f0' }}
+                    style={{ borderColor: isExpanded ? currentPhase.color : '#e2e8f0' }}
                   >
                     <div 
                       className="absolute -top-3 -left-2 w-8 h-8 rounded-full flex items-center justify-center text-sm font-black text-white shadow-md"
@@ -814,10 +806,10 @@ const ProcessFlowModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                     </div>
                     <div className="pt-3">
                       <h4 className="text-lg font-bold text-slate-900 mb-2 pr-20">{step.title}</h4>
-                      <p className={`text-sm leading-relaxed transition-all duration-300 ${isActive ? 'text-slate-700' : 'text-slate-500 line-clamp-2'}`}>
+                      <p className={`text-sm leading-relaxed transition-all duration-300 ${isExpanded ? 'text-slate-700' : 'text-slate-500 line-clamp-2'}`}>
                         {step.desc}
                       </p>
-                      {isActive && (
+                      {isExpanded && (
                         <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <div className={`w-2 h-2 rounded-full ${isAI ? 'bg-blue-500' : 'bg-emerald-500'}`} />
@@ -843,10 +835,10 @@ const ProcessFlowModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                 <div className="flex-1">
                   <h4 className="text-base font-bold text-slate-900 mb-1">AI Orchestration in This Phase</h4>
                   <p className="text-slate-600 text-sm leading-relaxed">
-                    {activePhase === 0 && "AI analyzes clinical assessment data to identify risk factors and recommend appropriate equipment. Confidence scores help nurses make informed decisions."}
+                    {activePhase === 0 && "AI analyzes clinical assessment data to identify risk factors and recommend appropriate equipment. Confidence scores help nurses make informed decisions quickly."}
                     {activePhase === 1 && "Stock Controller AI automatically allocates inventory from the nearest depot, while Compliance AI monitors for exceptions and escalates stock shortages immediately."}
-                    {activePhase === 2 && "Logistics AI optimizes route planning for field technicians, minimizing travel time while ensuring timely installations. The system automatically tracks device activation."}
-                    {activePhase === 3 && "Compliance AI provides 24/7 monitoring of device health and SLA performance. Returns Recovery AI identifies dormant equipment and automates the collection workflow."}
+                    {activePhase === 2 && "Logistics AI optimizes route planning for field technicians, minimizing travel time while ensuring timely installations. The system automatically tracks device activation and commissioning."}
+                    {activePhase === 3 && "Compliance AI provides 24/7 monitoring of device health and SLA performance. Returns Recovery AI identifies dormant equipment and automates the collection workflow for asset recovery."}
                   </p>
                   <div className="flex gap-2 mt-3">
                     {currentPhase.steps.filter(s => s.actor === 'ai').map((s, i) => (
@@ -864,7 +856,7 @@ const ProcessFlowModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         {/* Footer Navigation */}
         <div className="flex-none p-4 border-t border-slate-100 bg-slate-50 flex justify-between items-center">
           <button
-            onClick={() => { setActivePhase(Math.max(0, activePhase - 1)); setActiveStep(null); }}
+            onClick={() => { setActivePhase(Math.max(0, activePhase - 1)); setExpandedStep(null); }}
             disabled={activePhase === 0}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-slate-600 hover:bg-white hover:shadow-sm disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:shadow-none transition-all"
           >
@@ -874,14 +866,14 @@ const ProcessFlowModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             {PROCESS_PHASES.map((phase, i) => (
               <button
                 key={i}
-                onClick={() => { setActivePhase(i); setActiveStep(null); }}
+                onClick={() => { setActivePhase(i); setExpandedStep(null); }}
                 className={`w-3 h-3 rounded-full transition-all ${i === activePhase ? 'scale-125' : 'hover:scale-110'}`}
                 style={{ background: i === activePhase ? phase.color : i < activePhase ? `${phase.color}50` : '#cbd5e1' }}
               />
             ))}
           </div>
           <button
-            onClick={() => { setActivePhase(Math.min(PROCESS_PHASES.length - 1, activePhase + 1)); setActiveStep(null); }}
+            onClick={() => { setActivePhase(Math.min(PROCESS_PHASES.length - 1, activePhase + 1)); setExpandedStep(null); }}
             disabled={activePhase === PROCESS_PHASES.length - 1}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white bg-brand-500 hover:bg-brand-600 disabled:opacity-40 disabled:hover:bg-brand-500 transition-all shadow-sm"
           >
@@ -918,7 +910,7 @@ const PortalCard: React.FC<{
   );
 };
 
-// --- MAIN LANDING PAGE ---
+// --- MAIN LANDING PAGE (LIGHT THEME) ---
 export const Landing: React.FC = () => {
   const navigate = useNavigate();
   const [showArchitecture, setShowArchitecture] = useState(false);
